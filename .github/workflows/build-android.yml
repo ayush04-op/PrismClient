@@ -32,8 +32,19 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Analyze (report errors)
+        continue-on-error: true
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings > analyze.log 2>&1 || true
+          grep -E "error •" analyze.log | head -25 | while read -r l; do echo "::error::$l"; done
+
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee build.log || {
+            grep -E "Error|error:|FAILURE|What went wrong|Could not" -A1 build.log | head -30 | while read -r l; do echo "::error::$l"; done
+            exit 1
+          }
 
       - uses: actions/upload-artifact@v4
         with:
