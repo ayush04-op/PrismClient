@@ -38,6 +38,9 @@ jobs:
           G="$D/android/build.gradle"
           PKG=$(grep -oP 'package="\K[^"]+' "$D/android/src/main/AndroidManifest.xml" || echo com.tdlib.plugin)
           grep -q namespace "$G" || sed -i "0,/android {/s//android {\n    namespace \"$PKG\"/" "$G"
+          sed -i -E 's/compileSdk(Version)?[ =]+[0-9]+/compileSdk 36/' "$G"
+          sed -i -E 's/minSdk(Version)?[ =]+[0-9]+/minSdk 24/' "$G"
+          cat "$G"
           echo "patched $G with namespace $PKG"
 
       - name: Analyze (report errors)
@@ -50,7 +53,7 @@ jobs:
         run: |
           set -o pipefail
           flutter build apk --release 2>&1 | tee build.log || {
-            grep -E "Error|error:|FAILURE|What went wrong|Could not" -A1 build.log | head -30 | while read -r l; do echo "::error::$l"; done
+            grep -E "What went wrong|Execution failed|error:|Could not" -A6 build.log | head -45 | while read -r l; do echo "::error::$l"; done
             exit 1
           }
 
