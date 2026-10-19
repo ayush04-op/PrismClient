@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tdlib/td_api.dart' as td;
@@ -22,6 +23,9 @@ class TdService {
 
   final _updates = StreamController<td.TdObject>.broadcast();
 
+  /// Last raw TDLib messages, shown on screen while debugging.
+  final ValueNotifier<String> debugLog = ValueNotifier('starting…');
+
   /// Every object TDLib emits (updates, errors, responses).
   Stream<td.TdObject> get updates => _updates.stream;
 
@@ -29,7 +33,12 @@ class TdService {
     if (_started) return;
     _started = true;
 
-    await TdPlugin.initialize(); // ADAPTER (iOS: pass libtdjson name)
+    try {
+      await TdPlugin.initialize(); // ADAPTER (iOS: pass libtdjson name)
+    } catch (e) {
+      debugLog.value = 'init failed: $e';
+      rethrow;
+    }
     _clientId = TdPlugin.instance.tdCreate(); // ADAPTER
 
     send(td.SetLogVerbosityLevel(newVerbosityLevel: 1));
@@ -39,6 +48,9 @@ class TdService {
       for (var i = 0; i < 50; i++) {
         final raw = TdPlugin.instance.tdReceive(0); // ADAPTER
         if (raw == null) break;
+        if (!raw.contains('updateOption') && !raw.contains('updateConnectionState')) {
+          debugLog.value = raw.length > 220 ? raw.substring(0, 220) : raw;
+        }
         final obj = td.convertToObject(raw);
         if (obj != null) _updates.add(obj);
       }
@@ -51,6 +63,7 @@ class TdService {
 
   /// Answer TDLib's `authorizationStateWaitTdlibParameters`.
   Future<void> sendParameters() async {
+    debugLog.value = 'sending parameters (apiId=${dotenv.env['API_ID']?.trim().length ?? 0} chars)';
     final dir = await getApplicationSupportDirectory();
     send(
       td.SetTdlibParameters(
@@ -62,8 +75,8 @@ class TdService {
         useChatInfoDatabase: true,
         useMessageDatabase: true,
         useSecretChats: false,
-        apiId: int.tryParse(dotenv.env['API_ID'] ?? '') ?? 0,
-        apiHash: dotenv.env['API_HASH'] ?? '',
+        apiId: int.tryParse((dotenv.env['API_ID'] ?? '').trim()) ?? 0,
+        apiHash: (dotenv.env['API_HASH'] ?? '').trim(),
         systemLanguageCode: 'en',
         deviceModel: 'GlassGram',
         systemVersion: 'Flutter',

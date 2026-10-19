@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
+import '../../core/tdlib/td_service.dart';
 import '../../core/theme/mesh_background.dart';
 import 'auth_controller.dart';
 
@@ -47,7 +48,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     return GlassScaffold(
       background: const MeshBackground(),
-      body: SafeArea(
+      body: Material(
+        type: MaterialType.transparency,
+        child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -87,14 +90,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
                             : const Text('Continue'),
                       ),
-                    ] else
+                    ] else ...[
                       const Center(child: CircularProgressIndicator()),
+                      const SizedBox(height: 16),
+                      ValueListenableBuilder<String>(
+                        valueListenable: TdService.instance.debugLog,
+                        builder: (_, v, __) => Text(v,
+                            style: const TextStyle(fontSize: 11, color: Colors.white54),
+                            textAlign: TextAlign.center),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
           ),
         ),
+      ),
       ),
     );
   }

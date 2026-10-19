@@ -36,7 +36,12 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> _init() async {
-    await _td.start();
+    try {
+      await _td.start();
+    } catch (e) {
+      state = state.copyWith(error: '$e');
+      return;
+    }
     _sub = _td.updates.listen(_onEvent);
     _td.send(td.GetAuthorizationState());
   }
