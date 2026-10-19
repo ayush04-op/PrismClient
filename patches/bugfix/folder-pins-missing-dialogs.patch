@@ -1,0 +1,94 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Fri, 17 Jul 2026 20:41:35 +0400
+Subject: Fix folder pins missing when the pinned dialog is not in the local cache
+
+---
+ .../messenger/MessagesController.java         | 11 ++++++++
+ .../telegram/messenger/MessagesStorage.java   | 28 +++++++++++++------
+ 2 files changed, 31 insertions(+), 8 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+@@ -2394,6 +2394,17 @@ public class MessagesController extends BaseController implements NotificationCe
+                     }
+                     sortDialogs(null);
+                     getNotificationCenter().postNotificationName(NotificationCenter.dialogsNeedReload);
++
++                    for (int a = 0, N = dialogFilters.size(); a < N; a++) {
++                        DialogFilter filter = dialogFilters.get(a);
++                        for (int b = 0, N2 = filter.pinnedDialogs.size(); b < N2; b++) {
++                            long did = filter.pinnedDialogs.keyAt(b);
++                            if (DialogObject.isEncryptedDialog(did) || dialogs_dict.indexOfKey(did) >= 0) {
++                                continue;
++                            }
++                            loadUnknownDialog(getInputPeer(did), 0);
++                        }
++                    }
+                 }
+                 if (remote != 0) {
+                     getUserConfig().filtersLoaded = true;
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java
+@@ -3431,10 +3431,10 @@ public class MessagesStorage extends BaseController {
+                             existingIds.remove(id);
+                             if (!existingDialogsIds.remove(id)) {
+                                 changed = true;
+-                                if (!dialogsToLoadMap.containsKey(id)) {
+-                                    dialogsToLoad.add(id);
+-                                    dialogsToLoadMap.put(id, peer);
+-                                }
++                            }
++                            if (!dialogsToLoadMap.containsKey(id)) {
++                                dialogsToLoad.add(id);
++                                dialogsToLoadMap.put(id, peer);
+                             }
+                         }
+                         if (secretChatsMap != null) {
+@@ -3550,19 +3550,17 @@ public class MessagesStorage extends BaseController {
+                 TLRPC.messages_Dialogs dialogs;
+                 if (!dialogsToLoad.isEmpty()) {
+                     dialogs = loadDialogsByIds(TextUtils.join(",", dialogsToLoad), usersToLoad, chatsToLoad, new ArrayList<>());
+-                    for (int a = 0, N = dialogs.dialogs.size(); a < N; a++) {
+-                        TLRPC.Dialog dialog = dialogs.dialogs.get(a);
+-                        dialogsToLoadMap.remove(dialog.id);
+-                    }
+                 } else {
+                     dialogs = new TLRPC.TL_messages_dialogs();
+                 }
++                HashSet<Long> loadedPeerIds = new HashSet<>();
+                 ArrayList<TLRPC.User> users = new ArrayList<>();
+                 if (!usersToLoad.isEmpty()) {
+                     getUsersInternal(usersToLoad, users);
+                     for (int a = 0, N = users.size(); a < N; a++) {
+                         TLRPC.User user = users.get(a);
+                         usersToLoadMap.remove(user.id);
++                        loadedPeerIds.add(user.id);
+                     }
+                 }
+                 ArrayList<TLRPC.Chat> chats = new ArrayList<>();
+@@ -3571,6 +3569,20 @@ public class MessagesStorage extends BaseController {
+                     for (int a = 0, N = chats.size(); a < N; a++) {
+                         TLRPC.Chat chat = chats.get(a);
+                         chatsToLoadMap.remove(chat.id);
++                        loadedPeerIds.add(-chat.id);
++                    }
++                }
++                for (int a = dialogs.dialogs.size() - 1; a >= 0; a--) {
++                    TLRPC.Dialog dialog = dialogs.dialogs.get(a);
++                    if (loadedPeerIds.contains(dialog.id)) {
++                        dialogsToLoadMap.remove(dialog.id);
++                    } else {
++                        dialogs.dialogs.remove(a);
++                    }
++                }
++                for (int a = dialogs.messages.size() - 1; a >= 0; a--) {
++                    if (dialogsToLoadMap.containsKey(dialogs.messages.get(a).dialog_id)) {
++                        dialogs.messages.remove(a);
+                     }
+                 }
+ 

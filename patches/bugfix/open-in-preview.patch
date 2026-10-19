@@ -1,0 +1,92 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Thu, 2 Jul 2026 21:21:37 +0400
+Subject: correctly handle "Open in..." in ChatAttachAlert: open editor before sending + support multi-attach
+
+---
+ .../main/java/org/telegram/ui/ChatActivity.java   |  3 ++-
+ .../telegram/ui/Components/ChatAttachAlert.java   |  2 +-
+ .../ui/Components/ChatAttachAlertPhotoLayout.java | 15 ++++++++++++---
+ 3 files changed, 15 insertions(+), 5 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -12718,7 +12718,7 @@ public class ChatActivity extends BaseFragment implements
+         }
+     }
+ 
+-    private void createChatAttachView() {
++    public void createChatAttachView() {
+         if (getParentActivity() == null || getContext() == null) {
+             return;
+         }
+@@ -20609,6 +20609,7 @@ public class ChatActivity extends BaseFragment implements
+                 ((ChatAttachAlertRichLayout) chatAttachAlert.getCurrentAttachLayout()).onExternalDocumentPicked(data);
+                 return;
+             } else if (requestCode == 1) {
++                if (desu.inugram.helpers.media.MediaPickerHelper.handlePickerResult(this, data)) return;
+                 if (data == null || data.getData() == null) {
+                     showAttachmentError();
+                     return;
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java
+@@ -1142,7 +1142,7 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
+ 
+     public boolean restrictEphemeralMessageTypes;
+ 
+-    protected int maxSelectedPhotos = -1;
++    public int maxSelectedPhotos = -1;
+     protected boolean allowOrder = true;
+     protected boolean openWithFrontFaceCamera;
+     private float captionEditTextTopOffset;
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlertPhotoLayout.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlertPhotoLayout.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlertPhotoLayout.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlertPhotoLayout.java
+@@ -184,8 +184,9 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
+     private TextView tooltipTextView;
+     private ImageView switchCameraButton;
+     private boolean takingPhoto;
+-    private static boolean mediaFromExternalCamera;
+-    private static ArrayList<Object> cameraPhotos = new ArrayList<>();
++    public static boolean mediaFromExternalCamera;
++    public static ArrayList<Object> cameraPhotos = new ArrayList<>();
++    public static int inu_openIndex = -1;
+     public static HashMap<Object, Object> selectedPhotos = new HashMap<>();
+     public static ArrayList<Object> selectedPhotosOrder = new ArrayList<>();
+     public static int lastImageId = -1;
+@@ -2062,7 +2063,9 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
+         AndroidUtilities.unlockOrientation(AndroidUtilities.findActivity(getContext()));
+     }
+ 
+-    protected void openPhotoViewer(MediaController.PhotoEntry entry, final boolean sameTakePictureOrientation, boolean external) {
++    public void openPhotoViewer(MediaController.PhotoEntry entry, final boolean sameTakePictureOrientation, boolean external) {
++        final int inuOpenIndex = inu_openIndex;
++        inu_openIndex = -1;
+         if (entry != null) {
+             cameraPhotos.add(entry);
+             selectedPhotos.put(entry.imageId, entry);
+@@ -2127,6 +2130,9 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
+             arrayList = getAllPhotosArray();
+             index = cameraPhotos.size() - 1;
+         }
++        if (inuOpenIndex >= 0) {
++            index = inuOpenIndex;
++        }
+         if (parentAlert.getAvatarFor() != null && entry != null) {
+             parentAlert.getAvatarFor().isVideo = entry.isVideo;
+         }
+@@ -3380,6 +3386,9 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
+                 parentAlert.getPhotoPreviewLayout().invalidateGroupsView();
+             }
+         } else if (id == open_in) {
++            if (parentAlert.avatarPicker == 0 && desu.inugram.helpers.media.MediaPickerHelper.launchPicker(parentAlert)) {
++                return;
++            }
+             try {
+                 if (shouldLoadAllMedia()) {
+                     Intent videoPickerIntent = new Intent();

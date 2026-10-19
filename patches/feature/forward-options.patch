@@ -1,0 +1,65 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Wed, 13 May 2026 18:52:11 +0200
+Subject: Long-tap forward in message menu to forward without sender or caption
+
+---
+ .../src/main/java/org/telegram/ui/ChatActivity.java        | 7 +++++--
+ .../src/main/java/org/telegram/ui/DialogsActivity.java     | 4 ++++
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -15359,6 +15359,7 @@ public class ChatActivity extends BaseFragment implements
+                     messagePreviewParams.attach(forwardingPreviewView);
+                 }
+                 messagePreviewParams.updateForward(messageObjectsToForward, dialog_id);
++                ChatHelper.applyForwardOptionsToPreview(messagePreviewParams);
+                 if (messagePreviewParams.isEmpty() && editingMessageObject == null) {
+                     messagePreviewParams = null;
+                 }
+@@ -31351,7 +31352,7 @@ public class ChatActivity extends BaseFragment implements
+             final boolean showSponsorInfo = !suggestEdit && !isEphemeral && selectedObject != null && selectedObject.isSponsored() && (selectedObject.sponsoredInfo != null || selectedObject.sponsoredAdditionalInfo != null || selectedObject.sponsoredUrl != null && !selectedObject.sponsoredUrl.startsWith("https://" + getMessagesController().linkPrefix));
+             final boolean isReactionsAvailableFinal = !suggestEdit && isReactionsAvailable;
+ 
+-            int flags = 0;
++            int flags = ActionBarPopupWindow.ActionBarPopupWindowLayout.FLAG_USE_SWIPEBACK;
+             if (isReactionsViewAvailable || showMessageSeen || showSponsorInfo) {
+                 flags |= ActionBarPopupWindow.ActionBarPopupWindowLayout.FLAG_USE_SWIPEBACK;
+             }
+@@ -33656,6 +33657,7 @@ public class ChatActivity extends BaseFragment implements
+                 break;
+             }
+             case OPTION_FORWARD: {
++                ChatHelper.clearForwardFlags();
+                 if (getMessagesController().isFrozen()) {
+                     AccountFrozenAlert.show(currentAccount);
+                     selectedObject = null;
+@@ -34770,8 +34772,9 @@ public class ChatActivity extends BaseFragment implements
+                         params.suggestionParams = messageSuggestionParams;
+                         getSendMessagesHelper().sendMessage(params);
+                     }
+-                    getSendMessagesHelper().sendMessage(fmessages, did, false, false, notify, scheduleDate, scheduleRepeatPeriod, null, -1, price == null ? 0 : price, getSendMonoForumPeerId(), getSendMessageSuggestionParams());
++                    getSendMessagesHelper().sendMessage(fmessages, did, ChatHelper.pendingHideAuthor, ChatHelper.pendingHideCaption, notify, scheduleDate, scheduleRepeatPeriod, null, -1, price == null ? 0 : price, getSendMonoForumPeerId(), getSendMessageSuggestionParams());
+                 }
++                ChatHelper.clearForwardFlags();
+                 fragment.finishFragment();
+                 createUndoView();
+                 if (undoView != null) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -12074,6 +12074,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+         final boolean onlyMyselfFinal = onlyMyself;
+ 
+         ItemOptions.makeOptions(this, view)
++            .addIf(!isQuote && delegate instanceof ChatActivity, R.drawable.msg_forward_noquote, LocaleController.getString(R.string.InuForwardNoQuote), () -> {
++                desu.inugram.helpers.chat.ChatHelper.pendingHideAuthor = true;
++                view.callOnClick();
++            })
+             .add(R.drawable.input_notify_off, getString(R.string.SendWithoutSound), () -> {
+                 this.notify = false;
+                 if (delegate == null || selectedDialogs.isEmpty()) {

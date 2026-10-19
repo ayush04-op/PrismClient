@@ -1,0 +1,210 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleksii Kulinich <entaytion@gmail.com>
+Date: Sat, 19 Sep 2026 16:23:19 +0300
+Subject: Input message translation and enter view actions
+
+---
+ .../java/org/telegram/ui/ChatActivity.java    | 22 +++++++++++--
+ .../ui/Components/ChatActivityEnterView.java  | 23 +++++++++++++-
+ .../ui/Components/TranslateAlert3.java        | 31 ++++++++++++++-----
+ 3 files changed, 64 insertions(+), 12 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -14676,6 +14676,22 @@ public class ChatActivity extends BaseFragment implements
+         }
+     }
+ 
++    public void inu_toggleLinkPreview() {
++        if (chatActivityEnterView == null) return;
++        boolean enabled = chatActivityEnterView.isMessageWebPageSearchEnabled();
++        if (enabled || foundWebPage != null) {
++            chatActivityEnterView.setWebPage(null, false);
++            foundWebPage = null;
++            if (messagePreviewParams != null) {
++                messagePreviewParams.updateLink(currentAccount, null, chatActivityEnterView.getFieldText(), replyingMessageObject == threadMessageObject ? null : replyingMessageObject, replyingQuote, editingMessageObject);
++            }
++            fallbackFieldPanel();
++        } else {
++            chatActivityEnterView.setWebPage(null, true);
++            inu_refetchWebPreview();
++        }
++    }
++
+     private void requestLinkPreview(TL_account.getWebPagePreview req, Utilities.Callback2<Boolean, TLRPC.WebPage> done) {
+         cancelSearchLinks();
+         linkSearchRequestId = getConnectionsManager().sendRequestTyped(req, AndroidUtilities::runOnUIThread, (response, error) -> {
+@@ -28216,9 +28232,9 @@ public class ChatActivity extends BaseFragment implements
+         if (chat && encryptedChat == null) {
+             menu.add(R.id.menu_groupbolditalic, R.id.menu_date, order++, LocaleController.getString(R.string.FormattedDate));
+         }
+-//        if (MessagesController.getInstance(UserConfig.selectedAccount).getTranslateController().isContextTranslateEnabled()) {
+-//            menu.add(R.id.menu_groupbolditalic, R.id.menu_translate, order++, "Translate");
+-//        }
++        if (desu.inugram.InuConfig.INPUT_TRANSLATE.getValue()) {
++            menu.add(R.id.menu_groupbolditalic, R.id.menu_translate, order++, LocaleController.getString(R.string.TranslateMessage));
++        }
+         menu.add(R.id.menu_groupbolditalic, R.id.menu_regular, order++, LocaleController.getString(R.string.Regular));
+     }
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
+@@ -2872,6 +2872,7 @@ public class ChatActivityEnterView extends FrameLayout implements
+             attachButton.setContentDescription(getString(R.string.AccDescrAttachButton));
+             updateFieldRight(1);
+         }
++        desu.inugram.helpers.chat.ChatInputMenuHelper.attach(this);
+ 
+         aiButton = new ImageView(context);
+         aiButton.setImageDrawable(aiButtonIcon = new AiButtonDrawable(context));
+@@ -6279,6 +6280,12 @@ public class ChatActivityEnterView extends FrameLayout implements
+         setRecordVideoButtonVisible(!isInVideoMode(), true);
+     }
+ 
++    public void inu_openAttach() {
++        if (delegate != null) {
++            delegate.didPressAttachButton();
++        }
++    }
++
+     public void inu_startRecordingLocked(boolean video) {
+         createRecordCircle();
+         setRecordVideoButtonVisible(video, false);
+@@ -8849,6 +8856,7 @@ public class ChatActivityEnterView extends FrameLayout implements
+                 suggestButton.setTranslationX(shownSendButton ? -Math.max(0, sendButton.width() - dp(64)) : dp(42));
+             }
+         }
++        desu.inugram.helpers.chat.ChatInputMenuHelper.updateVisibility(this, animated);
+     }
+ 
+     private void setSlowModeButtonVisible(boolean visible) {
+@@ -8878,7 +8886,11 @@ public class ChatActivityEnterView extends FrameLayout implements
+                 layoutParams.rightMargin = dp(50);
+             }
+         } else {
+-            if (scheduledButton != null && scheduledButton.getTag() != null) {
++            if (scheduledButton != null && scheduledButton.getTag() != null && desu.inugram.helpers.chat.ChatInputMenuHelper.isMenuButtonVisible(this)) {
++                layoutParams.rightMargin = dp(98);
++            } else if (scheduledButton != null && scheduledButton.getTag() != null) {
++                layoutParams.rightMargin = dp(50);
++            } else if (desu.inugram.helpers.chat.ChatInputMenuHelper.isMenuButtonVisible(this)) {
+                 layoutParams.rightMargin = dp(50);
+             } else {
+                 layoutParams.rightMargin = dp(2);
+@@ -8896,6 +8908,15 @@ public class ChatActivityEnterView extends FrameLayout implements
+             layoutParams2.rightMargin = editingMessageObject == null ? Math.max(0, sendButton.width() - dp(DEFAULT_HEIGHT)) : 0;
+             recordedAudioPanel.setLayoutParams(layoutParams2);
+         }
++        View inu_menuBtn = desu.inugram.helpers.chat.ChatInputMenuHelper.getMenuButton(this);
++        if (inu_menuBtn != null) {
++            boolean hasScheduled = scheduledButton != null && scheduledButton.getTag() != null;
++            inu_menuBtn.setTranslationX(hasScheduled ? -dp(48) : 0);
++        }
++    }
++
++    public void inu_updateFieldRight() {
++        updateFieldRight(lastAttachVisible);
+     }
+ 
+     public void startMessageTransition() {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/TranslateAlert3.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/TranslateAlert3.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/TranslateAlert3.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/TranslateAlert3.java
+@@ -532,7 +532,7 @@ public class TranslateAlert3 extends BottomSheetWithRecyclerListView {
+ 
+             layout1 = new LinearLayout(context);
+             layout1.setOrientation(LinearLayout.HORIZONTAL);
+-            addView(layout1, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL | Gravity.LEFT));
++            addView(layout1, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL | (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT)));
+ 
+             text1View = new TextView(context);
+             text1View.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+@@ -576,14 +576,14 @@ public class TranslateAlert3 extends BottomSheetWithRecyclerListView {
+             emojifyTextView.setTypeface(AndroidUtilities.bold());
+             emojifyTextView.setText(LocaleController.getString(R.string.AIEditorEmojify));
+             emojifyContainer.addView(emojifyTextView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL, 3, -1, 2, 0));
+-            addView(emojifyContainer, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.RIGHT | Gravity.CENTER_VERTICAL, 0, -3, -6, -3));
++            addView(emojifyContainer, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.CENTER_VERTICAL, LocaleController.isRTL ? -6 : 0, -3, LocaleController.isRTL ? 0 : -6, -3));
+             ScaleStateListAnimator.apply(emojifyContainer, 0.025f, 1.5f);
+ 
+             anotherExample = new LinearLayout(context);
+             anotherExample.setPadding(dp(6), dp(3), dp(6), dp(3));
+             anotherExample.setOrientation(LinearLayout.HORIZONTAL);
+             anotherExample.setVisibility(View.GONE);
+-            addView(anotherExample, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.RIGHT, 0, 0, -6, 0));
++            addView(anotherExample, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT), LocaleController.isRTL ? -6 : 0, 0, LocaleController.isRTL ? 0 : -6, 0));
+             ScaleStateListAnimator.apply(anotherExample, 0.025f, 1.5f);
+ 
+             anotherExampleIcon = new ImageView(context);
+@@ -737,7 +737,11 @@ public class TranslateAlert3 extends BottomSheetWithRecyclerListView {
+                 @Override
+                 protected void onDraw(Canvas canvas) {
+                     final int w = moreView.getWidth() + dp(8);
+-                    canvas.saveLayerAlpha(getScrollX(), 0, getScrollX() + getWidth() - w, getHeight(), 0xFF, Canvas.ALL_SAVE_FLAG);
++                    if (LocaleController.isRTL) {
++                        canvas.saveLayerAlpha(getScrollX() + w, 0, getScrollX() + getWidth(), getHeight(), 0xFF, Canvas.ALL_SAVE_FLAG);
++                    } else {
++                        canvas.saveLayerAlpha(getScrollX(), 0, getScrollX() + getWidth() - w, getHeight(), 0xFF, Canvas.ALL_SAVE_FLAG);
++                    }
+ 
+                     super.onDraw(canvas);
+ 
+@@ -746,8 +750,13 @@ public class TranslateAlert3 extends BottomSheetWithRecyclerListView {
+                     SquigglyLinesSpan.drawOnText(canvas, getLayout());
+                     canvas.restore();
+ 
+-                    AndroidUtilities.rectTmp.set(getWidth() - w - dp(24), 0, getWidth() - w, getHeight());
+-                    clip.draw(canvas, AndroidUtilities.rectTmp, GradientClip.RIGHT, 1.0f);
++                    if (LocaleController.isRTL) {
++                        AndroidUtilities.rectTmp.set(w, 0, w + dp(24), getHeight());
++                        clip.draw(canvas, AndroidUtilities.rectTmp, GradientClip.LEFT, 1.0f);
++                    } else {
++                        AndroidUtilities.rectTmp.set(getWidth() - w - dp(24), 0, getWidth() - w, getHeight());
++                        clip.draw(canvas, AndroidUtilities.rectTmp, GradientClip.RIGHT, 1.0f);
++                    }
+                     canvas.restore();
+                 }
+             };
+@@ -763,7 +772,7 @@ public class TranslateAlert3 extends BottomSheetWithRecyclerListView {
+             moreView.setPadding(dp(8), 0, dp(8), 0);
+             moreView.setGravity(Gravity.CENTER);
+             ScaleStateListAnimator.apply(moreView);
+-            addView(moreView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 18, Gravity.RIGHT | Gravity.TOP, 0, 1, 0, 0));
++            addView(moreView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 18, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP, 0, 1, 0, 0));
+ 
+             textView = new SpoilersTextView(context) {
+                 @Override
+@@ -786,7 +795,7 @@ public class TranslateAlert3 extends BottomSheetWithRecyclerListView {
+             copyButton.setScaleType(ImageView.ScaleType.CENTER);
+             copyButton.setContentDescription(getString(R.string.Copy));
+             ScaleStateListAnimator.apply(copyButton);
+-            addView(copyButton, LayoutHelper.createFrame(38, 38, Gravity.BOTTOM | Gravity.RIGHT, 0, 0, -20 + 4, -16 + 4));
++            addView(copyButton, LayoutHelper.createFrame(38, 38, Gravity.BOTTOM | (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT), LocaleController.isRTL ? -20 + 4 : 0, 0, LocaleController.isRTL ? 0 : -20 + 4, -16 + 4));
+             copyButton.setVisibility(View.GONE);
+ 
+             updateColors();
+@@ -859,6 +868,9 @@ public class TranslateAlert3 extends BottomSheetWithRecyclerListView {
+             moreView.setOnClickListener(click);
+             setClipChildren(collapsed);
+ 
++            boolean isRtl = AndroidUtilities.isRTL(text) || LocaleController.isRTL;
++            shortTextView.setGravity(isRtl ? Gravity.RIGHT : Gravity.LEFT);
++            textView.setGravity(isRtl ? Gravity.RIGHT : Gravity.LEFT);
+             shortTextView.setText(text);
+             textView.setText(text);
+             textView.setTextIsSelectable(!noforwards && (spans == null || spans.length == 0));
+@@ -902,6 +914,9 @@ public class TranslateAlert3 extends BottomSheetWithRecyclerListView {
+             if (copyButton.getVisibility() != View.VISIBLE) return false;
+             final Layout layout = textView.getLayout();
+             if (layout.getLineCount() <= 0) return false;
++            if (LocaleController.isRTL) {
++                return layout.getLineLeft(layout.getLineCount() - 1) < dp(42);
++            }
+             return layout.getLineRight(layout.getLineCount() - 1) > layout.getWidth() - dp(42);
+         }
+ 

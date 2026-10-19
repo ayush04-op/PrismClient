@@ -1,0 +1,141 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: polina4096 <polina4096@icloud.com>
+Date: Fri, 22 May 2026 00:16:18 +0400
+Subject: Configurable text + media spoiler styles, with line-extension toggle
+
+---
+ .../org/telegram/ui/Cells/ChatMessageCell.java  | 10 ++++++++--
+ .../java/org/telegram/ui/Cells/DialogCell.java  |  1 +
+ .../ui/Components/spoilers/SpoilerEffect.java   | 17 +++++++++++++++--
+ 3 files changed, 24 insertions(+), 4 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+@@ -1327,7 +1327,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+     private int buttonY;
+     private int videoButtonX;
+     private int videoButtonY;
+-    private int buttonState;
++    public int buttonState;
+     private int buttonPressed;
+     private int videoButtonPressed;
+     private int miniButtonPressed;
+@@ -15266,6 +15266,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+     }
+ 
+     public void drawBlurredPhotoParticles(Canvas canvas) {
++        if (desu.inugram.helpers.chat.SpoilerHelper.drawMediaSpoilerIfOverridden(canvas, this)) {
++            return;
++        }
+         if (mediaSpoilerEffect2 == null) {
+             if (!LiteMode.isEnabled(LiteMode.FLAG_CHAT_SPOILER)) {
+                 if (mediaSpoilerEffect == null) {
+@@ -19647,6 +19650,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                             replyTextWidth -= sz;
+                             maxWidth += sz;
+                         }
++                        boolean inu_isCustomSpoiler = InuConfig.TEXT_SPOILER_MODE.getValue() != InuConfig.TextSpoilerModeItem.DEFAULT;
+                         if (changed || !isReplyQuote) {
+                             stringFinalText = TextUtils.ellipsize(sb, textPaint, maxWidth, TextUtils.TruncateAt.END);
+                         } else {
+@@ -19674,6 +19678,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                         if (isSideMenued && !drawBackground || (!messageObject.isAnyKindOfSticker() && messageObject.type != MessageObject.TYPE_ROUND_VIDEO || messageObject.type == MessageObject.TYPE_EMOJIS)) {
+                             namesOffset += Math.max(0, replyTextHeight - dp(3.66f) - Theme.chat_replyTextPaint.getTextSize());
+                         }
++                        int replySpoilerTextWidth = replyTextLayout.getWidth();
+                         if (replyTextLayout.getLineCount() > 0) {
+                             int width = 0;
+                             replyTextOffset = replyTextLayout.getWidth();
+@@ -19686,13 +19691,14 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                                 replyTextOffset = Math.min(replyTextOffset, left);
+                             }
+                             replyTextWidth += width + dp(18);
++                            replySpoilerTextWidth = width;
+                         }
+                         if (isReplyTaskOrPollOption) {
+                             replyTextWidth += dp(16);
+                         }
+                         replySpoilers.clear();
+                         if (hasReplyQuote || getMessageObject().replyMessageObject != null && !getMessageObject().replyMessageObject.isSpoilersRevealed) {
+-                            SpoilerEffect.addSpoilers(this, replyTextLayout, replyTextOffset, replyTextOffset + replyTextWidth, replySpoilersPool, replySpoilers);
++                            SpoilerEffect.addSpoilers(this, replyTextLayout, replyTextOffset, replyTextOffset + (inu_isCustomSpoiler ? replySpoilerTextWidth : replyTextWidth), replySpoilersPool, replySpoilers);
+                         }
+                         animatedEmojiReplyStack = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, this, false, animatedEmojiReplyStack, replyTextLayout);
+                     }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+@@ -4266,6 +4266,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
+ 
+                             for (int i = 0; i < spoilers.size(); i++) {
+                                 SpoilerEffect eff = spoilers.get(i);
++                                desu.inugram.helpers.chat.SpoilerHelper.setDrawAlphaMultiplier(eff, 1f - updateHelper.typingProgres);
+                                 eff.setColor(messageLayout.getPaint().getColor());
+                                 eff.draw(canvas);
+                             }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/spoilers/SpoilerEffect.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/spoilers/SpoilerEffect.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/spoilers/SpoilerEffect.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/spoilers/SpoilerEffect.java
+@@ -110,6 +110,8 @@ public class SpoilerEffect extends Drawable {
+ 
+     public boolean insideQuote;
+ 
++    public boolean inu_isTextSpoiler;
++
+     private static int measureParticlesPerCharacter() {
+         switch (SharedConfig.getDevicePerformanceClass()) {
+             default:
+@@ -308,6 +310,9 @@ public class SpoilerEffect extends Drawable {
+     @Override
+     public void draw(@NonNull Canvas canvas) {
+         final Rect bounds = getBounds();
++        if (inu_isTextSpoiler && desu.inugram.helpers.chat.SpoilerHelper.drawSolidIfOverridden(canvas, this, mParent, lastColor, mAlpha)) {
++            return;
++        }
+         if (bounds.isEmpty()) {
+             return;
+         }
+@@ -694,6 +699,7 @@ public class SpoilerEffect extends Drawable {
+                 addSpoilerRangesInternal(v, textLayout, left, right, start, end, spoilersPool, spoilers, quoteBlocks);
+             }
+         }
++        desu.inugram.helpers.chat.SpoilerHelper.linkNeighbors(spoilers);
+         if (v instanceof TextView && spoilersPool != null) {
+             spoilersPool.clear();
+         }
+@@ -710,6 +716,13 @@ public class SpoilerEffect extends Drawable {
+ 
+     private static void addSpoilerRangeInternal(@Nullable View v, @NonNull Layout textLayout, float left, float top, float right, float bottom, @Nullable Stack<SpoilerEffect> spoilersPool, List<SpoilerEffect> spoilers, int mostleft, int mostright, ArrayList<QuoteSpan.Block> quote) {
+         SpoilerEffect spoilerEffect = spoilersPool == null || spoilersPool.isEmpty() ? new SpoilerEffect() : spoilersPool.remove(0);
++        spoilerEffect.inu_isTextSpoiler = true;
++        if (desu.inugram.InuConfig.SPOILER_EXTEND_TO_LINE_END.getValue() && mostright > 0) {
++            int inu_line = textLayout.getLineForVertical((int) ((top + bottom) / 2f));
++            if (inu_line < textLayout.getLineCount() - 1 && right >= textLayout.getLineRight(inu_line) - dp(2)) {
++                right = mostright;
++            }
++        }
+         spoilerEffect.insideQuote = false;
+         if (quote != null) {
+             final float cy = (top + bottom) / 2f;
+@@ -828,7 +841,7 @@ public class SpoilerEffect extends Drawable {
+                             sb.removeSpan(e);
+                         }
+ 
+-                        sb.setSpan(new ForegroundColorSpan(Color.TRANSPARENT), start, end, sp.getSpanFlags(ss));
++                        sb.setSpan(new desu.inugram.helpers.chat.SpoilerHelper.TransparentMetricSpan(ss), start, end, sp.getSpanFlags(ss));
+                         sb.removeSpan(ss);
+                     }
+                 }
+@@ -955,7 +968,7 @@ public class SpoilerEffect extends Drawable {
+                             }, sp.getSpanStart(e), sp.getSpanEnd(e), sp.getSpanFlags(ss));
+                             sb.removeSpan(e);
+                         }
+-                        sb.setSpan(new ForegroundColorSpan(Color.TRANSPARENT), start, end, sp.getSpanFlags(ss));
++                        sb.setSpan(new desu.inugram.helpers.chat.SpoilerHelper.TransparentMetricSpan(ss), start, end, sp.getSpanFlags(ss));
+                         sb.removeSpan(ss);
+                     }
+                 }

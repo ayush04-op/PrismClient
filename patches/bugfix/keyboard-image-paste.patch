@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Fri, 10 Apr 2026 04:23:15 +0300
+Subject: fix for a bug causing images pasted from gboard to be sent directly, without PhotoViewer
+
+---
+ .../java/org/telegram/ui/Components/ChatActivityEnterView.java | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
+@@ -5384,7 +5384,8 @@ public class ChatActivityEnterView extends FrameLayout implements
+                             return false;
+                         }
+                     }
+-                    if (inputContentInfo.getDescription().hasMimeType("image/gif") || SendMessagesHelper.shouldSendWebPAsSticker(null, inputContentInfo.getContentUri())) {
++                    boolean isGboardSticker = inputContentInfo.getDescription().getExtras() != null && inputContentInfo.getDescription().getExtras().getBoolean("com.google.android.inputmethod.content.IS_STICKER");
++                    if (inputContentInfo.getDescription().hasMimeType("image/gif") || isGboardSticker || (inputContentInfo.getDescription().hasMimeType("image/webp") && SendMessagesHelper.shouldSendWebPAsSticker(null, inputContentInfo.getContentUri()))) {
+                         if (isInScheduleMode()) {
+                             AlertsCreator.createScheduleDatePickerDialog(parentActivity, parentFragment.getDialogId(), (notify, scheduleDate, scheduleRepeatPeriod) -> send(inputContentInfo, notify, scheduleDate, scheduleRepeatPeriod), resourcesProvider);
+                         } else {

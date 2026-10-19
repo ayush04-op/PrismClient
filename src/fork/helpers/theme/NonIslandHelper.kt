@@ -1,0 +1,231 @@
+@file:Suppress("DEPRECATION")
+
+package desu.inugram.helpers.theme
+
+import android.graphics.Canvas
+import android.graphics.Rect
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.view.View
+import android.widget.FrameLayout
+import android.widget.TextView
+import androidx.core.view.isVisible
+import desu.inugram.InuConfig
+import desu.inugram.ui.BlurBehindHelper
+import org.telegram.messenger.AndroidUtilities
+import org.telegram.messenger.AndroidUtilities.dp
+import org.telegram.messenger.R
+import org.telegram.ui.ActionBar.INavigationLayout
+import org.telegram.ui.ActionBar.Theme
+import org.telegram.ui.Components.ChatActivityEnterView
+import org.telegram.ui.Components.ChatActivityTopPanelLayout
+import org.telegram.ui.Components.FilterTabsView
+import org.telegram.ui.Components.FragmentSearchField
+import org.telegram.ui.Components.MentionsContainerView
+import org.telegram.ui.Components.RecyclerListView
+import org.telegram.ui.Components.SizeNotifierFrameLayout
+import org.telegram.ui.DialogsActivity
+import org.telegram.ui.SearchTabsAndFiltersLayout
+import kotlin.math.max
+
+object NonIslandHelper {
+    @JvmStatic
+    fun foldersBar(): Boolean = InuConfig.NON_ISLAND_FOLDERS_BAR.value
+
+    @JvmStatic
+    fun sharedMediaTabs(): Boolean = InuConfig.NON_ISLAND_SHARED_MEDIA_TABS.value
+
+    @JvmStatic
+    fun globalSearch(): Boolean = InuConfig.NON_ISLAND_GLOBAL_SEARCH.value
+
+    @JvmStatic
+    fun chatElements(): Boolean = InuConfig.NON_ISLAND_CHAT_ELEMENTS.value
+
+    @JvmStatic
+    fun chatInputRowHeight(): Int = if (chatElements()) 48 else 44
+
+    @JvmStatic
+    fun chatSendIcon(): Int = if (chatElements()) R.drawable.ic_send else R.drawable.send_plane_24
+
+    @JvmStatic
+    fun createInputButtonSelector(color: Int): Drawable =
+        if (chatElements()) Theme.createSelectorDrawable(color)
+        else Theme.createInsetRoundRectDrawable(color, dp(19f).toFloat(), dp(1f), dp(3f))
+
+    @JvmStatic
+    fun applySendButtonRipple(button: View, frameWidthDp: Int, color: Int) {
+        if (!chatElements()) return
+        val box = dp(ChatActivityEnterView.DEFAULT_HEIGHT.toFloat())
+        val inset = dp(3f)
+        button.background = Theme.createInsetRoundRectDrawable(
+            color,
+            (box - inset * 2) / 2f,
+            dp(frameWidthDp.toFloat()) - box + inset, inset, inset, inset,
+        )
+    }
+
+    @JvmStatic
+    fun needChatLightNavBar(
+        inputBubbleHeight: Float,
+        resourcesProvider: Theme.ResourcesProvider?,
+    ): Boolean? {
+        if (!chatElements()) return null
+        if (inputBubbleHeight <= 0f) return null
+        val color = Theme.getColor(Theme.key_chat_messagePanelBackground, resourcesProvider)
+        return AndroidUtilities.computePerceivedBrightness(color) <= 0.9f
+    }
+
+    @JvmStatic
+    fun needChatLightStatusBar(resourcesProvider: Theme.ResourcesProvider?): Boolean? {
+        if (!chatElements()) return null
+        val color = Theme.getColor(Theme.key_chat_topPanelBackground, resourcesProvider)
+        return AndroidUtilities.computePerceivedBrightness(color) > 0.721f
+    }
+
+    const val ATTACH_TAB_SHADOW_DP = 3f
+
+    @JvmStatic
+    fun applyChatAttachTabBar(
+        wrapper: FrameLayout,
+        recyclerView: RecyclerListView,
+    ) {
+        if (!chatElements()) return
+        wrapper.background = null
+        wrapper.clipChildren = false
+        recyclerView.clipToOutline = false
+        recyclerView.outlineProvider = null
+        val innerPaddingTop = dp(4f)
+        val innerPadding = dp(6f)
+        recyclerView.setPadding(innerPadding, innerPaddingTop, innerPadding, AndroidUtilities.navigationBarHeight)
+        recyclerView.clipToPadding = false
+        val recyclerLp = recyclerView.layoutParams as? FrameLayout.LayoutParams ?: return
+        val shadowH = dp(ATTACH_TAB_SHADOW_DP)
+        recyclerLp.topMargin = shadowH
+        val lp = wrapper.layoutParams as? FrameLayout.LayoutParams ?: return
+        lp.height = shadowH + dp(48f) + innerPaddingTop + AndroidUtilities.navigationBarHeight
+        lp.bottomMargin = -AndroidUtilities.navigationBarHeight
+    }
+
+    const val FOLDERS_BAR_HEIGHT_DP = 44
+    const val FOLDERS_BAR_OVERLAP_DP = 10
+    const val FOLDERS_BAR_VISIBLE_HEIGHT_DP = FOLDERS_BAR_HEIGHT_DP - FOLDERS_BAR_OVERLAP_DP
+
+    @JvmStatic
+    fun foldersBarOverlapDp(): Int = if (globalSearch()) FOLDERS_BAR_OVERLAP_DP else 0
+
+    @JvmStatic
+    fun foldersBarVisibleHeightDp(): Int = FOLDERS_BAR_HEIGHT_DP - foldersBarOverlapDp()
+
+    @JvmStatic
+    fun applyMd3TabsStyle(indicator: GradientDrawable, listView: RecyclerListView, selectorColor: Int) {
+        val rad = AndroidUtilities.dpf2(3f)
+        indicator.cornerRadii = floatArrayOf(rad, rad, rad, rad, 0f, 0f, 0f, 0f)
+        listView.setSelectorType(42)
+        listView.setSelectorRadius(16)
+        listView.setSelectorDrawableColor(selectorColor)
+    }
+
+    @JvmStatic
+    fun adjustMd3TabSelectorRect(rect: Rect) {
+        val cy = rect.centerY()
+        rect.top = cy - dp(16f)
+        rect.bottom = cy + dp(16f)
+        rect.inset(dp(2f), 0)
+    }
+
+    @JvmStatic
+    fun setMd3TabIndicatorBounds(indicator: Drawable, indicatorX: Float, indicatorWidth: Float, height: Float, hideProgress: Float) {
+        val centerX = indicatorX + indicatorWidth / 2f
+        val width = max(dp(24f).toFloat(), indicatorWidth - dp(2f) * 2)
+        val hideOffset = hideProgress * dp(3f)
+        indicator.setBounds(
+            (centerX - width / 2f).toInt(),
+            (height - dp(3f) + hideOffset).toInt(),
+            (centerX + width / 2f).toInt(),
+            (height + hideOffset).toInt(),
+        )
+    }
+
+    @JvmStatic
+    fun applyFilterTabBar(tabsView: FilterTabsView, contentView: SizeNotifierFrameLayout) {
+        if (!foldersBar()) return
+        tabsView.setBlurredBackground(null)
+        tabsView.background = null
+        tabsView.inu_blurHelper = BlurBehindHelper(tabsView, contentView, Theme.key_windowBackgroundWhite, drawBottomDivider = true)
+        tabsView.setPadding(0, 0, 0, 0)
+        val lp = tabsView.layoutParams as? FrameLayout.LayoutParams ?: return
+        lp.height = dp(FOLDERS_BAR_HEIGHT_DP.toFloat())
+        lp.leftMargin = 0
+        lp.rightMargin = 0
+    }
+
+    @JvmStatic
+    fun applyGlobalSearchBar(field: FragmentSearchField, contentView: SizeNotifierFrameLayout) {
+        if (!globalSearch()) return
+        field.setupBlurredBackground(null)
+        field.inu_blurHelper = BlurBehindHelper(field, contentView, Theme.key_windowBackgroundWhite)
+        val lp = field.layoutParams as? FrameLayout.LayoutParams
+        if (lp != null) {
+            lp.leftMargin = 0
+            lp.rightMargin = 0
+        }
+        updateGlobalSearchBarInsets(field)
+    }
+
+    // entiny: re-apply on inset changes because statusBarHeight is 0 at createView under non-legacy insets
+    @JvmStatic
+    fun updateGlobalSearchBarInsets(field: FragmentSearchField) {
+        if (!globalSearch()) return
+        val extraTopPadding = AndroidUtilities.statusBarHeight + dp(8f)
+        field.setPadding(0, extraTopPadding, 0, 0)
+        val lp = field.layoutParams as? FrameLayout.LayoutParams ?: return
+        val height = dp(DialogsActivity.SEARCH_FIELD_HEIGHT.toFloat()) + extraTopPadding
+        if (lp.height != height) {
+            lp.height = height
+            field.requestLayout()
+        }
+    }
+
+    @JvmStatic
+    fun applyGlobalSearchTabs(layout: SearchTabsAndFiltersLayout, contentView: SizeNotifierFrameLayout) {
+        if (!globalSearch()) return
+        layout.setBlurredBackground(null)
+        layout.background = null
+        layout.inu_blurHelper = BlurBehindHelper(layout, contentView, Theme.key_windowBackgroundWhite, drawBottomDivider = true)
+        layout.setPadding(0, 0, 0, 0)
+        layout.translationY = -dp(FOLDERS_BAR_OVERLAP_DP.toFloat()).toFloat()
+        val lp = layout.layoutParams as? FrameLayout.LayoutParams ?: return
+        lp.height = dp(FOLDERS_BAR_HEIGHT_DP.toFloat())
+        lp.leftMargin = 0
+        lp.rightMargin = 0
+    }
+
+    @JvmStatic
+    fun applyChatTopPanelButton(view: TextView) {
+        if (!chatElements()) return
+        view.stateListAnimator = null
+        view.background = Theme.createSelectorDrawable(
+            Theme.multAlpha(view.currentTextColor, 0.10f), Theme.RIPPLE_MASK_ALL
+        )
+    }
+
+    @JvmStatic
+    fun drawChatHeaderShadow(
+        parentLayout: INavigationLayout,
+        canvas: Canvas,
+        topPanelLayout: ChatActivityTopPanelLayout?,
+        mentionContainer: MentionsContainerView?,
+        topicsTabsHeight: Float,
+        actionBarBottom: Int,
+    ) {
+        if (!chatElements()) {
+            return
+        }
+
+        val hasPanel = topPanelLayout != null && actionBarBottom > 0;
+        val panelH = if (hasPanel) topPanelLayout.getAnimatedHeightWithPadding(0f).toInt() else 0;
+        if (!(mentionContainer != null && mentionContainer.isVisible)) {
+            parentLayout.drawHeaderShadow(canvas, actionBarBottom + topicsTabsHeight.toInt() + panelH);
+        }
+    }
+}

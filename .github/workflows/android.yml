@@ -1,0 +1,134 @@
+name: Build Prism APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_PACKAGE: app.prism.client
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: false
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: false
+          swap-storage: true
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Git identity
+        run: |
+          git config --global user.email ci@prism
+          git config --global user.name 'prism ci'
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install StGit
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends stgit
+
+      - run: bun install --frozen-lockfile
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: prism-ndk-27.2
+          max-size: 5G
+
+      - name: Set up patched Telegram source (pluginless)
+        run: bun run setup -- --ci --pluginless
+
+      - name: Rebrand and inject your Telegram keys
+        env:
+          API_ID: ${{ secrets.API_ID }}
+          API_HASH: ${{ secrets.API_HASH }}
+        run: |
+          set -e
+          W=worktree-pluginless
+          [ -n "$API_ID" ] && [ -n "$API_HASH" ] || { echo "::error::API_ID / API_HASH secrets missing"; exit 1; }
+          # own application id (entinyGram's id is theirs; ours lets both apps be installed together)
+          grep -rIl --exclude-dir=.git 'ua.entaytion.entinygram' $W | xargs -r sed -i "s/ua\.entaytion\.entinygram/$APP_PACKAGE/g"
+          # own Telegram API keys
+          F=$(grep -rIl --include=BuildVars.java 'APP_HASH' $W | head -1)
+          echo "BuildVars: $F"
+          sed -i -E "s/(public static int APP_ID = )[0-9]+;/\1${API_ID};/; s/(public static String APP_HASH = \")[0-9a-f]*(\";)/\1${API_HASH}\2/" "$F"
+          grep -n "APP_ID =\|APP_HASH =" "$F" | sed -E 's/"[0-9a-f]{32}"/"<hidden>"/'
+          # placeholder Firebase config so the build compiles (push notifications stay off until a real one is added)
+          for d in TMessagesProj TMessagesProj_App; do
+            cat > "$W/$d/google-services.json" <<JSON
+          {"project_info":{"project_number":"123456789012","project_id":"prism-client","storage_bucket":"prism-client.appspot.com"},
+           "client":[
+            {"client_info":{"mobilesdk_app_id":"1:123456789012:android:0000000000000000","android_client_info":{"package_name":"$APP_PACKAGE"}},"oauth_client":[],"api_key":[{"current_key":"AIzaSyDUMMYDUMMYDUMMYDUMMYDUMMYDUMMY000"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}},
+            {"client_info":{"mobilesdk_app_id":"1:123456789012:android:0000000000000001","android_client_info":{"package_name":"$APP_PACKAGE.beta"}},"oauth_client":[],"api_key":[{"current_key":"AIzaSyDUMMYDUMMYDUMMYDUMMYDUMMYDUMMY000"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}
+           ],"configuration_version":"1"}
+          JSON
+          done
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-cleanup: always
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: >-
+            platforms;android-35
+            platforms;android-36
+            build-tools;35.0.0
+            build-tools;36.0.0
+            cmake;3.22.1
+            cmake;3.31.6
+            ndk;27.2.12479018
+
+      - name: Tune Gradle
+        run: |
+          mkdir -p ~/.gradle
+          echo 'org.gradle.caching=true' >> ~/.gradle/gradle.properties
+          echo 'org.gradle.parallel=true' >> ~/.gradle/gradle.properties
+          echo 'org.gradle.jvmargs=-Xmx8192m -Dfile.encoding=UTF-8 -XX:+UseParallelGC' >> ~/.gradle/gradle.properties
+
+      - name: Build arm64 release APK
+        working-directory: worktree-pluginless
+        env:
+          INU_BUILD: ${{ github.run_number }}
+          INU_BUILD_TYPE: release
+          ABI_FILTERS: arm64-v8a
+          CCACHE_COMPILERCHECK: content
+          CCACHE_SLOPPINESS: time_macros,file_macro,include_file_mtime,include_file_ctime,locale,system_headers
+          CCACHE_BASEDIR: ${{ github.workspace }}/worktree-pluginless
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon :TMessagesProj_App:assembleRelease 2>&1 | tee ../build.log || {
+            grep -E "What went wrong|Execution failed|error:|Could not|FAILURE" -A6 ../build.log | head -50 | while read -r l; do echo "::error::$l"; done
+            exit 1
+          }
+
+      - name: Collect APK
+        run: |
+          mkdir -p out
+          cp worktree-pluginless/TMessagesProj_App/build/outputs/apk/release/app.apk out/prism-arm64.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prism-apk
+          path: out/prism-arm64.apk
+          if-no-files-found: error
+          retention-days: 30

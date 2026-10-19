@@ -1,0 +1,243 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Sun, 5 Jul 2026 01:44:58 +0400
+Subject: improved ripple handling in RecyclerListView
+
+---
+ .../ui/Components/RecyclerListView.java       | 114 ++++++++++++++++--
+ .../java/org/telegram/ui/DialogsActivity.java |   1 +
+ 2 files changed, 108 insertions(+), 7 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/RecyclerListView.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/RecyclerListView.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/RecyclerListView.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/RecyclerListView.java
+@@ -1273,10 +1273,13 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+                 if (!interceptedByChild && currentChildView != null) {
+                     float x = event.getX();
+                     float y = event.getY();
++                    inu_selectorPressed = !inu_delayPressedState;
+                     selectChildRunnable = () -> {
+                         if (selectChildRunnable != null && currentChildView != null) {
+                             onChildPressed(currentChildView, x, y, true);
+                             selectChildRunnable = null;
++                            inu_selectorPressed = true;
++                            updateSelectorState();
+                         }
+                     };
+                     AndroidUtilities.runOnUIThread(selectChildRunnable, ViewConfiguration.getTapTimeout());
+@@ -1295,18 +1298,23 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+                         }
+                         updateSelectorState();
+                     } else {
+-                        selectorRect.setEmpty();
++                        inu_clearSelector();
+                     }
+                 } else {
+-                    selectorRect.setEmpty();
++                    inu_clearSelector();
+                 }
+             } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP || action == MotionEvent.ACTION_CANCEL || !isScrollIdle) {
+                 if (currentChildView != null) {
++                    final boolean inu_prepressed = selectChildRunnable != null;
+                     if (selectChildRunnable != null) {
+                         AndroidUtilities.cancelRunOnUIThread(selectChildRunnable);
+                         selectChildRunnable = null;
+                     }
+                     View pressedChild = currentChildView;
++                    if (inu_delayPressedState && inu_prepressed && action == MotionEvent.ACTION_UP && pressedChild.isEnabled()) {
++                        inu_selectorPressed = true;
++                        updateSelectorState();
++                    }
+                     onChildPressed(currentChildView, 0, 0, false);
+                     currentChildView = null;
+                     interceptedByChild = false;
+@@ -1395,7 +1403,7 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+                 }
+             }
+         } else {
+-            selectorRect.setEmpty();
++            inu_clearSelector();
+         }
+         updateSelectorState();
+     }
+@@ -1413,7 +1421,7 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+             currentChildView = null;
+             removeSelection(child, null);
+         }
+-        selectorRect.setEmpty();
++        inu_clearSelector();
+         if (clickRunnable != null) {
+             AndroidUtilities.cancelRunOnUIThread(clickRunnable);
+             clickRunnable = null;
+@@ -1433,7 +1441,7 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+             if (resetSelectorOnChanged) {
+                 currentFirst = -1;
+                 if (removeHighlighSelectionRunnable == null) {
+-                    selectorRect.setEmpty();
++                    inu_clearSelector();
+                 }
+             }
+             invalidate();
+@@ -1543,6 +1551,11 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+                 } else {
+                     selectorRect.setEmpty();
+                 }
++                for (int i = 0; i < inu_fadingSelectors.size(); i++) {
++                    Drawable d = inu_fadingSelectors.get(i).drawable;
++                    Rect bounds = d.getBounds();
++                    d.setBounds(bounds.left - dx, bounds.top - dy, bounds.right - dx, bounds.bottom - dy);
++                }
+                 checkSection(false);
+                 if (dy != 0 && fastScroll != null) {
+                     fastScroll.showFloatingDate();
+@@ -2361,6 +2374,51 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+         invalidate();
+     }
+ 
++    private static class InuFadingSelector {
++        final Drawable drawable;
++        final int position;
++        final long itemId;
++
++        InuFadingSelector(Drawable drawable, int position, long itemId) {
++            this.drawable = drawable;
++            this.position = position;
++            this.itemId = itemId;
++        }
++    }
++
++    private final java.util.ArrayList<InuFadingSelector> inu_fadingSelectors = new java.util.ArrayList<>();
++    private long inu_selectorItemId = NO_ID;
++
++    private long inu_getItemIdAt(int position) {
++        Adapter adapter = getAdapter();
++        if (adapter == null || position < 0 || position >= adapter.getItemCount()) {
++            return NO_ID;
++        }
++        return adapter.getItemId(position);
++    }
++
++    private void inu_retireSelector() {
++        final Drawable prev = selectorDrawable;
++        if (prev == null || selectorRect.isEmpty()) {
++            return;
++        }
++        prev.setState(StateSet.NOTHING);
++        final InuFadingSelector fading = new InuFadingSelector(prev, selectorPosition, inu_selectorItemId);
++        inu_fadingSelectors.add(fading);
++        setSelectorDrawableColor(getThemedColor(hasSections() ? Theme.key_settings_listSelector : Theme.key_listSelector));
++        prev.setCallback(this);
++        AndroidUtilities.runOnUIThread(() -> {
++            inu_fadingSelectors.remove(fading);
++            prev.setCallback(null);
++            invalidate();
++        }, 1000);
++    }
++
++    private void inu_clearSelector() {
++        inu_retireSelector();
++        selectorRect.setEmpty();
++    }
++
+     private void positionSelector(int position, View sel) {
+         positionSelector(position, sel, false, -1, -1, false);
+     }
+@@ -2382,6 +2440,12 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+             return;
+         }
+         final boolean positionChanged = position != selectorPosition;
++        if (positionChanged) {
++            inu_retireSelector();
++            if (selectorDrawable == null) {
++                return;
++            }
++        }
+         int bottomPadding;
+         if (getAdapter() instanceof SelectionAdapter) {
+             bottomPadding = ((SelectionAdapter) getAdapter()).getSelectionBottomPadding(sel);
+@@ -2392,6 +2456,7 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+             selectorPosition = position;
+         }
+         selectorView = sel;
++        inu_selectorItemId = inu_getItemIdAt(selectorPosition);
+         if (selectorType == 8) {
+             Theme.setMaskDrawableRad(selectorDrawable, selectorRadius, 0);
+         } else if (selectorType == 42) {
+@@ -2445,9 +2510,12 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+         }
+     }
+ 
++    public boolean inu_delayPressedState;
++    private boolean inu_selectorPressed;
++
+     private void updateSelectorState() {
+         if (selectorDrawable != null && selectorDrawable.isStateful()) {
+-            if (currentChildView != null) {
++            if (currentChildView != null && inu_selectorPressed) {
+                 if (selectorDrawable.setState(getDrawableStateForSelector())) {
+                     invalidateDrawable(selectorDrawable);
+                 }
+@@ -2488,7 +2556,15 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+ 
+     @Override
+     public boolean verifyDrawable(Drawable drawable) {
+-        return selectorDrawable == drawable || super.verifyDrawable(drawable);
++        if (selectorDrawable == drawable) {
++            return true;
++        }
++        for (int i = 0; i < inu_fadingSelectors.size(); i++) {
++            if (inu_fadingSelectors.get(i).drawable == drawable) {
++                return true;
++            }
++        }
++        return super.verifyDrawable(drawable);
+     }
+ 
+     @Override
+@@ -2637,9 +2713,33 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
+     }
+ 
+     private void drawSelectors2(Canvas canvas) {
++        for (int i = 0; i < inu_fadingSelectors.size(); i++) {
++            InuFadingSelector fading = inu_fadingSelectors.get(i);
++            if (fading.itemId != NO_ID && inu_getItemIdAt(fading.position) != fading.itemId) {
++                fading.drawable.setCallback(null);
++                inu_fadingSelectors.remove(i);
++                i--;
++                continue;
++            }
++            fading.drawable.draw(canvas);
++        }
+         if (selectorRect.isEmpty() || selectorDrawable == null) {
+             return;
+         }
++        if (inu_selectorItemId != NO_ID && inu_getItemIdAt(selectorPosition) != inu_selectorItemId) {
++            inu_selectorItemId = NO_ID;
++            selectorDrawable.setState(StateSet.NOTHING);
++            selectorDrawable.jumpToCurrentState();
++            selectorRect.setEmpty();
++            return;
++        }
++        if (selectorView != null && selectorView.getParent() == this && translateSelector != -2 && translateSelector != selectorPosition) {
++            int inu_bottomPadding = getAdapter() instanceof SelectionAdapter ? ((SelectionAdapter) getAdapter()).getSelectionBottomPadding(selectorView) : 0;
++            selectorRect.set(selectorView.getLeft(), selectorView.getTop(), selectorView.getRight(), selectorView.getBottom() - inu_bottomPadding);
++            if (selectorType == 42) {
++                desu.inugram.helpers.theme.NonIslandHelper.adjustMd3TabSelectorRect(selectorRect);
++            }
++        }
+ 
+         if ((translateSelector == -2 || translateSelector == selectorPosition) && selectorView != null) {
+             int bottomPadding;
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -1750,6 +1750,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+             super(context);
+             parentPage = page;
+             additionalClipBottom = dp(200);
++            inu_delayPressedState = true;
+         }
+ 
+         public void prepareSelectorForAnimation() {

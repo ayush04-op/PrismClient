@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Thu, 25 Jun 2026 02:42:26 +0400
+Subject: fix deeplinking to a non-primary album member sometimes mis-anchoring
+
+---
+ .../src/main/java/org/telegram/ui/ChatActivity.java        | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -21746,6 +21746,13 @@ public class ChatActivity extends BaseFragment implements
+                         scrollToMessage = messages.get(messArr.size() - 1);
+                     }
+                     if (scrollToMessage != null) {
++                        MessageObject.GroupedMessages scrollToGroup = groupedMessagesMap.get(scrollToMessage.getGroupId());
++                        if (scrollToMessage.getGroupId() != 0 && scrollToGroup != null) {
++                            MessageObject primary = scrollToGroup.findPrimaryMessageObject();
++                            if (primary != null) {
++                                scrollToMessage = primary;
++                            }
++                        }
+                         addSponsoredMessages(!isFirstLoading);
+                         int yOffset;
+                         boolean opt = false;

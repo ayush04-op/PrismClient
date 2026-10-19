@@ -1,0 +1,86 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleksii Kulinich <entaytion@gmail.com>
+Date: Tue, 1 Sep 2026 23:19:32 +0300
+Subject: Let the Settings screen and My Profile info rows be reordered and hidden
+
+---
+ .../java/org/telegram/ui/ProfileActivity.java | 21 +++++++++++++++++++
+ .../org/telegram/ui/SettingsActivity.java     |  6 ++++++
+ 2 files changed, 27 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+@@ -9670,6 +9670,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+         if (listAdapter != null) {
+             // saveScrollPosition();
+             firstLayout = true;
++            updateRowsIds(); // inu: pick up info-row order/visibility changes made while this fragment was paused (ProfileInfoMenuOrderActivity)
+             listAdapter.notifyDataSetChanged();
+         }
+         if (!parentLayout.isInPreviewMode() && blurredView != null && blurredView.getVisibility() == View.VISIBLE) {
+@@ -10843,6 +10844,25 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+                     }
+                 }
+                 infoStartRow = rowCount;
++                // inu: on our own profile the phone/bio/username rows are reorderable/hideable
++                // (InuConfig.PROFILE_INFO_ROWS); other profiles keep the stock order below.
++                if (myProfile && UserObject.isUserSelf(user)) {
++                    java.util.HashSet<desu.inugram.helpers.menu.ProfileInfoMenuConfig.Item> inu_unavailable = new java.util.HashSet<>();
++                    if (isBot || !(hasPhone || !hasInfo)) inu_unavailable.add(desu.inugram.helpers.menu.ProfileInfoMenuConfig.Item.PHONE);
++                    if (userInfo == null || TextUtils.isEmpty(userInfo.about)) inu_unavailable.add(desu.inugram.helpers.menu.ProfileInfoMenuConfig.Item.BIO);
++                    if (user == null || username == null) inu_unavailable.add(desu.inugram.helpers.menu.ProfileInfoMenuConfig.Item.USERNAME);
++                    if (!ProfileHelper.shouldShowIdRow()) inu_unavailable.add(desu.inugram.helpers.menu.ProfileInfoMenuConfig.Item.ID);
++                    if (!ProfileHelper.shouldShowRegDateRow(userId, currentChat)) inu_unavailable.add(desu.inugram.helpers.menu.ProfileInfoMenuConfig.Item.REG_DATE);
++                    for (desu.inugram.helpers.menu.ProfileInfoMenuConfig.Item inu_row : desu.inugram.helpers.ProfileSettingsHelper.orderedEnabledInfoRows(inu_unavailable)) {
++                        switch (inu_row) {
++                            case PHONE: phoneRow = rowCount++; break;
++                            case BIO: userInfoRow = rowCount++; break;
++                            case USERNAME: usernameRow = rowCount++; break;
++                            case ID: inu_idRow = rowCount++; break;
++                            case REG_DATE: inu_regDateRow = rowCount++; break;
++                        }
++                    }
++                } else {
+                 if (!isBot && (hasPhone || !hasInfo)) {
+                     phoneRow = rowCount++;
+                 }
+@@ -10854,6 +10874,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+                 }
+                 if (ProfileHelper.shouldShowIdRow()) inu_idRow = rowCount++;
+                 if (ProfileHelper.shouldShowRegDateRow(userId, currentChat)) inu_regDateRow = rowCount++;
++                }
+                 if (userInfo != null) {
+                     if (userInfo.birthday != null) {
+                         birthdayRow = rowCount++;
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+@@ -704,12 +704,16 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
+         // inu: the accounts list is hidden entirely - switching happens from the drawer/avatar
+         // (ported from inugram PR #34, made unconditional)
+ 
++        final int inu_reorderFrom = items.size();
+         final boolean walletAbove = getConnectionsManager().getCurrentTime() - 1791538462 < 4 * 7 * 24 * 60 * 60;
+         if (walletAbove && getMessagesController().config.walletAvailable.get()) {
+             final GramWallet wallet = GramWallet.getInstance(currentAccount);
+             items.add(SettingCell.Factory.of(25, 0, 0, Theme.isCurrentThemeDark() ? R.drawable.settings_wallet_dark : R.drawable.settings_wallet, TextCell.applyNewSpanTimed(getString(R.string.WalletAttachMoney), 1790679020), null, wallet.getBalance() > 0 ? GramWallet.formatGrams(wallet.getBalance()) : null));
+             items.add(UItem.asShadow(null));
+         }
++        // inu: everything from here down to the version cell is one reorderable/hideable pool
++        // (InuConfig.PROFILE_SETTINGS_ROWS). Separators added here are rebuilt per stock group
++        // by ProfileSettingsHelper.reorder after the user's order is applied.
+ 
+         if (!desu.inugram.helpers.security.ParanoiaHelper.shouldHideSettings()) {
+             items.add(SettingCell.Factory.of(99, IconBackgroundColors.ENTINY.top, IconBackgroundColors.ENTINY.bottom, R.drawable.icon_settings_inu, getString(R.string.InuSettings), getString(R.string.InuSettingsInfo)));
+@@ -777,6 +781,8 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
+             items.add(SettingCell.Factory.of(22, 0xFFF45255, 0xFFDF3955, 0, getString(R.string.DebugClearLogs)));
+         }
+ 
++        desu.inugram.helpers.ProfileSettingsHelper.reorder(items, inu_reorderFrom);
++
+         items.add(UItem.asCustomShadow(versionView));
+     }
+ 

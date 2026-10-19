@@ -1,0 +1,255 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Sat, 30 May 2026 18:26:42 +0400
+Subject: fix hardcoded usage of white color instead of theme colors
+
+---
+ .../ui/Cells/PhotoAttachPhotoCell.java        |  3 +-
+ .../telegram/ui/Cells/ProfileSearchCell.java  |  2 +-
+ .../ui/Cells/SharedPhotoVideoCell.java        |  3 +-
+ .../ui/Cells/SharedPhotoVideoCell2.java       |  8 +++--
+ .../Components/Premium/LimitPreviewView.java  | 31 ++++++++++++-------
+ .../ui/Components/RLottieDrawable.java        |  4 +++
+ .../org/telegram/ui/ManageLinksActivity.java  |  2 ++
+ .../org/telegram/ui/SettingsActivity.java     |  1 +
+ 8 files changed, 38 insertions(+), 16 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/PhotoAttachPhotoCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/PhotoAttachPhotoCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/PhotoAttachPhotoCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/PhotoAttachPhotoCell.java
+@@ -262,10 +262,11 @@ public class PhotoAttachPhotoCell extends FrameLayout {
+ 
+         videoPlayImageView = new ImageView(context);
+         videoPlayImageView.setImageResource(R.drawable.play_mini_video);
++        videoPlayImageView.setColorFilter(getThemedColor(Theme.key_chat_mediaTimeText));
+         videoInfoContainer.addView(videoPlayImageView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL));
+ 
+         videoTextView = new TextView(context);
+-        videoTextView.setTextColor(0xffffffff);
++        videoTextView.setTextColor(getThemedColor(Theme.key_chat_mediaTimeText));
+         videoTextView.setTypeface(AndroidUtilities.bold());
+         videoTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
+         videoTextView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ProfileSearchCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ProfileSearchCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ProfileSearchCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ProfileSearchCell.java
+@@ -1118,7 +1118,7 @@ public class ProfileSearchCell extends BaseCell implements NotificationCenter.No
+             final float s = openButtonBounce.getScale(.06f);
+             canvas.scale(s, s, openButtonRect.centerX(), openButtonRect.centerY());
+             canvas.drawRoundRect(openButtonRect, openButtonRect.height() / 2.0f, openButtonRect.height() / 2.0f, openButtonBackgroundPaint);
+-            openButtonText.draw(canvas, x + dp(14), getHeight() / 2.0f, 0xFFFFFFFF, 1.0f);
++            openButtonText.draw(canvas, x + dp(14), getHeight() / 2.0f, Theme.getColor(Theme.key_featuredStickers_buttonText), 1.0f);
+             canvas.restore();
+         }
+     }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedPhotoVideoCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedPhotoVideoCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedPhotoVideoCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedPhotoVideoCell.java
+@@ -113,10 +113,11 @@ public class SharedPhotoVideoCell extends FrameLayout {
+ 
+             ImageView imageView1 = new ImageView(context);
+             imageView1.setImageResource(R.drawable.play_mini_video);
++            imageView1.setColorFilter(Theme.getColor(Theme.key_chat_mediaTimeText), android.graphics.PorterDuff.Mode.SRC_IN);
+             videoInfoContainer.addView(imageView1, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL));
+ 
+             videoTextView = new TextView(context);
+-            videoTextView.setTextColor(0xffffffff);
++            videoTextView.setTextColor(Theme.getColor(Theme.key_chat_mediaTimeText));
+             videoTextView.setTypeface(AndroidUtilities.bold());
+             videoTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
+             videoTextView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedPhotoVideoCell2.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedPhotoVideoCell2.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedPhotoVideoCell2.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedPhotoVideoCell2.java
+@@ -181,7 +181,7 @@ public class SharedPhotoVideoCell2 extends FrameLayout {
+ 
+         viewsText.setCallback(this);
+         viewsText.setTextSize(dp(12));
+-        viewsText.setTextColor(Color.WHITE);
++        viewsText.setTextColor(sharedResources.inu_mediaTimeTextColor);
+         viewsText.setTypeface(AndroidUtilities.bold());
+         viewsText.setOverrideFullWidth(AndroidUtilities.displaySize.x);
+ 
+@@ -1234,14 +1234,18 @@ public class SharedPhotoVideoCell2 extends FrameLayout {
+         Paint highlightPaint = new Paint();
+         SparseArray<String> imageFilters = new SparseArray<>();
+         private final HashMap<Integer, Bitmap> privacyBitmaps = new HashMap<>();
++        public int inu_mediaTimeTextColor;
+ 
+         public SharedResources(Context context, Theme.ResourcesProvider resourcesProvider) {
++            inu_mediaTimeTextColor = Theme.getColor(Theme.key_chat_mediaTimeText, resourcesProvider);
+             textPaint.setTextSize(dp(12));
+-            textPaint.setColor(Color.WHITE);
++            textPaint.setColor(inu_mediaTimeTextColor);
+             textPaint.setTypeface(AndroidUtilities.bold());
+             playDrawable = ContextCompat.getDrawable(context, R.drawable.play_mini_video).mutate();
++            playDrawable.setColorFilter(new PorterDuffColorFilter(inu_mediaTimeTextColor, PorterDuff.Mode.SRC_IN));
+             playDrawable.setBounds(0, 0, playDrawable.getIntrinsicWidth(), playDrawable.getIntrinsicHeight());
+             viewDrawable = ContextCompat.getDrawable(context, R.drawable.filled_views).mutate();
++            viewDrawable.setColorFilter(new PorterDuffColorFilter(inu_mediaTimeTextColor, PorterDuff.Mode.SRC_IN));
+             viewDrawable.setBounds(0, 0, (int) (viewDrawable.getIntrinsicWidth() * .7f), (int) (viewDrawable.getIntrinsicHeight() * .7f));
+             backgroundPaint.setColor(Theme.getColor(Theme.key_sharedMedia_photoPlaceholder, resourcesProvider));
+         }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/Premium/LimitPreviewView.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/Premium/LimitPreviewView.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/Premium/LimitPreviewView.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/Premium/LimitPreviewView.java
+@@ -94,6 +94,13 @@ public class LimitPreviewView extends LinearLayout {
+     private boolean isRatingStyle;
+ 
+     Theme.ResourcesProvider resourcesProvider;
++
++    private int inu_filledTextColor() {
++        if (isRatingStyle && !isRatingNegative) {
++            return Theme.getColor(Theme.key_featuredStickers_buttonText, resourcesProvider);
++        }
++        return Color.WHITE;
++    }
+     private boolean animate;
+     private boolean animateArrowFadeIn, animateArrowFadeOut, animateBackgroundFade;
+     private boolean animateIncrease;
+@@ -279,13 +286,13 @@ public class LimitPreviewView extends LinearLayout {
+                             width1 = (int) (leftWidth + availableWidth * percent);
+                             if (!animateArrowFadeIn && !animateArrowFadeOut) {
+                                 premiumCount.setTextColor(isRatingNegative ? Color.WHITE : hasDarkGradientProvider() ? Color.WHITE : Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+-                                defaultText.setTextColor(Color.WHITE);
++                                defaultText.setTextColor(inu_filledTextColor());
+                             }
+                         } else {
+                             width1 = width;
+                             if (!animateArrowFadeIn && !animateArrowFadeOut) {
+-                                premiumCount.setTextColor(Color.WHITE);
+-                                defaultText.setTextColor(Color.WHITE);
++                                premiumCount.setTextColor(inu_filledTextColor());
++                                defaultText.setTextColor(inu_filledTextColor());
+                             }
+                         }
+                     } else {
+@@ -643,7 +650,7 @@ public class LimitPreviewView extends LinearLayout {
+         premiumText.setVisibility(View.GONE);
+ 
+         premiumCount.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+-        defaultText.setTextColor(Color.WHITE);
++        defaultText.setTextColor(inu_filledTextColor());
+ 
+         setIconValue(boosts.boosts, false);
+         isBoostsStyle = true;
+@@ -665,12 +672,13 @@ public class LimitPreviewView extends LinearLayout {
+         premiumText.setVisibility(View.GONE);
+ 
+         premiumCount.setTextColor(isRatingNegative ? Color.WHITE : Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+-        defaultText.setTextColor(Color.WHITE);
++        defaultText.setTextColor(inu_filledTextColor());
+ 
+         setIconValue((int) current_stars, false);
+         isBoostsStyle = true;
+         isSimpleStyle = true;
+         isRatingStyle = true;
++        limitIcon.textPaint.setColor(inu_filledTextColor());
+     }
+ 
+     public void setStarRating(TL_stars.Tl_starsRating rating) {
+@@ -698,12 +706,13 @@ public class LimitPreviewView extends LinearLayout {
+         premiumText.setVisibility(View.GONE);
+ 
+         premiumCount.setTextColor(isRatingNegative ? Color.WHITE : Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+-        defaultText.setTextColor(Color.WHITE);
++        defaultText.setTextColor(inu_filledTextColor());
+ 
+         setIconValue((int) rating.stars, (int) rating.next_level_stars, true, false);
+         isBoostsStyle = true;
+         isSimpleStyle = true;
+         isRatingStyle = true;
++        limitIcon.textPaint.setColor(inu_filledTextColor());
+     }
+ 
+     private Runnable animateStarRatingRunnable;
+@@ -738,7 +747,7 @@ public class LimitPreviewView extends LinearLayout {
+             requestLayout();
+ 
+             premiumCount.setTextColor(isRatingNegative ? Color.WHITE : Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+-            defaultText.setTextColor(Color.WHITE);
++            defaultText.setTextColor(inu_filledTextColor());
+ 
+             setIconValue((int) to.stars, (int) to.next_level_stars, true, false);
+         } else if (to.level > from.level) {
+@@ -768,7 +777,7 @@ public class LimitPreviewView extends LinearLayout {
+             requestLayout();
+ 
+             premiumCount.setTextColor(isRatingNegative ? Color.WHITE: Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+-            defaultText.setTextColor(Color.WHITE);
++            defaultText.setTextColor(inu_filledTextColor());
+             defaultText.animate()
+                 .alpha(0).scaleX(0.7f).scaleY(0.7f)
+                 .setDuration(320)
+@@ -832,7 +841,7 @@ public class LimitPreviewView extends LinearLayout {
+                     .start();
+ 
+                 premiumCount.setTextColor(isRatingNegative ? Color.WHITE: Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+-                defaultText.setTextColor(Color.WHITE);
++                defaultText.setTextColor(inu_filledTextColor());
+ 
+                 setIconValue((int) to.stars, (int) to.next_level_stars, true, false);
+             }, 600);
+@@ -873,7 +882,7 @@ public class LimitPreviewView extends LinearLayout {
+                 .start();
+ 
+             premiumCount.setTextColor(isRatingNegative ? Color.WHITE: Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+-            defaultText.setTextColor(Color.WHITE);
++            defaultText.setTextColor(inu_filledTextColor());
+ 
+             setIconValue((int) from.stars, (int) from.next_level_stars, true, false);
+ 
+@@ -926,7 +935,7 @@ public class LimitPreviewView extends LinearLayout {
+                     .start();
+ 
+                 premiumCount.setTextColor(isRatingNegative ? Color.WHITE : Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
+-                defaultText.setTextColor(Color.WHITE);
++                defaultText.setTextColor(inu_filledTextColor());
+ 
+                 setIconValue((int) to.stars, (int) to.next_level_stars, true, false);
+             }, 600);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/RLottieDrawable.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/RLottieDrawable.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/RLottieDrawable.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/RLottieDrawable.java
+@@ -892,6 +892,10 @@ public class RLottieDrawable extends BitmapDrawable implements Animatable, Bitma
+     }
+ 
+     public final void setLayerColor(String layerName, int color) {
++        if (isSingleChannel) {
++            setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
++            return;
++        }
+         newColorUpdates.put(layerName, color);
+         requestRedrawColors();
+     }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ManageLinksActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ManageLinksActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ManageLinksActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ManageLinksActivity.java
+@@ -1287,6 +1287,8 @@ public class ManageLinksActivity extends BaseFragment implements NotificationCen
+                 linkIconRevoked.setBounds(cX - dp(12), cY - dp(12), cX + dp(12), cY + dp(12));
+                 linkIconRevoked.draw(canvas);
+             } else {
++                int inu_iconTint = drawState == LINK_STATE_BLUE ? Theme.getColor(Theme.key_featuredStickers_buttonText) : Color.WHITE;
++                linkIcon.setColorFilter(new PorterDuffColorFilter(inu_iconTint, PorterDuff.Mode.MULTIPLY));
+                 linkIcon.setBounds(cX - dp(12), cY - dp(12), cX + dp(12), cY + dp(12));
+                 linkIcon.draw(canvas);
+             }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+@@ -455,6 +455,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
+         cameraImageView = new ImageView(context);
+         cameraImageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+         cameraImageView.setImageResource(R.drawable.filled_premium_camera);
++        cameraImageView.setColorFilter(getThemedColor(Theme.key_featuredStickers_buttonText), android.graphics.PorterDuff.Mode.SRC_IN);
+         cameraBackground.addView(cameraImageView, LayoutHelper.createFrame(22, 22, Gravity.CENTER));
+         cameraButton.addView(cameraBackground, LayoutHelper.createFrame(30, 30));
+         avatarContainer.addView(cameraButton, LayoutHelper.createFrame(34, 34, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 32, 75, 0, 0));

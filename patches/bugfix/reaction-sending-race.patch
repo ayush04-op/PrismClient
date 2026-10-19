@@ -1,0 +1,140 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.pet>
+Date: Tue, 6 Oct 2026 18:10:07 +0400
+Subject: fix reactions silently disappearing right after being sent
+
+---
+ .../ChatMessagesMetadataController.java       |  7 ++++++
+ .../org/telegram/messenger/MessageObject.java | 19 ++++++++++++++
+ .../messenger/MessagesController.java         | 25 +++++++++++++++++++
+ .../messenger/SendMessagesHelper.java         |  1 +
+ .../java/org/telegram/ui/ChatActivity.java    |  1 +
+ 5 files changed, 53 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/ChatMessagesMetadataController.java b/TMessagesProj/src/main/java/org/telegram/messenger/ChatMessagesMetadataController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/ChatMessagesMetadataController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/ChatMessagesMetadataController.java
+@@ -170,6 +170,13 @@ public class ChatMessagesMetadataController {
+         }
+     }
+ 
++    public void cancelReactionsRequests() {
++        for (int i = 0; i < reactionsRequests.size(); i++) {
++            chatActivity.getConnectionsManager().cancelRequest(reactionsRequests.get(i), true);
++        }
++        reactionsRequests.clear();
++    }
++
+     public void onFragmentDestroy() {
+         for (int i = 0; i < reactionsRequests.size(); i++) {
+             chatActivity.getConnectionsManager().cancelRequest(reactionsRequests.get(i), false);
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+@@ -768,11 +768,30 @@ public class MessageObject {
+         return null;
+     }
+ 
++    private static boolean inu_reactionsEqual(TLRPC.TL_messageReactions a, TLRPC.TL_messageReactions b) {
++        if (a == null || b == null) {
++            return a == b;
++        }
++        if (a.results.size() != b.results.size() || hasUnreadReactions(a) != hasUnreadReactions(b)) {
++            return false;
++        }
++        for (int i = 0; i < a.results.size(); i++) {
++            TLRPC.ReactionCount reactionA = a.results.get(i);
++            TLRPC.ReactionCount reactionB = b.results.get(i);
++            if (reactionA.count != reactionB.count || reactionA.chosen != reactionB.chosen || !ReactionsLayoutInBubble.equalsTLReaction(reactionA.reaction, reactionB.reaction)) {
++                return false;
++            }
++        }
++        return true;
++    }
++
+     public void copyStableParams(MessageObject old) {
+         stableId = old.stableId;
+         messageOwner.premiumEffectWasPlayed = old.messageOwner.premiumEffectWasPlayed;
+         forcePlayEffect = old.forcePlayEffect;
+         wasJustSent = old.wasJustSent;
++        reactionsLastCheckTime = old.reactionsLastCheckTime;
++        reactionsChanged |= !inu_reactionsEqual(old.messageOwner.reactions, messageOwner.reactions);
+         if (messageOwner.reactions != null && messageOwner.reactions.results != null && !messageOwner.reactions.results.isEmpty() && old.messageOwner.reactions != null && old.messageOwner.reactions.results != null) {
+             for (int i = 0; i < messageOwner.reactions.results.size(); i++) {
+                 TLRPC.ReactionCount reactionCount = messageOwner.reactions.results.get(i);
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+@@ -17779,6 +17779,29 @@ public class MessagesController extends BaseController implements NotificationCe
+         }
+     }
+ 
++    private static void mergeMessageReactionUpdates(ArrayList<TLRPC.Update> updates) {
++        for (int a = 0, size = updates.size(); a < size; a++) {
++            TLRPC.Update baseUpdate = updates.get(a);
++            TLRPC.Message message;
++            if (baseUpdate instanceof TL_update.TL_updateEditChannelMessage) {
++                message = ((TL_update.TL_updateEditChannelMessage) baseUpdate).message;
++            } else if (baseUpdate instanceof TL_update.TL_updateEditMessage) {
++                message = ((TL_update.TL_updateEditMessage) baseUpdate).message;
++            } else {
++                continue;
++            }
++            long dialogId = MessageObject.getDialogId(message);
++            for (int b = 0; b < size; b++) {
++                if (updates.get(b) instanceof TL_update.TL_updateMessageReactions) {
++                    TL_update.TL_updateMessageReactions update = (TL_update.TL_updateMessageReactions) updates.get(b);
++                    if (message.id == update.msg_id && dialogId == MessageObject.getPeerId(update.peer)) {
++                        MessageObject.updateReactions(message, update.reactions);
++                    }
++                }
++            }
++        }
++    }
++
+     public static long getUpdateChannelId(TLRPC.Update update) {
+         if (update instanceof TL_update.TL_updateNewChannelMessage) {
+             return ((TL_update.TL_updateNewChannelMessage) update).message.peer_id.channel_id;
+@@ -18119,6 +18142,7 @@ public class MessagesController extends BaseController implements NotificationCe
+             }
+             if (!needGetDiff) {
+                 getMessagesStorage().putUsersAndChats(updates.users, updates.chats, true, true);
++                mergeMessageReactionUpdates(updates.updates);
+                 Collections.sort(updates.updates, updatesComparator);
+                 for (int a = 0; a < updates.updates.size(); a++) {
+                     TLRPC.Update update = updates.updates.get(a);
+@@ -18414,6 +18438,7 @@ public class MessagesController extends BaseController implements NotificationCe
+             }
+             return true;
+         }
++        mergeMessageReactionUpdates(updates);
+         long currentTime = System.currentTimeMillis();
+         boolean printChanged = false;
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+@@ -3983,6 +3983,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
+         if (messageObject == null || parentFragment == null) {
+             return;
+         }
++        messageObject.reactionsLastCheckTime = System.currentTimeMillis();
+         TLRPC.TL_messages_sendReaction req = new TLRPC.TL_messages_sendReaction();
+         if (messageObject.messageOwner.isThreadMessage && messageObject.messageOwner.fwd_from != null) {
+             req.peer = getMessagesController().getInputPeer(messageObject.getFromChatId());
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -33189,6 +33189,7 @@ public class ChatActivity extends BaseFragment implements
+         }
+ 
+         ReactionsEffectOverlay.removeCurrent(false);
++        chatMessagesMetadataController.cancelReactionsRequests();
+         final int currentChosenReactions = primaryMessage.getChoosenReactions().size();
+         final boolean added = primaryMessage.selectReaction(visibleReaction, bigEmoji, fromDoubleTap);
+         int messageIdForCell = primaryMessage.getId();

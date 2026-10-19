@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Thu, 9 Apr 2026 04:03:43 +0300
+Subject: hide stories
+
+---
+ TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java   | 2 +-
+ TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java | 2 +-
+ .../main/java/org/telegram/ui/Stories/StoriesController.java    | 1 +
+ 3 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -39548,7 +39548,7 @@ public class ChatActivity extends BaseFragment implements
+                     arrayList = new ArrayList<>();
+                     arrayList.add(messageObject);
+                 }
+-                final boolean includeStory = getMessagesController().storiesEnabled() && StoryEntry.canRepostMessage(messageObject);
++                final boolean includeStory = getMessagesController().storiesEnabled() && StoryEntry.canRepostMessage(messageObject) && !InuConfig.HIDE_REPOST_TO_STORY.getValue();
+                 showDialog(new ShareAlert(getContext(), ChatActivity.this, arrayList, null, null, ChatObject.isChannel(currentChat), null, null, false, false, includeStory, null, themeDelegate) {
+                     { includeStoryFromMessage = includeStory; }
+                     @Override
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+@@ -6135,7 +6135,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+ 
+     @Override
+     public boolean canSelectStories() {
+-        return photoPathsArray != null && photoPathsArray.size() == 1 || videoPath != null;
++        return !desu.inugram.InuConfig.HIDE_REPOST_TO_STORY.getValue() && (photoPathsArray != null && photoPathsArray.size() == 1 || videoPath != null);
+     }
+ 
+     @Override
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Stories/StoriesController.java b/TMessagesProj/src/main/java/org/telegram/ui/Stories/StoriesController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Stories/StoriesController.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Stories/StoriesController.java
+@@ -280,6 +280,7 @@ public class StoriesController {
+     }
+ 
+     public boolean hasStories() {
++        if (desu.inugram.InuConfig.HIDE_STORIES.getValue()) return false;
+         return (dialogListStories != null && dialogListStories.size() > 0) || hasSelfStories();
+     }
+ 

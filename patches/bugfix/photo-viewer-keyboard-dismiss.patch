@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Tue, 23 Jun 2026 17:19:08 +0400
+Subject: fix photo viewer dismissing keyboard (and also breaking close animation target), by essentially reverting to its pre-12.8 behavior
+
+---
+ .../org/telegram/ui/Components/SharedMediaLayout.java  |  2 +-
+ .../src/main/java/org/telegram/ui/LaunchActivity.java  | 10 +++++++---
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/SharedMediaLayout.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/SharedMediaLayout.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/SharedMediaLayout.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/SharedMediaLayout.java
+@@ -1340,7 +1340,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
+                     object.viewX = coords[0];
+                     object.viewY = coords[1] - (Build.VERSION.SDK_INT >= 21 ? 0 : AndroidUtilities.statusBarHeight);
+                     object.parentView = listView;
+-                    object.animatingImageView = mediaPages[0].animatingImageView;
++                    object.animatingImageView = null; // inu: matching photo-viewer-keyboard-dismiss
+                     mediaPages[0].listView.getLocationInWindow(coords);
+                     object.animatingImageViewYOffset = -coords[1];
+                     object.imageReceiver = imageReceiver;
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+@@ -9190,14 +9190,18 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+     private int reasonsToHideMainContent = 0;
+     private int reasonsToHideDecorView = 0;
+ 
++    // inugram: keep the main content VISIBLE and drawing instead of setting GONE — GONE freezes
++    // the view tree's layout, which dismisses the keyboard and breaks PhotoViewer close-animation
++    // target positions. drawing must keep running too: link-preview photo positions inside
++    // ChatMessageCell are only assigned at draw time, so suppressing draws leaves stale
++    // ImageReceiver coords for the close-animation target (visual jump at the end).
++    // rebase note: this is more of a workaround (revert to old behavior) than an actual bugfix.
++    // if future upstream updates fixes those, our workaround should be removed.
+     private void updateReasonsToHideMainContent(boolean increment, boolean withDecorView) {
+         reasonsToHideMainContent += (increment ? 1 : -1);
+         if (withDecorView) {
+             reasonsToHideDecorView += (increment ? 1 : -1);
+         }
+-        if (frameLayout != null) {
+-            frameLayout.setVisibility(reasonsToHideMainContent > 0 ? View.GONE : View.VISIBLE);
+-        }
+         checkDecorViewVisibility();
+     }
+ 

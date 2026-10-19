@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Sat, 4 Jul 2026 14:47:12 +0400
+Subject: fix lingering system media session after playback ends.
+
+---
+ .../main/java/org/telegram/messenger/MusicBrowserService.java  | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MusicBrowserService.java b/TMessagesProj/src/main/java/org/telegram/messenger/MusicBrowserService.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MusicBrowserService.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MusicBrowserService.java
+@@ -46,6 +46,9 @@ public class MusicBrowserService extends MediaBrowserService {
+         if (clientPackageName == null) {
+             return null;
+         }
++        if (rootHints != null && rootHints.getBoolean(BrowserRoot.EXTRA_RECENT, false)) {
++            return null;
++        }
+         boolean isSelf = Process.SYSTEM_UID == clientUid || Process.myUid() == clientUid;
+         if (!isSelf && !PackageValidator.isKnownCaller(this, clientPackageName, clientUid)) {
+             return null;

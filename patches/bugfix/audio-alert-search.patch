@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Sun, 31 May 2026 18:28:42 +0400
+Subject: fix back button overlapping search field in audio player
+
+---
+ .../java/org/telegram/ui/Components/AudioPlayerAlert.java     | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/AudioPlayerAlert.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/AudioPlayerAlert.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/AudioPlayerAlert.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/AudioPlayerAlert.java
+@@ -1338,6 +1338,10 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
+             actionBar.setAlpha(1.0f);
+             actionBarBackground.setAlpha(0.0f);
+             actionBarSlideProperty.set(actionBar, 0.0f);
++        } else {
++            // menuOccupyBack=true makes the search container lay out at x=0; without
++            // this seed the search field overlaps the back button when search opens.
++            actionBarSlideProperty.set(actionBar, 1.0f);
+         }
+ 
+         listAdapter.setup();

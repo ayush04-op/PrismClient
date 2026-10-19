@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Sat, 30 May 2026 18:27:35 +0400
+Subject: fix bottom transparent gap in some bottom sheets
+
+---
+ .../java/org/telegram/ui/Components/FiltersListBottomSheet.java  | 1 -
+ .../java/org/telegram/ui/Components/PhonebookShareAlert.java     | 1 -
+ .../main/java/org/telegram/ui/Components/ThemeEditorView.java    | 1 -
+ .../src/main/java/org/telegram/ui/Components/UsersAlertBase.java | 1 -
+ 4 files changed, 4 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/FiltersListBottomSheet.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/FiltersListBottomSheet.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/FiltersListBottomSheet.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/FiltersListBottomSheet.java
+@@ -140,7 +140,6 @@ public class FiltersListBottomSheet extends BottomSheet implements NotificationC
+                 int statusBarHeight = 0;
+                 float radProgress = 1.0f;
+                 top += AndroidUtilities.statusBarHeight;
+-                height -= AndroidUtilities.statusBarHeight;
+ 
+                 if (fullHeight) {
+                     if (top + backgroundPaddingTop < AndroidUtilities.statusBarHeight * 2) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/PhonebookShareAlert.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/PhonebookShareAlert.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/PhonebookShareAlert.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/PhonebookShareAlert.java
+@@ -420,7 +420,6 @@ public class PhonebookShareAlert extends BottomSheet {
+ 
+                 if (Build.VERSION.SDK_INT >= 21) {
+                     top += AndroidUtilities.statusBarHeight;
+-                    height -= AndroidUtilities.statusBarHeight;
+                 }
+ 
+                 shadowDrawable.setBounds(0, top, getMeasuredWidth(), height);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ThemeEditorView.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ThemeEditorView.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ThemeEditorView.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ThemeEditorView.java
+@@ -717,7 +717,6 @@ public class ThemeEditorView {
+                     if (!isFullscreen) {
+                         top += AndroidUtilities.statusBarHeight;
+                         y += AndroidUtilities.statusBarHeight;
+-                        height -= AndroidUtilities.statusBarHeight;
+ 
+                         if (top + backgroundPaddingTop < AndroidUtilities.statusBarHeight * 2) {
+                             int diff = Math.min(AndroidUtilities.statusBarHeight, AndroidUtilities.statusBarHeight * 2 - top - backgroundPaddingTop);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/UsersAlertBase.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/UsersAlertBase.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/UsersAlertBase.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/UsersAlertBase.java
+@@ -522,7 +522,6 @@ public class UsersAlertBase extends BottomSheet {
+             if (Build.VERSION.SDK_INT >= 21) {
+                 top += AndroidUtilities.statusBarHeight;
+                 y += AndroidUtilities.statusBarHeight;
+-                height -= AndroidUtilities.statusBarHeight;
+ 
+                 if (top + backgroundPaddingTop + getTranslationY() < AndroidUtilities.statusBarHeight * 2) {
+                     int diff = (int) Math.min(AndroidUtilities.statusBarHeight, AndroidUtilities.statusBarHeight * 2 - top - backgroundPaddingTop - getTranslationY());

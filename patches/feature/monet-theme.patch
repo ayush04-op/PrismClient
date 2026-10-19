@@ -1,0 +1,354 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Mon, 20 Apr 2026 10:55:44 +0300
+Subject: monet theme, almost directly ported from NagramX
+
+---
+ .../org/telegram/messenger/MessageObject.java | 10 +--
+ .../messenger/MessagesController.java         | 24 +++---
+ .../telegram/messenger/RichMessageLayout.java |  2 +-
+ .../java/org/telegram/ui/ActionBar/Theme.java | 76 ++++++++++++++++++-
+ .../telegram/ui/ActionBar/ThemeColors.java    | 14 ++++
+ .../telegram/ui/Cells/ChatMessageCell.java    |  4 +-
+ .../ui/Components/AvatarDrawable.java         |  2 +-
+ .../java/org/telegram/ui/DialogsActivity.java |  4 +
+ 8 files changed, 113 insertions(+), 23 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+@@ -8928,7 +8928,7 @@ public class MessageObject {
+                 if (block.code && !block.quote && textLayout.getText() instanceof Spannable) {
+                     SpannableString sb;
+                     if (!TextUtils.isEmpty(range.language)) {
+-                        sb = CodeHighlighting.getHighlighted(blockText.toString(), range.language);
++                        sb = CodeHighlighting.getHighlighted(blockText.toString(), range.language, isOutOwner());
+                     } else {
+                         sb = new SpannableString(blockText.toString());
+                     }
+@@ -8968,7 +8968,7 @@ public class MessageObject {
+                 try {
+                     SpannableString sb;
+                     if (block.code && !block.quote) {
+-                        sb = CodeHighlighting.getHighlighted(blockText.toString(), range.language);
++                        sb = CodeHighlighting.getHighlighted(blockText.toString(), range.language, isOutOwner());
+                     } else {
+                         sb = SpannableString.valueOf(blockText);
+                     }
+@@ -9391,7 +9391,7 @@ public class MessageObject {
+                     if (block.code && !block.quote && textLayout.getText() instanceof Spannable) {
+                         SpannableString sb;
+                         if (!TextUtils.isEmpty(range.language)) {
+-                            sb = CodeHighlighting.getHighlighted(text.subSequence(range.start, range.end).toString(), range.language);
++                            sb = CodeHighlighting.getHighlighted(text.subSequence(range.start, range.end).toString(), range.language, messageObject != null && messageObject.isOutOwner());
+                         } else {
+                             sb = new SpannableString(text.subSequence(range.start, range.end));
+                         }
+@@ -9418,7 +9418,7 @@ public class MessageObject {
+                     try {
+                         SpannableString sb;
+                         if (block.code && !block.quote) {
+-                            sb = CodeHighlighting.getHighlighted(text.subSequence(startCharacter, endCharacter).toString(), range.language);
++                            sb = CodeHighlighting.getHighlighted(text.subSequence(startCharacter, endCharacter).toString(), range.language, messageObject != null && messageObject.isOutOwner());
+                         } else {
+                             sb = SpannableString.valueOf(text.subSequence(startCharacter, endCharacter));
+                         }
+@@ -9434,7 +9434,7 @@ public class MessageObject {
+                 }
+ 
+                 if (block.code && block.textLayout.getText() instanceof Spannable && TextUtils.isEmpty(range.language)) {
+-                    CodeHighlighting.highlight((Spannable) block.textLayout.getText(), 0, block.textLayout.getText().length(), range.language, 0, null, true);
++                    CodeHighlighting.highlight((Spannable) block.textLayout.getText(), 0, block.textLayout.getText().length(), range.language, 0, null, true, messageObject != null && messageObject.isOutOwner());
+                 }
+ 
+                 textLayoutBlocks.add(block);
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+@@ -5292,43 +5292,43 @@ public class MessagesController extends BaseController implements NotificationCe
+                 return Theme.getColor(Theme.keys_avatar_nameInMessage[id], resourcesProvider);
+             }
+             final boolean isDark = resourcesProvider != null ? resourcesProvider.isDark() : Theme.isCurrentThemeDark();
+-            return (isDark ? darkColors : colors)[i];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((isDark ? darkColors : colors)[i]);
+         }
+         public int getLvl(boolean isGroup) {
+             return isGroup ? groupLvl : channelLvl;
+         }
+         public int getColor1(boolean isDark) {
+-            return (isDark ? darkColors : colors)[0];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((isDark ? darkColors : colors)[0]);
+         }
+         public int getColor2(boolean isDark) {
+-            return (isDark ? darkColors : colors)[1];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((isDark ? darkColors : colors)[1]);
+         }
+         public int getColor3(boolean isDark) {
+-            return (isDark ? darkColors : colors)[2];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((isDark ? darkColors : colors)[2]);
+         }
+         public int getColor4(boolean isDark) {
+-            return (isDark ? darkColors : colors)[3];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((isDark ? darkColors : colors)[3]);
+         }
+         public int getColor5(boolean isDark) {
+-            return (isDark ? darkColors : colors)[4];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((isDark ? darkColors : colors)[4]);
+         }
+         public int getColor6(boolean isDark) {
+-            return (isDark ? darkColors : colors)[5];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((isDark ? darkColors : colors)[5]);
+         }
+         public int getColor1() {
+-            return (Theme.isCurrentThemeDark() ? darkColors : colors)[0];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((Theme.isCurrentThemeDark() ? darkColors : colors)[0]);
+         }
+         public int getColor2() {
+-            return (Theme.isCurrentThemeDark() ? darkColors : colors)[1];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((Theme.isCurrentThemeDark() ? darkColors : colors)[1]);
+         }
+         public int getColor3() {
+-            return (Theme.isCurrentThemeDark() ? darkColors : colors)[2];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((Theme.isCurrentThemeDark() ? darkColors : colors)[2]);
+         }
+         public int getColor4() {
+-            return (Theme.isCurrentThemeDark() ? darkColors : colors)[3];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((Theme.isCurrentThemeDark() ? darkColors : colors)[3]);
+         }
+         public int getColor5() {
+-            return (Theme.isCurrentThemeDark() ? darkColors : colors)[4];
++            return desu.inugram.helpers.theme.MonetHelper.maybeHarmonizePeerColor((Theme.isCurrentThemeDark() ? darkColors : colors)[4]);
+         }
+         public boolean hasColor2() {
+             return getColor2() != getColor1();
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/RichMessageLayout.java b/TMessagesProj/src/main/java/org/telegram/messenger/RichMessageLayout.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/RichMessageLayout.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/RichMessageLayout.java
+@@ -5910,7 +5910,7 @@ public class RichMessageLayout {
+                     }
+                 }
+                 if (!TextUtils.isEmpty(block.language)) {
+-                    CodeHighlighting.highlight(content, 0, content.length(), block.language, 0, null, false);
++                    CodeHighlighting.highlight(content, 0, content.length(), block.language, 0, null, false, root != null && root.isOut());
+                 }
+             }
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java
+@@ -146,6 +146,7 @@ import java.util.Locale;
+ import java.util.Map;
+ import java.util.Objects;
+ import java.util.concurrent.CountDownLatch;
++import desu.inugram.helpers.theme.MonetHelper;
+ 
+ public class Theme {
+ 
+@@ -1642,13 +1643,33 @@ public class Theme {
+             return defaultAccentCount != 0;
+         }
+ 
++        public boolean inu_isMonet() {
++            return "Monet Dark".equals(name) || "Monet Light".equals(name) || "Monet AMOLED".equals(name);
++        }
++
++        public boolean inu_isMonetLight() {
++            return "Monet Light".equals(name);
++        }
++
++        public boolean inu_isMonetDark() {
++            return "Monet Dark".equals(name);
++        }
++
++        public boolean inu_isMonetAmoled() {
++            return "Monet AMOLED".equals(name);
++        }
++
++        public boolean inu_isMonetNight() {
++            return inu_isMonetDark() || inu_isMonetAmoled();
++        }
++
+         public boolean isDark() {
+             if (isDark != UNKNOWN) {
+                 return isDark == DARK;
+             }
+-            if ("Dark Blue".equals(name) || "Night".equals(name)) {
++            if ("Dark Blue".equals(name) || "Night".equals(name) || "Monet Dark".equals(name) || "Monet AMOLED".equals(name)) {
+                 isDark = DARK;
+-            } else if ("Blue".equals(name) || "Arctic Blue".equals(name) || "Day".equals(name)) {
++            } else if ("Blue".equals(name) || "Arctic Blue".equals(name) || "Day".equals(name) || "Monet Light".equals(name)) {
+                 isDark = LIGHT;
+             }
+             if (isDark == UNKNOWN) {
+@@ -3424,6 +3445,13 @@ public class Theme {
+     public static final int key_wallet_comment = colorsCount++;
+     public static final int key_wallet_out_commentBorder = colorsCount++;
+     public static final int key_wallet_inputCurrency = colorsCount++;
++    public static final int key_inu_code_out_keyword = colorsCount++;
++    public static final int key_inu_code_out_operator = colorsCount++;
++    public static final int key_inu_code_out_constant = colorsCount++;
++    public static final int key_inu_code_out_string = colorsCount++;
++    public static final int key_inu_code_out_number = colorsCount++;
++    public static final int key_inu_code_out_comment = colorsCount++;
++    public static final int key_inu_code_out_function = colorsCount++;
+ 
+     public static final String key_drawable_botInline = "drawableBotInline";
+     public static final String key_drawable_botLink = "drawableBotLink";
+@@ -4016,6 +4044,38 @@ public class Theme {
+         themes.add(themeInfo);
+         themesDict.put("Night", themeInfo);
+ 
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
++            themeInfo = new ThemeInfo();
++            themeInfo.name = "Monet Light";
++            themeInfo.assetName = "monet_light.attheme";
++            themeInfo.previewBackgroundColor = MonetHelper.getColor("n1_50");
++            themeInfo.previewInColor = MonetHelper.getColor("a2_50");
++            themeInfo.previewOutColor = MonetHelper.getColor("a1_600");
++            themeInfo.sortIndex = 6;
++            themes.add(themeInfo);
++            themesDict.put("Monet Light", themeInfo);
++
++            themeInfo = new ThemeInfo();
++            themeInfo.name = "Monet Dark";
++            themeInfo.assetName = "monet_dark.attheme";
++            themeInfo.previewBackgroundColor = MonetHelper.getColor("n1_900");
++            themeInfo.previewInColor = MonetHelper.getColor("n2_800");
++            themeInfo.previewOutColor = MonetHelper.getColor("a1_100");
++            themeInfo.sortIndex = 7;
++            themes.add(themeInfo);
++            themesDict.put("Monet Dark", themeInfo);
++
++            themeInfo = new ThemeInfo();
++            themeInfo.name = "Monet AMOLED";
++            themeInfo.assetName = "monet_amoled.attheme";
++            themeInfo.previewBackgroundColor = MonetHelper.getColor("n1_1000");
++            themeInfo.previewInColor = MonetHelper.getColor("n2_800");
++            themeInfo.previewOutColor = MonetHelper.getColor("a1_100");
++            themeInfo.sortIndex = 8;
++            themes.add(themeInfo);
++            themesDict.put("Monet AMOLED", themeInfo);
++        }
++
+         String themesString = themeConfig.getString("themes2", null);
+ 
+         int remoteVersion = themeConfig.getInt("remote_version", 0);
+@@ -4248,6 +4308,8 @@ public class Theme {
+                     if (accent != null) {
+                         info.overrideWallpaper = accent.overrideWallpaper;
+                     }
++                } else if (info.inu_isMonet()) {
++                    info.loadWallpapers(themeConfig);
+                 }
+             }
+             if (oldEditor != null) {
+@@ -7565,6 +7627,12 @@ public class Theme {
+             int currentPosition = 0;
+             if (assetName != null) {
+                 file = getAssetFile(assetName);
++                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
++                    File override = desu.inugram.helpers.theme.MonetHelper.getThemeOverrideFile(assetName);
++                    if (override != null) {
++                        file = override;
++                    }
++                }
+             }
+             stream = new FileInputStream(file);
+             int idx;
+@@ -7597,6 +7665,10 @@ public class Theme {
+                                     } catch (Exception ignore) {
+                                         value = Utilities.parseInt(param);
+                                     }
++                                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && (param.startsWith("a") || param.startsWith("n") || param.startsWith("m"))) {
++                                    value = MonetHelper.getColor(param, key);
++                                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && param.endsWith("h")) {
++                                    value = MonetHelper.harmonize(Utilities.parseInt(param.substring(0, param.length() - 1)));
+                                 } else {
+                                     value = Utilities.parseInt(param);
+                                 }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ThemeColors.java
+@@ -861,6 +861,13 @@ public class ThemeColors {
+         defaultColors[key_code_number] = 0xFF327FE5;
+         defaultColors[key_code_comment] = 0x80000000;
+         defaultColors[key_code_function] = 0xFFF28C39;
++        defaultColors[key_inu_code_out_keyword] = defaultColors[key_code_keyword];
++        defaultColors[key_inu_code_out_operator] = defaultColors[key_code_operator];
++        defaultColors[key_inu_code_out_constant] = defaultColors[key_code_constant];
++        defaultColors[key_inu_code_out_string] = defaultColors[key_code_string];
++        defaultColors[key_inu_code_out_number] = defaultColors[key_code_number];
++        defaultColors[key_inu_code_out_comment] = defaultColors[key_code_comment];
++        defaultColors[key_inu_code_out_function] = defaultColors[key_code_function];
+ 
+         defaultColors[key_iv_background] = 0xFFFFFFFF;
+         defaultColors[key_iv_backgroundGray] = 0xfff0f0f0;
+@@ -1691,6 +1698,13 @@ public class ThemeColors {
+         colorKeysMap.put(key_code_number, "code_number");
+         colorKeysMap.put(key_code_comment, "code_comment");
+         colorKeysMap.put(key_code_function, "code_function");
++        colorKeysMap.put(key_inu_code_out_keyword, "inu_code_out_keyword");
++        colorKeysMap.put(key_inu_code_out_operator, "inu_code_out_operator");
++        colorKeysMap.put(key_inu_code_out_constant, "inu_code_out_constant");
++        colorKeysMap.put(key_inu_code_out_string, "inu_code_out_string");
++        colorKeysMap.put(key_inu_code_out_number, "inu_code_out_number");
++        colorKeysMap.put(key_inu_code_out_comment, "inu_code_out_comment");
++        colorKeysMap.put(key_inu_code_out_function, "inu_code_out_function");
+         colorKeysMap.put(key_iv_background, "iv_background");
+         colorKeysMap.put(key_iv_backgroundGray, "iv_backgroundGray");
+         colorKeysMap.put(key_iv_navigationBackground, "iv_navigationBackground");
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+@@ -24051,7 +24051,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+             if (currentMessageObject != null && currentMessageObject.sendPreview) {
+                 alpha *= effectDrawable == null ? 0f : effectDrawable.isNotEmpty();
+             }
+-            paint.setAlpha((int) (oldAlpha * timeAlpha * alpha * .6f));
++            paint.setAlpha((int) (oldAlpha * timeAlpha * alpha * (Theme.getActiveTheme().inu_isMonetLight() ? 1f : .6f)));
+ 
+             int r;
+             if (documentAttachType != DOCUMENT_ATTACH_TYPE_ROUND && documentAttachType != DOCUMENT_ATTACH_TYPE_STICKER && currentMessageObject.type != MessageObject.TYPE_EMOJIS) {
+@@ -24094,7 +24094,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                     canvas.restore();
+                     Paint dimPaint = getThemedPaint(Theme.key_paint_chatTimeBackground);
+                     int oldAlpha2 = dimPaint.getAlpha();
+-                    dimPaint.setAlpha((int) (oldAlpha2 * controlsAlpha * .4f));
++                    dimPaint.setAlpha((int) (oldAlpha2 * controlsAlpha * (Theme.getActiveTheme().inu_isMonetLight() ? 1f : .4f)));
+                     canvas.drawRoundRect(rect, r, r, dimPaint);
+                     dimPaint.setAlpha(oldAlpha2);
+                 } else {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/AvatarDrawable.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/AvatarDrawable.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/AvatarDrawable.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/AvatarDrawable.java
+@@ -563,7 +563,7 @@ public class AvatarDrawable extends Drawable {
+             return;
+         }
+         int size = bounds.width();
+-        namePaint.setColor(ColorUtils.setAlphaComponent(getThemedColor(Theme.key_avatar_text), alpha));
++        namePaint.setColor(ColorUtils.setAlphaComponent(desu.inugram.helpers.theme.MonetHelper.getAvatarTextColor(getThemedColor(Theme.key_avatar_text), getColor(), getColor2()), alpha));
+         Paint backgroundPaint = Theme.avatar_backgroundPaint;
+         if (hasAdvancedGradient && advancedGradient != null) {
+             advancedGradient.setBounds(bounds.left, bounds.top, bounds.left + size, bounds.top + size);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -13657,6 +13657,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+     private void showItemOptions() {
+         ItemOptions io = ItemOptions.makeOptions(this, optionsItem);
+         io.setColors(getThemedColor(Theme.key_actionBarDefaultTitle), getThemedColor(Theme.key_actionBarDefaultTitle));
++        if (Theme.getActiveTheme().inu_isMonet()) {
++            io.setColors(getThemedColor(Theme.key_actionBarDefaultSubmenuItem), getThemedColor(Theme.key_actionBarDefaultSubmenuItemIcon));
++            io.setSelectorColor(getThemedColor(Theme.key_dialogButtonSelector));
++        }
+         io.setDimAlpha(0x08);
+ 
+         final Activity activity = getParentActivity();

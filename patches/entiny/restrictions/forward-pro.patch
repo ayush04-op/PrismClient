@@ -1,0 +1,345 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleksii Kulinich <entaytion@gmail.com>
+Date: Mon, 14 Sep 2026 11:22:54 +0300
+Subject: Forward Pro: quick toggles and edit before forward in ShareAlert
+
+---
+ .../org/telegram/messenger/MessageObject.java |  3 +-
+ .../messenger/SendMessagesHelper.java         |  2 +-
+ .../ui/Components/FilterTabsView.java         |  2 +-
+ .../telegram/ui/Components/ShareAlert.java    | 97 ++++++++++++++-----
+ .../java/org/telegram/ui/PhotoViewer.java     |  5 +-
+ 5 files changed, 80 insertions(+), 29 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+@@ -8739,7 +8739,8 @@ public class MessageObject {
+         if (messageOwner.send_state != MESSAGE_SEND_STATE_SENT) {
+             hasEntities = false;
+         } else {
+-            hasEntities = !getEntities().isEmpty();
++            ArrayList<TLRPC.MessageEntity> entities = getEntities();
++            hasEntities = entities != null && !entities.isEmpty();
+         }
+ 
+         boolean useManualParse = !hasEntities && (
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+@@ -2590,7 +2590,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
+                         newMsg.flags &=~ 64;
+                     }
+                 }
+-                if (!newMsg.entities.isEmpty()) {
++                if (newMsg.entities != null && !newMsg.entities.isEmpty()) {
+                     newMsg.flags |= TLRPC.MESSAGE_FLAG_HAS_ENTITIES;
+                 }
+                 if (newMsg.attachPath == null) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/FilterTabsView.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/FilterTabsView.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/FilterTabsView.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/FilterTabsView.java
+@@ -248,7 +248,7 @@ public class FilterTabsView extends FrameLayout {
+             currentTab = tab;
+             currentPosition = position;
+             setContentDescription(tab.title);
+-            inu_iconDrawable = FolderHelper.needIcons() ? getContext().getResources().getDrawable(tab.inu_iconResId).mutate() : null;
++            inu_iconDrawable = FolderHelper.needIcons() && tab.inu_iconResId != 0 ? getContext().getResources().getDrawable(tab.inu_iconResId).mutate() : null;
+             requestLayout();
+ 
+             if (currentNoanimate != (currentTab != null && currentTab.noanimate)) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ShareAlert.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ShareAlert.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ShareAlert.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ShareAlert.java
+@@ -141,10 +141,10 @@ import java.util.concurrent.atomic.AtomicReference;
+ public class ShareAlert extends BottomSheet implements NotificationCenter.NotificationCenterDelegate {
+ 
+     private FrameLayout frameLayout;
+-    private FrameLayout frameLayout2;
+-    private EditTextEmoji commentTextView;
++    public FrameLayout frameLayout2;
++    public EditTextEmoji commentTextView;
+     private ChatActivityEnterView.SendButton writeButton;
+-    private FrameLayout writeButtonContainer;
++    public FrameLayout writeButtonContainer;
+     private FrameLayout pickerBottom;
+     private View bottomFadeView;
+     private FrameLayout pickerBottomLayout;
+@@ -164,15 +164,15 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+     private ShareDialogsAdapter listAdapter;
+     private ShareTopicsAdapter shareTopicsAdapter;
+     private ShareSearchAdapter searchAdapter;
+-    protected ArrayList<MessageObject> sendingMessageObjects;
++    public ArrayList<MessageObject> sendingMessageObjects;
+     private String[] sendingText = new String[2];
+     private int hasPoll;
+     private StickerEmptyView searchEmptyView;
+     private Drawable shadowDrawable;
+     private View[] shadow = new View[2];
+     private AnimatorSet[] shadowAnimation = new AnimatorSet[2];
+-    protected LongSparseArray<TLRPC.Dialog> selectedDialogs = new LongSparseArray<>();
+-    protected Map<TLRPC.Dialog, TLRPC.TL_forumTopic> selectedDialogTopics = new HashMap<>();
++    public LongSparseArray<TLRPC.Dialog> selectedDialogs = new LongSparseArray<>();
++    public Map<TLRPC.Dialog, TLRPC.TL_forumTopic> selectedDialogTopics = new HashMap<>();
+     private SwitchView switchView;
+     private int containerViewTop = -1;
+     private boolean fullyShown = false;
+@@ -699,9 +699,11 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+                 int availableHeight = totalHeight - getPaddingTop();
+ 
+                 int size = Math.max(searchAdapter.getItemCount(), listAdapter.getItemCount() - 1);
+-                int contentSize = dp(103) + dp(48) + Math.max(2, (int) Math.ceil(size / 4.0f)) * dp(103) + backgroundPaddingTop;
++                // entiny: folder tabs grow the header, so the sheet must reserve that height too
++                int inu_extraHeaderDp = desu.inugram.helpers.chat.ForwardProHelper.getFolderTabsHeightDp(ShareAlert.this);
++                int contentSize = dp(103) + dp(48 + inu_extraHeaderDp) + Math.max(2, (int) Math.ceil(size / 4.0f)) * dp(103) + backgroundPaddingTop;
+                 if (topicsGridView.getVisibility() != View.GONE) {
+-                    int topicsSize = dp(103) + dp(48) + Math.max(2, (int) Math.ceil((shareTopicsAdapter.getItemCount() - 1) / 4.0f)) * dp(103) + backgroundPaddingTop;
++                    int topicsSize = dp(103) + dp(48 + inu_extraHeaderDp) + Math.max(2, (int) Math.ceil((shareTopicsAdapter.getItemCount() - 1) / 4.0f)) * dp(103) + backgroundPaddingTop;
+                     if (topicsSize > contentSize) {
+                         contentSize = AndroidUtilities.lerp(contentSize, topicsSize, topicsGridView.getAlpha());
+                     }
+@@ -1084,7 +1086,15 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+             AndroidUtilities.showKeyboard(searchView.editText);
+         });
+ 
+-        frameLayout.addView(searchView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 40, Gravity.BOTTOM | Gravity.LEFT, 11, 7, 11, 11));
++        boolean inu_forwardProActive = desu.inugram.helpers.chat.ForwardProHelper.isActive(this);
++        if (inu_forwardProActive) {
++            desu.inugram.helpers.chat.ForwardProHelper.attachSearchRow(this, frameLayout, searchView);
++            if (!(darkTheme && linkToCopy[1] != null)) {
++                desu.inugram.helpers.chat.ForwardProHelper.attachFolderTabs(this, frameLayout);
++            }
++        } else {
++            frameLayout.addView(searchView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 40, Gravity.BOTTOM | Gravity.LEFT, 11, 7, 11, 11));
++        }
+         topicsBackActionBar = new ActionBar(context);
+         topicsBackActionBar.setOccupyStatusBar(false);
+         topicsBackActionBar.setBackButtonImage(R.drawable.ic_ab_back);
+@@ -1161,14 +1171,14 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+ 
+             @Override
+             protected boolean allowSelectChildAtPosition(float x, float y) {
+-                return y >= scrollOffsetY + dp(darkTheme && linkToCopy[1] != null ? 111 : 58);
++                return y >= scrollOffsetY + dp(inu_getHeaderHeight());
+             }
+ 
+             @Override
+             public void draw(Canvas canvas) {
+                 if (topicsGridView.getVisibility() != View.GONE) {
+                     canvas.save();
+-                    canvas.clipRect(0, scrollOffsetY + dp(darkTheme && linkToCopy[1] != null ? 111 : 58), getWidth(), getHeight());
++                    canvas.clipRect(0, scrollOffsetY + dp(inu_getHeaderHeight()), getWidth(), getHeight());
+                 }
+                 super.draw(canvas);
+                 if (topicsGridView.getVisibility() != View.GONE) {
+@@ -1245,14 +1255,14 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+ 
+             @Override
+             protected boolean allowSelectChildAtPosition(float x, float y) {
+-                return y >= scrollOffsetY + dp(darkTheme && linkToCopy[1] != null ? 111 : 58);
++                return y >= scrollOffsetY + dp(inu_getHeaderHeight());
+             }
+ 
+             @Override
+             public void draw(Canvas canvas) {
+                 if (topicsGridView.getVisibility() != View.GONE) {
+                     canvas.save();
+-                    canvas.clipRect(0, scrollOffsetY + dp(darkTheme && linkToCopy[1] != null ? 111 : 58), getWidth(), getHeight());
++                    canvas.clipRect(0, scrollOffsetY + dp(inu_getHeaderHeight()), getWidth(), getHeight());
+                 }
+                 super.draw(canvas);
+                 if (topicsGridView.getVisibility() != View.GONE) {
+@@ -1345,14 +1355,14 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+         containerView.addView(bottomFadeView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 300, Gravity.BOTTOM));
+ 
+         FrameLayout.LayoutParams frameLayoutParams = new FrameLayout.LayoutParams(LayoutHelper.MATCH_PARENT, AndroidUtilities.getShadowHeight(), Gravity.TOP | Gravity.LEFT);
+-        frameLayoutParams.topMargin = dp(darkTheme && linkToCopy[1] != null ? 111 : 58);
++        frameLayoutParams.topMargin = dp(inu_getHeaderHeight());
+         shadow[0] = new View(context);
+         shadow[0].setBackgroundColor(getThemedColor(Theme.key_dialogShadowLine));
+         shadow[0].setAlpha(0.0f);
+         shadow[0].setTag(1);
+         containerView.addView(shadow[0], frameLayoutParams);
+ 
+-        containerView.addView(frameLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, darkTheme && linkToCopy[1] != null ? 111 : 58, Gravity.LEFT | Gravity.TOP));
++        containerView.addView(frameLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, inu_getHeaderHeight(), Gravity.LEFT | Gravity.TOP));
+ 
+         frameLayoutParams = new FrameLayout.LayoutParams(LayoutHelper.MATCH_PARENT, AndroidUtilities.getShadowHeight(), Gravity.BOTTOM | Gravity.LEFT);
+         frameLayoutParams.bottomMargin = dp(48);
+@@ -1687,7 +1697,7 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+ //        commentTextView.setBackgroundColor(backgroundColor);
+         commentTextView.setHint(LocaleController.getString(R.string.ShareComment));
+         commentTextView.onResume();
+-        commentTextView.setPadding(0, 0, dp(84), 0);
++        commentTextView.setPadding(0, 0, dp(84) + desu.inugram.helpers.chat.ForwardProHelper.getExtraCommentPadding(this), 0);
+         frameLayout2.addView(commentTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.LEFT));
+         frameLayout2.setClipChildren(false);
+         frameLayout2.setClipToPadding(false);
+@@ -1759,10 +1769,11 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+         writeButton.setCirclePadding(dp(1), dp(6));
+         writeButton.newCounterPos = true;
+         writeButtonContainer.addView(writeButton, LayoutHelper.createFrameMatchParent());
+-        writeButton.setOnClickListener(v -> sendInternal(true));
+-        writeButton.setOnLongClickListener(v -> {
+-            return onSendLongClick(writeButton);
+-        });
++        if (desu.inugram.helpers.chat.ForwardProHelper.isActive(this)) {
++            desu.inugram.helpers.chat.ForwardProHelper.attachCommentRow(this);
++        }
++        writeButton.setOnClickListener(v -> sendInternal(!desu.inugram.helpers.chat.ForwardProHelper.isSilentSend(this)));
++        writeButton.setOnLongClickListener(v -> onSendLongClick(writeButton));
+ 
+         textPaint.setTextSize(dp(12));
+         textPaint.setTypeface(AndroidUtilities.bold());
+@@ -2245,7 +2256,20 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+         return containerView.getMeasuredHeight() - containerViewTop;
+     }
+ 
+-    private boolean showSendersName = true;
++    public boolean showSendersName = true;
++    public void inu_refreshDialogsList() {
++        if (listAdapter != null) {
++            listAdapter.fetchDialogs();
++        }
++    }
++    private int inu_getHeaderHeight() {
++        boolean inu_darkLink = darkTheme && linkToCopy[1] != null;
++        int base = inu_darkLink ? 111 : 58;
++        if (!inu_darkLink) {
++            base += desu.inugram.helpers.chat.ForwardProHelper.getFolderTabsHeightDp(this);
++        }
++        return base;
++    }
+     private ActionBarPopupWindow sendPopupWindow;
+     private boolean onSendLongClick(View view) {
+         if (parentActivity == null) {
+@@ -2290,7 +2314,8 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+             showSendersNameView.setTextAndIcon(false ? LocaleController.getString(R.string.ShowSenderNames) : LocaleController.getString(R.string.ShowSendersName), 0);
+             showSendersNameView.setChecked(showSendersName = true);
+ 
+-            ActionBarMenuSubItem hideSendersNameView = new ActionBarMenuSubItem(getContext(), true, false, true, resourcesProvider);
++            boolean inu_forwardProCaptionRow = desu.inugram.helpers.chat.ForwardProHelper.isActive(this);
++            ActionBarMenuSubItem hideSendersNameView = new ActionBarMenuSubItem(getContext(), true, false, !inu_forwardProCaptionRow, resourcesProvider);
+             if (darkTheme) {
+                 hideSendersNameView.setTextColor(getThemedColor(Theme.key_voipgroup_nameText));
+             }
+@@ -2300,11 +2325,16 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+             showSendersNameView.setOnClickListener(e -> {
+                 showSendersNameView.setChecked(showSendersName = true);
+                 hideSendersNameView.setChecked(!showSendersName);
++                desu.inugram.helpers.chat.ForwardProHelper.updateQuickToggleIcons(this);
+             });
+             hideSendersNameView.setOnClickListener(e -> {
+                 showSendersNameView.setChecked(showSendersName = false);
+                 hideSendersNameView.setChecked(!showSendersName);
++                desu.inugram.helpers.chat.ForwardProHelper.updateQuickToggleIcons(this);
+             });
++            if (inu_forwardProCaptionRow) {
++                desu.inugram.helpers.chat.ForwardProHelper.attachHideCaptionRow(this, sendPopupLayout1, darkTheme);
++            }
+             sendPopupLayout1.setupRadialSelectors(getThemedColor(Theme.key_dialogButtonSelector));
+ 
+             layout.addView(sendPopupLayout1, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, 0, -8));
+@@ -2407,6 +2437,10 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+             }
+         }
+ 
++        if (desu.inugram.helpers.chat.ForwardProHelper.handleSend(this, withSound)) {
++            return;
++        }
++
+         CharSequence[] text = new CharSequence[] { commentTextView.getText() };
+         ArrayList<TLRPC.MessageEntity> entities = MediaDataController.getInstance(currentAccount).getEntities(text, true);
+         final int video_timestamp;
+@@ -2505,7 +2539,8 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+                         params.monoForumPeer = monoForumPeerId;
+                         SendMessagesHelper.getInstance(currentAccount).sendMessage(params);
+                     }
+-                    result = SendMessagesHelper.getInstance(currentAccount).sendMessage(sendingMessageObjects, key, !showSendersName,false, withSound, 0, 0, replyTopMsg, video_timestamp, price == null ? 0 : price, monoForumPeerId, null);
++                    boolean inu_hideCaption = desu.inugram.helpers.chat.ForwardProHelper.shouldHideCaption(this);
++                    result = SendMessagesHelper.getInstance(currentAccount).sendMessage(sendingMessageObjects, key, !showSendersName, inu_hideCaption, withSound, desu.inugram.helpers.chat.ForwardProHelper.getScheduleDate(this), 0, replyTopMsg, video_timestamp, price == null ? 0 : price, monoForumPeerId, null);
+                     if (result != 0) {
+                         removeKeys.add(key);
+                     }
+@@ -2798,10 +2833,12 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+                 timestampFrameLayout.setVisibility(View.VISIBLE);
+             }
+             writeButtonContainer.setVisibility(View.VISIBLE);
++            desu.inugram.helpers.chat.ForwardProHelper.onShowCommentTextView(this, true);
+         } else {
+             if (pickerBottom != null) {
+                 pickerBottom.setVisibility(View.VISIBLE);
+             }
++            desu.inugram.helpers.chat.ForwardProHelper.onShowCommentTextView(this, false);
+         }
+         if (pickerBottom != null) {
+             ViewCompat.setImportantForAccessibility(pickerBottom, show ? ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS : ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_YES);
+@@ -2879,7 +2916,8 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+             writeButton.setStarsPrice(price, messagesCount, animated != 0);
+             showCommentTextView(true);
+ 
+-            commentTextView.setPadding(0, 0, Math.max(dp(84), writeButton.width()), 0);
++            int extraPad = desu.inugram.helpers.chat.ForwardProHelper.getExtraCommentPadding(this);
++            commentTextView.setPadding(0, 0, Math.max(dp(84) + extraPad, writeButton.width() + extraPad), 0);
+         }
+     }
+ 
+@@ -2889,6 +2927,7 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+             AndroidUtilities.hideKeyboard(commentTextView.getEditText());
+         }
+         fullyShown = false;
++        desu.inugram.helpers.chat.ForwardProHelper.onDismiss(this);
+         super.dismiss();
+         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.dialogsNeedReload);
+     }
+@@ -2933,6 +2972,9 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+                 if (dialog.id == selfUserId) {
+                     continue;
+                 }
++                if (!desu.inugram.helpers.chat.ForwardProHelper.isDialogAllowedByFolder(ShareAlert.this, dialog.id)) {
++                    continue;
++                }
+                 if (!DialogObject.isEncryptedDialog(dialog.id)) {
+                     if (DialogObject.isUserDialog(dialog.id)) {
+                         if (dialog.folder_id == 1) {
+@@ -3017,7 +3059,12 @@ public class ShareAlert extends BottomSheet implements NotificationCenter.Notifi
+                 case 1:
+                 default: {
+                     view = new View(context);
+-                    view.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, dp(darkTheme && linkToCopy[1] != null ? 109 : 56)));
++                    boolean inu_darkLink = darkTheme && linkToCopy[1] != null;
++                    int inu_spacerHeight = inu_darkLink ? 109 : 56;
++                    if (!inu_darkLink) {
++                        inu_spacerHeight += desu.inugram.helpers.chat.ForwardProHelper.getFolderTabsHeightDp(ShareAlert.this);
++                    }
++                    view.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, dp(inu_spacerHeight)));
+                     break;
+                 }
+             }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java b/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
+@@ -4618,7 +4618,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+         showAlertDialog(builder);
+     }
+ 
+-    private void onSharePressed() {
++    public void onSharePressed() {
+         if (parentActivity == null || !allowShare) {
+             return;
+         }
+@@ -5809,6 +5809,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+         editItem.setContentDescription(getString(R.string.AccDescrPhotoEditor));
+         sendItem = menu.addItem(gallery_menu_send, R.drawable.msg_header_share);
+         sendItem.setContentDescription(getString(R.string.Forward));
++        if (desu.inugram.InuConfig.FORWARD_PRO.getValue()) {
++            desu.inugram.helpers.media.PhotoViewerHelper.attachSendLongPress(this, sendItem);
++        }
+ 
+         videoItem = menu.addItem(gallery_menu_quality, videoItemIcon = new ChooseQualityLayout.QualityIcon(activityContext, R.drawable.video_settings, new DarkThemeResourceProvider()));
+         videoItemIcon.setCallback(videoItem.getIconView());

@@ -1,0 +1,251 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Mon, 1 Jun 2026 16:20:23 +0400
+Subject: hiding messages from blocked users (with a spoiler or completely)
+
+---
+ .../messenger/MediaDataController.java        |  4 +-
+ .../org/telegram/messenger/MessageObject.java |  4 +-
+ .../messenger/MessagesController.java         |  3 ++
+ .../messenger/NotificationsController.java    |  9 ++--
+ .../telegram/ui/Cells/ChatMessageCell.java    |  4 +-
+ .../org/telegram/ui/Cells/DialogCell.java     |  4 +-
+ .../java/org/telegram/ui/ChatActivity.java    | 49 ++++++-------------
+ 7 files changed, 32 insertions(+), 45 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java
+@@ -7004,7 +7004,7 @@ public class MediaDataController extends BaseController {
+     }
+ 
+     public static void addTextStyleRuns(MessageObject msg, Spannable text) {
+-        addTextStyleRuns(msg.messageOwner.entities, msg.messageText, text, -1);
++        addTextStyleRuns(desu.inugram.helpers.chat.BlockedMessagesHelper.checkBlockedEntities(msg), msg.messageText, text, -1);
+     }
+ 
+     public static void addTextStyleRuns(TLRPC.DraftMessage msg, Spannable text, int allowedFlags) {
+@@ -7012,7 +7012,7 @@ public class MediaDataController extends BaseController {
+     }
+ 
+     public static void addTextStyleRuns(MessageObject msg, Spannable text, int allowedFlags) {
+-        addTextStyleRuns(msg.messageOwner.entities, msg.messageText, text, allowedFlags);
++        addTextStyleRuns(desu.inugram.helpers.chat.BlockedMessagesHelper.checkBlockedEntities(msg), msg.messageText, text, allowedFlags);
+     }
+ 
+     public static void addTextStyleRuns(ArrayList<TLRPC.MessageEntity> entities, CharSequence messageText, Spannable text) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+@@ -646,7 +646,7 @@ public class MessageObject {
+     }
+ 
+     public boolean hasMediaSpoilers() {
+-        return !isRepostPreview && (messageOwner.media != null && messageOwner.media.spoiler || needDrawBluredPreview()) || isHiddenSensitive();
++        return !isRepostPreview && (messageOwner.media != null && messageOwner.media.spoiler || needDrawBluredPreview() || desu.inugram.helpers.chat.BlockedMessagesHelper.shouldSpoil(this)) || isHiddenSensitive();
+     }
+ 
+     public Boolean isSensitiveCached;
+@@ -7991,7 +7991,7 @@ public class MessageObject {
+             entities.add(entityItalic);
+             return addEntitiesToText(text, entities, isOutOwner(), true, photoViewer, useManualParse);
+         } else {
+-            return addEntitiesToText(text, getEntities(), isOutOwner(), true, photoViewer, useManualParse);
++            return addEntitiesToText(text, desu.inugram.helpers.chat.BlockedMessagesHelper.checkBlockedEntities(this, getEntities()), isOutOwner(), true, photoViewer, useManualParse);
+         }
+     }
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+@@ -8931,6 +8931,9 @@ public class MessagesController extends BaseController implements NotificationCe
+                 totalBlockedCount = desu.inugram.helpers.security.ParanoiaHelper.adjustBlockedTotal(currentAccount, totalBlockedCount);
+                 loadingBlockedPeers = false;
+                 getNotificationCenter().postNotificationName(NotificationCenter.blockedUsersDidLoad);
++                if (!blockedEndReached && desu.inugram.helpers.chat.BlockedMessagesHelper.isEnabled()) {
++                    getBlockedPeers(false);
++                }
+             }
+         }));
+     }
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+@@ -2526,16 +2526,17 @@ public class NotificationsController extends BaseController implements Notificat
+             return null;
+         }
+         String text = messageObject.messageOwner.message;
+-        if (text == null || messageObject.messageOwner.entities == null) {
++        if (text == null || messageObject.messageOwner.entities == null && !desu.inugram.helpers.chat.BlockedMessagesHelper.shouldSpoil(messageObject)) {
+             return null;
+         }
+         StringBuilder stringBuilder = new StringBuilder(text);
+         if (messageObject != null && messageObject.didSpoilLoginCode()) {
+             return stringBuilder.toString();
+         }
+-        for (int i = 0; i < messageObject.messageOwner.entities.size(); i++) {
+-            if (messageObject.messageOwner.entities.get(i) instanceof TLRPC.TL_messageEntitySpoiler) {
+-                TLRPC.TL_messageEntitySpoiler spoiler = (TLRPC.TL_messageEntitySpoiler) messageObject.messageOwner.entities.get(i);
++        ArrayList<TLRPC.MessageEntity> entities = desu.inugram.helpers.chat.BlockedMessagesHelper.checkBlockedEntities(messageObject);
++        for (int i = 0; i < entities.size(); i++) {
++            if (entities.get(i) instanceof TLRPC.TL_messageEntitySpoiler) {
++                TLRPC.TL_messageEntitySpoiler spoiler = (TLRPC.TL_messageEntitySpoiler) entities.get(i);
+                 for (int j = 0; j < spoiler.length; j++) {
+                     stringBuilder.setCharAt(spoiler.offset + j, spoilerChars[j % spoilerChars.length]);
+                 }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+@@ -7428,7 +7428,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                         hasInvoicePrice = false;
+                     }
+                 }
+-                hasLinkPreview = !messageObject.isRestrictedMessage && MessageObject.getMedia(messageObject.messageOwner) instanceof TLRPC.TL_messageMediaWebPage && MessageObject.getMedia(messageObject.messageOwner).webpage instanceof TLRPC.TL_webPage;
++                hasLinkPreview = !messageObject.isRestrictedMessage && !desu.inugram.helpers.chat.BlockedMessagesHelper.shouldSpoil(messageObject) && MessageObject.getMedia(messageObject.messageOwner) instanceof TLRPC.TL_messageMediaWebPage && MessageObject.getMedia(messageObject.messageOwner).webpage instanceof TLRPC.TL_webPage;
+                 TLRPC.WebPage webpage = hasLinkPreview ? MessageObject.getMedia(messageObject.messageOwner).webpage : null;
+                 if (messageObject.isStoryMention()) {
+                     hasLinkPreview = true;
+@@ -19515,7 +19515,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                         }
+                         stringFinalText = TextUtils.ellipsize(stringFinalText, textPaint, maxWidth, TextUtils.TruncateAt.END);
+                         if (stringFinalText instanceof Spannable && messageObject.replyMessageObject.messageOwner != null) {
+-                            MediaDataController.addTextStyleRuns(messageObject.replyMessageObject.messageOwner.entities, messageObject.replyMessageObject.caption, (Spannable) stringFinalText);
++                            MediaDataController.addTextStyleRuns(desu.inugram.helpers.chat.BlockedMessagesHelper.checkBlockedEntities(messageObject.replyMessageObject), messageObject.replyMessageObject.caption, (Spannable) stringFinalText);
+                             stringFinalText = TextUtils.ellipsize(stringFinalText, textPaint, maxWidth, TextUtils.TruncateAt.END);
+                         }
+                     } else if (messageObject.replyMessageObject != null && messageObject.replyMessageObject.messageText != null && messageObject.replyMessageObject.messageText.length() > 0) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+@@ -1905,7 +1905,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
+                                             if (message != null) {
+                                                 message.spoilLoginCode();
+                                             }
+-                                            MediaDataController.addTextStyleRuns(message.messageOwner.entities, message.caption, msgBuilder, TextStyleSpan.FLAG_STYLE_SPOILER | TextStyleSpan.FLAG_STYLE_STRIKE);
++                                            MediaDataController.addTextStyleRuns(desu.inugram.helpers.chat.BlockedMessagesHelper.checkBlockedEntities(message), message.caption, msgBuilder, TextStyleSpan.FLAG_STYLE_SPOILER | TextStyleSpan.FLAG_STYLE_STRIKE);
+                                             MediaDataController.addAnimatedEmojiSpans(message.messageOwner.entities, msgBuilder, currentMessagePaint == null ? null : currentMessagePaint.getFontMetricsInt());
+                                         }
+                                         messageString = new SpannableStringBuilder(emoji).append(msgBuilder);
+@@ -6012,7 +6012,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
+                 if (message != null) {
+                     message.spoilLoginCode();
+                 }
+-                MediaDataController.addTextStyleRuns(message.messageOwner.entities, mess, msgBuilder, TextStyleSpan.FLAG_STYLE_SPOILER | TextStyleSpan.FLAG_STYLE_STRIKE);
++                MediaDataController.addTextStyleRuns(desu.inugram.helpers.chat.BlockedMessagesHelper.checkBlockedEntities(message), mess, msgBuilder, TextStyleSpan.FLAG_STYLE_SPOILER | TextStyleSpan.FLAG_STYLE_STRIKE);
+                 if (message != null && message.messageOwner != null) {
+                     MediaDataController.addAnimatedEmojiSpans(message.messageOwner.entities, msgBuilder, currentMessagePaint == null ? null : currentMessagePaint.getFontMetricsInt());
+                 }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -3052,6 +3052,8 @@ public class ChatActivity extends BaseFragment implements
+             .addGlobal(NotificationCenter.didApplyNewTheme)
+             .addGlobal(NotificationCenter.goingToPreviewTheme);
+ 
++        desu.inugram.helpers.chat.BlockedMessagesHelper.ensureBlockedPeersLoaded(currentAccount);
++
+         if (chatMode == MODE_EDIT_BUSINESS_LINK) {
+             observersGroup.add(NotificationCenter.businessLinksUpdated);
+         }
+@@ -23068,6 +23070,9 @@ public class ChatActivity extends BaseFragment implements
+         } else if (id == NotificationCenter.screenshotTook) {
+             updateInformationForScreenshotDetector();
+         } else if (id == NotificationCenter.blockedUsersDidLoad) {
++            if (desu.inugram.helpers.chat.BlockedMessagesHelper.isEnabled() && chatAdapter != null) {
++                chatAdapter.notifyDataSetChanged(true);
++            }
+             if (currentUser != null && !UserObject.isReplyUser(currentUser)) {
+                 boolean oldValue = userBlocked;
+                 userBlocked = getMessagesController().blockePeers.indexOfKey(currentUser.id) >= 0;
+@@ -37157,6 +37162,12 @@ public class ChatActivity extends BaseFragment implements
+         private int messagesEndRow;
+ 
+         public ArrayList<MessageObject> getMessages() {
++            return desu.inugram.helpers.chat.BlockedMessagesHelper.isHideMode() ? inu_visibleMessages : inu_getSourceMessages();
++        }
++
++        public final ArrayList<MessageObject> inu_visibleMessages = new ArrayList<>();
++
++        public ArrayList<MessageObject> inu_getSourceMessages() {
+             if (isFrozen) {
+                 return frozenMessages;
+             } else if (isFiltered) {
+@@ -37231,14 +37242,7 @@ public class ChatActivity extends BaseFragment implements
+ 
+         private void updateRowsInternal() {
+             rowCount = 0;
+-            final ArrayList<MessageObject> messages;
+-            if (isFrozen) {
+-                messages = frozenMessages;
+-            } else if (isFiltered) {
+-                messages = filteredMessages;
+-            } else {
+-                messages = ChatActivity.this.messages;
+-            }
++            final ArrayList<MessageObject> messages = desu.inugram.helpers.chat.BlockedMessagesHelper.refreshVisible(this);
+             if (chatMode == MODE_SAVED && isInsideContainer) {
+                 hintRow = rowCount++;
+             } else {
+@@ -37335,14 +37339,7 @@ public class ChatActivity extends BaseFragment implements
+                     return 1;
+                 }
+             }
+-            final ArrayList<MessageObject> messages;
+-            if (isFrozen) {
+-                messages = frozenMessages;
+-            } else if (isFiltered) {
+-                messages = filteredMessages;
+-            } else {
+-                messages = ChatActivity.this.messages;
+-            }
++            final ArrayList<MessageObject> messages = getMessages();
+ 
+             if (position >= messagesStartRow && position < messagesEndRow) {
+                 return messages.get(position - messagesStartRow).stableId;
+@@ -37824,21 +37821,14 @@ public class ChatActivity extends BaseFragment implements
+                 actionCell.setAlpha(1.0f);
+                 actionCell.setSpoilersSuppressed(chatListView.getScrollState() != RecyclerView.SCROLL_STATE_IDLE);
+             } else if (position >= messagesStartRow && position < messagesEndRow) {
+-                final ArrayList<MessageObject> messages;
+-                if (isFrozen) {
+-                    messages = frozenMessages;
+-                } else if (isFiltered) {
+-                    messages = filteredMessages;
+-                } else {
+-                    messages = ChatActivity.this.messages;
+-                }
++                final ArrayList<MessageObject> messages = getMessages();
+ 
+                 MessageObject message = messages.get(position - messagesStartRow);
+                 View view = holder.itemView;
+ 
+                 if (view instanceof ChatMessageCell) {
+                     final ChatMessageCell messageCell = (ChatMessageCell) view;
+-                    MessageObject.GroupedMessages groupedMessages = getValidGroupedMessage(message);
++                    MessageObject.GroupedMessages groupedMessages = desu.inugram.helpers.chat.BlockedMessagesHelper.filterGroup(getValidGroupedMessage(message));
+                     messageCell.isChat = currentChat != null || UserObject.isUserSelf(currentUser) || UserObject.isReplyUser(currentUser) || (chatMode == MODE_SEARCH);
+                     messageCell.setSponsoredMessageVisible(true, false);
+                     messageCell.isBotForum = UserObject.isBotForum(currentUser);
+@@ -38380,14 +38370,7 @@ public class ChatActivity extends BaseFragment implements
+                 return 1;
+             }
+             if (position >= messagesStartRow && position < messagesEndRow) {
+-                final ArrayList<MessageObject> messages;
+-                if (isFrozen) {
+-                    messages = frozenMessages;
+-                } else if (isFiltered) {
+-                    messages = filteredMessages;
+-                } else {
+-                    messages = ChatActivity.this.messages;
+-                }
++                final ArrayList<MessageObject> messages = getMessages();
+                 return messages.get(position - messagesStartRow).contentType;
+             } else if (position == botInfoRow) {
+                 return 3;

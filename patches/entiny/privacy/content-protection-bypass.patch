@@ -1,0 +1,140 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleksii Kulinich <entaytion@gmail.com>
+Date: Sat, 1 Aug 2026 14:16:29 +0300
+Subject: feat(content-protection): allow opted-in access to protected content
+
+- bypass forwarding restrictions only when the selected messages require it
+- allow copying protected messages under the same setting
+---
+ .../src/main/java/org/telegram/messenger/FileLoader.java | 4 ++--
+ .../main/java/org/telegram/messenger/MessageObject.java  | 2 +-
+ .../java/org/telegram/messenger/MessagesController.java  | 2 ++
+ .../java/org/telegram/messenger/SendMessagesHelper.java  | 9 +++++++++
+ .../main/java/org/telegram/ui/Cells/ChatMessageCell.java | 2 +-
+ .../src/main/java/org/telegram/ui/ChatActivity.java      | 7 ++++---
+ 6 files changed, 19 insertions(+), 7 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/FileLoader.java b/TMessagesProj/src/main/java/org/telegram/messenger/FileLoader.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/FileLoader.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/FileLoader.java
+@@ -1104,12 +1104,12 @@ public class FileLoader extends BaseController {
+         if (metadata != null) {
+             int flag;
+             long dialogId = metadata.dialogId;
+-            if (getMessagesController().isPeerNoForwards(dialogId) || DialogObject.isEncryptedDialog(dialogId)) {
++            if ((getMessagesController().isPeerNoForwards(dialogId) && !desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue()) || DialogObject.isEncryptedDialog(dialogId)) {
+                 return false;
+             }
+             if (parentObject instanceof MessageObject) {
+                 messageObject = (MessageObject) parentObject;
+-                if (messageObject.isRoundVideo() || messageObject.isVoice() || messageObject.isAnyKindOfSticker() || messageObject.messageOwner.noforwards) {
++                if (messageObject.isRoundVideo() || messageObject.isVoice() || messageObject.isAnyKindOfSticker() || (messageObject.messageOwner.noforwards && !desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue())) {
+                     return false;
+                 }
+             } else {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+@@ -11690,7 +11690,7 @@ public class MessageObject {
+     public boolean canForwardMessage() {
+         if (isQuickReply()) return false;
+         if (type == TYPE_GIFT_STARS || type == TYPE_GIFT_THEME_UPDATE || type == TYPE_SUGGEST_BIRTHDAY || type == TYPE_GIFT_OFFER || type == TYPE_SHARING_OFFER || type == TYPE_COMMUNITY_CHANGED) return false;
+-        return !(messageOwner instanceof TLRPC.TL_message_secret) && !needDrawBluredPreview() && !isLiveLocation() && type != MessageObject.TYPE_PHONE_CALL && !isSponsored() && !messageOwner.noforwards;
++        return !(messageOwner instanceof TLRPC.TL_message_secret) && !needDrawBluredPreview() && !isLiveLocation() && type != MessageObject.TYPE_PHONE_CALL && !isSponsored() && (!messageOwner.noforwards || desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue());
+     }
+ 
+     public boolean canEditMedia() {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+@@ -6684,6 +6684,7 @@ public class MessagesController extends BaseController implements NotificationCe
+     }
+ 
+     public boolean isChatNoForwards(TLRPC.Chat chat) {
++        if (desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue()) return false;
+         if (chat == null) {
+             return false;
+         }
+@@ -6709,6 +6710,7 @@ public class MessagesController extends BaseController implements NotificationCe
+     }
+ 
+     public boolean isUserNoForwards(TLRPC.UserFull userFull) {
++        if (desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue()) return false;
+         if (userFull == null) {
+             return false;
+         }
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+@@ -2268,6 +2268,15 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
+                 });
+                 return 0;
+             }
++            if (desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue()) {
++                ArrayList<MessageObject> inu_restricted = desu.inugram.helpers.chat.ChatHelper.splitRestrictedForward(messages, getMessagesController());
++                if (inu_restricted != null) {
++                    desu.inugram.helpers.chat.ChatHelper.sendRestrictedForward(this, currentAccount, inu_restricted, peer, notify, scheduleDate, scheduleRepeatPeriod, replyToTopMsg, monoForumPeerId, suggestionParams, hideCaption, payStars);
++                    if (messages.isEmpty()) {
++                        return 0;
++                    }
++                }
++            }
+             if (DialogObject.isUserDialog(peer)) {
+                 TLRPC.User sendToUser = getMessagesController().getUser(peer);
+                 if (sendToUser == null) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+@@ -6985,7 +6985,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                 drawSideButton = checkNeedDrawShareButton(messageObject) ? 2 : 0;
+             } else if (messageObject.searchType == ChatActivity.SEARCH_MY_MESSAGES) {
+                 drawSideButton = 0;
+-            } else if (MessagesController.getInstance(currentAccount).isPeerNoForwards(messageObject.getDialogId()) || (messageObject.messageOwner != null && messageObject.messageOwner.noforwards)) {
++            } else if (!desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue() && (MessagesController.getInstance(currentAccount).isPeerNoForwards(messageObject.getDialogId()) || (messageObject.messageOwner != null && messageObject.messageOwner.noforwards))) {
+                 drawSideButton = 0;
+                 if (isPinnedChat && !isRepliesChat && !messageObject.isSponsored()) {
+                     if (currentMessagesGroup != null && currentPosition != null) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -3554,7 +3554,7 @@ public class ChatActivity extends BaseFragment implements
+             if (chatActivity != null && chatActivity.getDialogId() == UserObject.VERIFY) {
+                 return false;
+             }
+-            final boolean noforwards = (
++            final boolean noforwards = !desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue() && (
+                 chatActivity != null && chatActivity.isPeerNoForwards() ||
+                 selectedView != null && selectedView.getMessageObject() != null && selectedView.getMessageObject().messageOwner != null && selectedView.getMessageObject().messageOwner.noforwards
+             );
+@@ -10465,7 +10465,7 @@ public class ChatActivity extends BaseFragment implements
+         }
+         ChatActionsHelper.addActionModeItems(this, actionMode, edit);
+         actionMode.setItemVisibility(edit, canEditMessagesCount == 1 && selectedMessagesIds[0].size() + selectedMessagesIds[1].size() == 1 ? View.VISIBLE : View.GONE);
+-        actionMode.setItemVisibility(copy, !isPeerNoForwards() && selectedMessagesCanCopyIds[0].size() + selectedMessagesCanCopyIds[1].size() != 0 ? View.VISIBLE : View.GONE);
++        actionMode.setItemVisibility(copy, (desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue() || !isPeerNoForwards()) && selectedMessagesCanCopyIds[0].size() + selectedMessagesCanCopyIds[1].size() != 0 ? View.VISIBLE : View.GONE);
+         actionMode.setItemVisibility(star, selectedMessagesCanStarIds[0].size() + selectedMessagesCanStarIds[1].size() != 0 ? View.VISIBLE : View.GONE);
+         actionMode.setItemVisibility(delete, cantDeleteMessagesCount == 0 ? View.VISIBLE : View.GONE);
+         actionMode.setItemVisibility(tag_message, getUserConfig().isPremium() ? View.VISIBLE : View.GONE);
+@@ -12330,6 +12330,7 @@ public class ChatActivity extends BaseFragment implements
+     }
+ 
+     private boolean hasSelectedNoforwardsMessage() {
++        if (desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue()) return false;
+         try {
+             for (int i = 0; i < selectedMessagesIds.length; ++i) {
+                 for (int j = 0; j < selectedMessagesIds[i].size(); ++j) {
+@@ -19523,7 +19524,7 @@ public class ChatActivity extends BaseFragment implements
+                 int copyVisible = View.GONE, starVisible = View.GONE, newCopyVisible = View.GONE, newStarVisible = View.GONE;
+                 if (copyItem != null) {
+                     copyVisible = copyItem.getVisibility();
+-                    copyItem.setVisibility(!noforwards && selectedMessagesCanCopyIds[0].size() + selectedMessagesCanCopyIds[1].size() != 0 ? View.VISIBLE : View.GONE);
++                    copyItem.setVisibility((desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue() || !noforwards) && selectedMessagesCanCopyIds[0].size() + selectedMessagesCanCopyIds[1].size() != 0 ? View.VISIBLE : View.GONE);
+                     newCopyVisible = copyItem.getVisibility();
+                 }
+                 if (starItem != null) {

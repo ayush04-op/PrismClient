@@ -1,0 +1,719 @@
+package desu.inugram.ui.settings
+
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.PorterDuff
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.View
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import desu.inugram.InuConfig
+import desu.inugram.SearchRegistry
+import desu.inugram.helpers.badges.BadgeRegistry
+import desu.inugram.helpers.CrashReporter
+import desu.inugram.helpers.InuUtils
+import desu.inugram.helpers.LogsHelper
+import desu.inugram.helpers.NotificationsHelper
+import desu.inugram.helpers.SystemInfo
+import desu.inugram.helpers.push.UnifiedPushHelper
+import desu.inugram.ui.DonateBottomSheet
+import org.telegram.messenger.AndroidUtilities
+import org.telegram.messenger.AndroidUtilities.dp
+import org.telegram.messenger.ApplicationLoader
+import org.telegram.messenger.FileLoader
+import org.telegram.messenger.FileLog
+import org.telegram.messenger.LocaleController
+import org.telegram.messenger.NotificationCenter
+import org.telegram.messenger.R
+import org.telegram.messenger.SharedConfig
+import org.telegram.messenger.UserConfig
+import org.telegram.messenger.Utilities
+import org.telegram.ui.ActionBar.AlertDialog
+import org.telegram.ui.ActionBar.Theme
+import org.telegram.ui.Cells.NotificationsCheckCell
+import org.telegram.ui.Cells.TextCheckCell
+import org.telegram.ui.Components.BulletinFactory
+import org.telegram.ui.Components.ItemOptions
+import org.telegram.ui.Components.LayoutHelper
+import org.telegram.ui.Components.UItem
+import org.telegram.ui.Components.UniversalAdapter
+import android.text.InputType
+import org.telegram.ui.Components.EditTextBoldCursor
+import org.telegram.ui.IUpdateLayout
+import org.telegram.ui.LaunchActivity
+import org.telegram.ui.UpdateLayoutWrapper
+
+class AdditionalSettingsActivity : SettingsPageActivity(), NotificationCenter.NotificationCenterDelegate {
+    override fun getTitle(): CharSequence = LocaleController.getString(R.string.InuCategoryBackup)
+
+    private var updateLayout: IUpdateLayout? = null
+    private var updateWrapper: UpdateLayoutWrapper? = null
+    private var bottomInset: Int = 0
+
+    private var donateCard: View? = null
+
+    private fun getOrCreateDonateCard(): View = donateCard ?: DonateCardCell(
+        context!!,
+        onSupport = { showDialog(DonateBottomSheet(this)) },
+        onHide = {
+            InuConfig.HIDE_DONATE_CARD.value = true
+            listView?.adapter?.update(true)
+            BulletinFactory.of(this).createSimpleBulletin(
+                R.raw.chats_infotip,
+                LocaleController.getString(R.string.InuDonateHidden),
+                LocaleController.getString(R.string.Undo),
+            ) {
+                InuConfig.HIDE_DONATE_CARD.value = false
+                listView?.adapter?.update(true)
+            }.show()
+        },
+    ).also { donateCard = it }
+
+    override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
+        if (InuConfig.HIDE_DONATE_CARD.value) {
+            items.add(mkSubPageButton(BUTTON_DONATE, R.drawable.inu_tabler_heart, LocaleController.getString(R.string.InuDonateRow)))
+        } else {
+            items.add(UItem.asCustom(getOrCreateDonateCard()))
+        }
+        items.add(UItem.asShadow(null))
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_HIDE_DEV_BADGES,
+                R.string.InuHideDevBadges,
+                R.string.InuHideDevBadgesInfo,
+                InuConfig.HIDE_DEV_BADGES.value,
+            )
+        )
+        items.add(UItem.asShadow(null))
+
+        items.add(UItem.asHeader(LocaleController.getString(R.string.InuUpdates)))
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_AUTO_UPDATE_CHECK,
+                R.string.InuAutoUpdateCheck,
+                R.string.InuAutoUpdateCheckInfo,
+                InuConfig.UPDATES_ENABLED.value,
+            )
+        )
+        if (InuConfig.UPDATES_ENABLED.value) {
+            items.add(
+                mkTwoLineCheckItem(
+                    TOGGLE_UPDATES_INCLUDE_BETA,
+                    R.string.InuUpdatesIncludeBeta,
+                    R.string.InuUpdatesIncludeBetaInfo,
+                    InuConfig.UPDATES_INCLUDE_BETA.value,
+                )
+            )
+        }
+        items.add(UItem.asShadow(null))
+
+        items.add(UItem.asHeader(LocaleController.getString(R.string.InuLogs)))
+        items.add(
+            UItem.asCheck(
+                TOGGLE_LOGS_ENABLED,
+                LocaleController.getString(R.string.InuLogsEnabled),
+            ).setChecked(LogsHelper.isEnabled())
+        )
+        if (LogsHelper.isEnabled()) {
+            items.add(
+                mkTwoLineCheckItem(
+                    TOGGLE_LOGS_REDACT,
+                    R.string.InuLogsRedact,
+                    R.string.InuLogsRedactInfo,
+                    InuConfig.LOGS_REDACT.value,
+                )
+            )
+            items.add(UItem.asCustom(getOrCreateLogsRow()))
+            items.add(UItem.asCustom(getOrCreateHeapRow()))
+        }
+        items.add(UItem.asShadow(null))
+
+        items.add(UItem.asHeader(LocaleController.getString(R.string.InuPushHeader)))
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_UNIFIED_PUSH,
+                R.string.InuUnifiedPush,
+                R.string.InuUnifiedPushInfo,
+                UnifiedPushHelper.isEnabled(),
+                experimental = true,
+            )
+        )
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_BACKGROUND_SERVICE,
+                R.string.InuBackgroundService,
+                R.string.InuBackgroundServiceInfo,
+                InuConfig.FOREGROUND_PUSH_SERVICE.value,
+            )
+        )
+        if (InuConfig.FOREGROUND_PUSH_SERVICE.value && android.os.Build.VERSION.SDK_INT >= 26) {
+            items.add(UItem.asButton(BUTTON_BACKGROUND_SERVICE_CHANNEL, LocaleController.getString(R.string.InuBackgroundServiceHideNotification), LocaleController.getString(R.string.InuBackgroundServiceHideNotificationInfo)))
+        }
+        if (UnifiedPushHelper.isEnabled()) {
+            items.add(
+                UItem.asButton(
+                    BUTTON_UNIFIED_PUSH_DISTRIBUTOR,
+                    LocaleController.getString(R.string.InuUnifiedPushDistributor),
+                    UnifiedPushHelper.currentDistributor()?.let(::appLabel) ?: LocaleController.getString(R.string.InuUnifiedPushNoDistributor),
+                )
+            )
+            val gw = UnifiedPushHelper.getGateway()
+            val gwSubtitle = if (gw.isNotEmpty()) {
+                if (gw == UnifiedPushHelper.DEFAULT_GATEWAY) {
+                    "${LocaleController.getString(R.string.InuUnifiedPushGatewayDefault)} ($gw)"
+                } else {
+                    gw
+                }
+            } else {
+                LocaleController.getString(R.string.InuUnifiedPushGatewayDirect)
+            }
+            items.add(
+                UItem.asButton(
+                    BUTTON_UNIFIED_PUSH_GATEWAY,
+                    LocaleController.getString(R.string.InuUnifiedPushGateway),
+                    gwSubtitle,
+                )
+            )
+        }
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_NOTIF_CHANNEL_SYNC,
+                R.string.InuNotifChannelSync,
+                R.string.InuNotifChannelSyncInfo,
+                InuConfig.NOTIF_CHANNEL_SYNC.value,
+            )
+        )
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_PER_CHAT_NOTIF_CHANNELS,
+                R.string.InuPerChatNotifChannels,
+                R.string.InuPerChatNotifChannelsInfo,
+                InuConfig.PER_CHAT_NOTIF_CHANNELS.value,
+            )
+        )
+        items.add(UItem.asShadow(null))
+
+        items.add(UItem.asHeader(LocaleController.getString(R.string.InuDataBackup)))
+        items.add(mkSubPageButton(BUTTON_CLOUD_SYNC, R.drawable.inu_tabler_cloud, LocaleController.getString(R.string.InuCloudSync)))
+        items.add(mkSubPageButton(BUTTON_CACHE_MANAGEMENT, R.drawable.inu_tabler_trash_x, LocaleController.getString(R.string.InuCacheManagement)))
+        items.add(mkSubPageButton(BUTTON_DATACENTER_STATUS, R.drawable.inu_tabler_server, LocaleController.getString(R.string.InuDatacenterStatus)))
+        items.add(UItem.asShadow(null))
+
+        items.add(UItem.asButton(BUTTON_COPY_SYSINFO, R.drawable.inu_tabler_terminal_2, LocaleController.getString(R.string.InuLogsCopySystemInfo)))
+        items.add(UItem.asShadow(null))
+    }
+
+    override fun createView(context: Context): View {
+        val root = super.createView(context) as FrameLayout
+
+        val wrapper = UpdateLayoutWrapper(context)
+        root.addView(
+            wrapper,
+            LayoutHelper.createFrame(
+                LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT,
+                Gravity.BOTTOM,
+            ),
+        )
+        updateWrapper = wrapper
+
+        val ul = ApplicationLoader.applicationLoaderInstance?.takeUpdateLayout(parentActivity, wrapper)
+        updateLayout = ul
+        ul?.updateAppUpdateViews(UserConfig.selectedAccount, false)
+        applyListPadding()
+
+        return root
+    }
+
+    override fun onInsets(left: Int, top: Int, right: Int, bottom: Int) {
+        bottomInset = bottom
+        updateWrapper?.setPadding(0, 0, 0, bottom)
+        applyListPadding()
+    }
+
+    private fun toggleBackgroundService(view: View) {
+        if (InuConfig.FOREGROUND_PUSH_SERVICE.value) {
+            InuConfig.FOREGROUND_PUSH_SERVICE.value = false
+            (view as? NotificationsCheckCell)?.isChecked = false
+            restartPushService()
+            return
+        }
+        val ctx = parentActivity ?: return
+        AlertDialog.Builder(ctx, resourceProvider)
+            .setTitle(LocaleController.getString(R.string.InuBackgroundService))
+            .setMessage(LocaleController.getString(R.string.InuBackgroundServiceAlert))
+            .setPositiveButton(LocaleController.getString(R.string.InuBackgroundServiceEnable)) { _, _ ->
+                InuConfig.FOREGROUND_PUSH_SERVICE.value = true
+                (view as? NotificationsCheckCell)?.isChecked = true
+                restartPushService()
+            }
+            .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
+            .show()
+    }
+
+    private fun openServiceChannelSettings() {
+        val ctx = parentActivity ?: return
+        val intent = android.content.Intent(android.provider.Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+            .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, ctx.packageName)
+            .putExtra(android.provider.Settings.EXTRA_CHANNEL_ID, "push_service_channel")
+        runCatching { ctx.startActivity(intent) }
+    }
+
+    private fun restartPushService() {
+        val app = ApplicationLoader.applicationContext
+        app.stopService(android.content.Intent(app, org.telegram.messenger.NotificationsService::class.java))
+        ApplicationLoader.startPushService()
+    }
+
+    private fun toggleUnifiedPush() {
+        val enable = !UnifiedPushHelper.isEnabled()
+        if (enable && UnifiedPushHelper.distributors().isEmpty()) {
+            BulletinFactory.of(this).createErrorBulletin(LocaleController.getString(R.string.InuUnifiedPushNoDistributorInfo)).show()
+            return
+        }
+        UnifiedPushHelper.setEnabled(enable)
+        listView?.adapter?.update(true)
+    }
+
+    private fun pickDistributor(anchor: View) {
+        val all = UnifiedPushHelper.distributors()
+        if (all.isEmpty()) {
+            BulletinFactory.of(this).createErrorBulletin(LocaleController.getString(R.string.InuUnifiedPushNoDistributorInfo)).show()
+            return
+        }
+        val current = UnifiedPushHelper.currentDistributor()
+        RadioItemOptions.show(this, anchor, all.map { appLabel(it) }, all.indexOf(current).coerceAtLeast(0)) { which ->
+            val picked = all.getOrNull(which) ?: return@show
+            if (picked != current) {
+                UnifiedPushHelper.setEnabled(true, picked)
+                listView?.adapter?.update(true)
+            }
+        }
+    }
+
+    private fun editGateway() {
+        val ctx = context ?: return
+        val current = UnifiedPushHelper.getGateway()
+        val container = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(24f), dp(8f), dp(24f), 0)
+        }
+        val input = EditTextBoldCursor(ctx).apply {
+            setTextColor(Theme.getColor(Theme.key_dialogTextBlack))
+            setHintTextColor(Theme.getColor(Theme.key_dialogTextHint))
+            setCursorColor(Theme.getColor(Theme.key_dialogTextBlack))
+            setCursorSize(dp(20f))
+            setCursorWidth(1.5f)
+            hint = "https://p2p.belloworld.it/"
+            setText(current)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+            isSingleLine = true
+            textSize = 16f
+        }
+        container.addView(input, LinearLayout.LayoutParams(-1, -2).apply {
+            bottomMargin = dp(8f)
+        })
+        val infoText = TextView(ctx).apply {
+            setTextColor(Theme.getColor(Theme.key_dialogTextGray2))
+            setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f)
+            text = LocaleController.getString(R.string.InuUnifiedPushGatewayInfo)
+        }
+        container.addView(infoText, LinearLayout.LayoutParams(-1, -2))
+
+        val builder = AlertDialog.Builder(ctx, resourceProvider)
+            .setTitle(LocaleController.getString(R.string.InuUnifiedPushGateway))
+            .setView(container)
+            .setPositiveButton(LocaleController.getString(R.string.OK)) { _, _ ->
+                val entered = input.text.toString().trim()
+                UnifiedPushHelper.setGateway(entered)
+                listView?.adapter?.update(true)
+            }
+            .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
+
+        if (current.isNotEmpty()) {
+            builder.setNeutralButton(LocaleController.getString(R.string.Reset)) { _, _ ->
+                UnifiedPushHelper.setGateway("")
+                listView?.adapter?.update(true)
+            }
+        } else {
+            builder.setNeutralButton(LocaleController.getString(R.string.InuUnifiedPushGatewayDefault)) { _, _ ->
+                UnifiedPushHelper.setGateway("https://p2p.belloworld.it/")
+                listView?.adapter?.update(true)
+            }
+        }
+        showDialog(builder.create())
+    }
+
+    private fun appLabel(packageName: String): CharSequence = try {
+        val pm = ApplicationLoader.applicationContext.packageManager
+        pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0))
+    } catch (_: Exception) {
+        packageName
+    }
+
+    private fun applyListPadding() {
+        val lv = listView ?: return
+        val barHeight = if (SharedConfig.isAppUpdateAvailable()) dp(44f) else 0
+        lv.setPadding(lv.paddingLeft, lv.paddingTop, lv.paddingRight, bottomInset + barHeight)
+    }
+
+    override fun onClick(item: UItem, view: View, position: Int, x: Float, y: Float) {
+        when (item.id) {
+            TOGGLE_UNIFIED_PUSH -> toggleUnifiedPush()
+
+            TOGGLE_BACKGROUND_SERVICE -> toggleBackgroundService(view)
+
+            BUTTON_BACKGROUND_SERVICE_CHANNEL -> openServiceChannelSettings()
+
+            BUTTON_UNIFIED_PUSH_DISTRIBUTOR -> pickDistributor(view)
+
+            BUTTON_UNIFIED_PUSH_GATEWAY -> editGateway()
+
+            TOGGLE_NOTIF_CHANNEL_SYNC -> {
+                (view as? NotificationsCheckCell)?.isChecked = InuConfig.NOTIF_CHANNEL_SYNC.toggle()
+            }
+
+            TOGGLE_PER_CHAT_NOTIF_CHANNELS -> {
+                val new = InuConfig.PER_CHAT_NOTIF_CHANNELS.toggle()
+                (view as? NotificationsCheckCell)?.isChecked = new
+                NotificationsHelper.resetDefaultNotificationChannels()
+            }
+
+            TOGGLE_AUTO_UPDATE_CHECK -> {
+                val new = InuConfig.UPDATES_ENABLED.toggle()
+                (view as? NotificationsCheckCell)?.isChecked = new
+                listView?.adapter?.update(true)
+            }
+
+            TOGGLE_UPDATES_INCLUDE_BETA -> {
+                val new = InuConfig.UPDATES_INCLUDE_BETA.toggle()
+                (view as? NotificationsCheckCell)?.isChecked = new
+            }
+
+            TOGGLE_HIDE_DEV_BADGES -> {
+                (view as? NotificationsCheckCell)?.isChecked = InuConfig.HIDE_DEV_BADGES.toggle()
+                // entiny: update badge on cached TLRPC user/chat objects so toggle takes effect without app restart
+                BadgeRegistry.refreshCached()
+            }
+
+            TOGGLE_LOGS_REDACT -> (view as? NotificationsCheckCell)?.isChecked = InuConfig.LOGS_REDACT.toggle()
+
+            TOGGLE_LOGS_ENABLED -> {
+                if (LogsHelper.isEnabled()) {
+                    setLogsEnabled(false, view)
+                } else {
+                    AlertDialog.Builder(parentActivity ?: return)
+                        .setTitle(LocaleController.getString(R.string.InuLogsPrivacyTitle))
+                        .setMessage(LocaleController.getString(R.string.InuLogsPrivacyText))
+                        .setPositiveButton(LocaleController.getString(R.string.InuLogsEnableAction)) { _, _ -> setLogsEnabled(true, view) }
+                        .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
+                        .show()
+                }
+            }
+
+            BUTTON_COPY_SYSINFO -> {
+                AndroidUtilities.addToClipboard(SystemInfo.build())
+                BulletinFactory.of(this).createCopyBulletin(
+                    LocaleController.getString(R.string.InuLogsSystemInfoCopied)
+                ).show()
+            }
+
+            BUTTON_DONATE -> showDialog(DonateBottomSheet(this))
+
+            BUTTON_CLOUD_SYNC -> presentFragment(BackupSettingsActivity())
+            BUTTON_CACHE_MANAGEMENT -> presentFragment(CacheManagementSettingsActivity())
+            BUTTON_DATACENTER_STATUS -> presentFragment(DatacenterStatusActivity())
+        }
+    }
+
+    override fun onFragmentCreate(): Boolean {
+        val ok = super.onFragmentCreate()
+        val global = NotificationCenter.getGlobalInstance()
+        global.addObserver(this, NotificationCenter.appUpdateAvailable)
+        global.addObserver(this, NotificationCenter.appUpdateLoading)
+        val acct = NotificationCenter.getInstance(UserConfig.selectedAccount)
+        acct.addObserver(this, NotificationCenter.fileLoadProgressChanged)
+        acct.addObserver(this, NotificationCenter.fileLoaded)
+        acct.addObserver(this, NotificationCenter.fileLoadFailed)
+        return ok
+    }
+
+    override fun onFragmentDestroy() {
+        val global = NotificationCenter.getGlobalInstance()
+        global.removeObserver(this, NotificationCenter.appUpdateAvailable)
+        global.removeObserver(this, NotificationCenter.appUpdateLoading)
+        val acct = NotificationCenter.getInstance(UserConfig.selectedAccount)
+        acct.removeObserver(this, NotificationCenter.fileLoadProgressChanged)
+        acct.removeObserver(this, NotificationCenter.fileLoaded)
+        acct.removeObserver(this, NotificationCenter.fileLoadFailed)
+        super.onFragmentDestroy()
+    }
+
+    override fun didReceivedNotification(id: Int, account: Int, vararg args: Any?) {
+        val ul = updateLayout ?: return
+        val acct = UserConfig.selectedAccount
+        when (id) {
+            NotificationCenter.appUpdateAvailable -> {
+                val animated = args.getOrNull(0) as? Boolean ?: true
+                ul.updateAppUpdateViews(acct, animated)
+                applyListPadding()
+            }
+
+            NotificationCenter.appUpdateLoading -> {
+                ul.updateFileProgress(null)
+                ul.updateAppUpdateViews(acct, true)
+            }
+
+            NotificationCenter.fileLoadProgressChanged -> {
+                ul.updateFileProgress(args)
+            }
+
+            NotificationCenter.fileLoaded, NotificationCenter.fileLoadFailed -> {
+                val name = args.getOrNull(0) as? String ?: return
+                val doc = SharedConfig.pendingAppUpdate?.document ?: return
+                if (name == FileLoader.getAttachFileName(doc)) {
+                    ul.updateAppUpdateViews(acct, true)
+                }
+            }
+        }
+    }
+
+    private var logsRow: View? = null
+    private var logsSizeText: TextView? = null
+    private var logsSize: Long = -1L
+
+    private fun getOrCreateLogsRow(): View {
+        logsRow?.let { return it }
+        val ctx = context!!
+        val row = object : LinearLayout(ctx) {
+            override fun dispatchDraw(canvas: Canvas) {
+                super.dispatchDraw(canvas)
+                canvas.drawLine(
+                    dp(20f).toFloat(),
+                    height - 1f,
+                    width.toFloat(),
+                    height.toFloat(),
+                    Theme.dividerPaint,
+                )
+            }
+        }.apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = dp(50f)
+            setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite))
+            setPadding(dp(21f), 0, dp(8f), 0)
+        }
+        val size = TextView(ctx).apply {
+            setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText))
+            setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16f)
+            text = logsSizeLabel(logsSize)
+        }
+        logsSizeText = size
+        row.addView(size, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        row.addView(buildLogsIconButton(ctx, R.drawable.msg_clear, R.string.InuLogsClear) {
+            FileLog.cleanupLogs()
+            refreshLogsSize()
+            BulletinFactory.of(this).createSimpleBulletin(
+                R.raw.chats_infotip,
+                LocaleController.getString(R.string.InuLogsCleared),
+            ).show()
+        })
+        row.addView(buildLogsIconButton(ctx, R.drawable.msg_shareout, R.string.InuLogsShare) { anchor ->
+            showShareMenu(anchor)
+        })
+        logsRow = row
+        refreshLogsSize()
+        return row
+    }
+
+    private fun buildLogsIconButton(
+        ctx: Context, iconRes: Int, contentDescRes: Int, onClick: (anchor: View) -> Unit,
+    ): ImageView = ImageView(ctx).apply {
+        setImageResource(iconRes)
+        setColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon), PorterDuff.Mode.MULTIPLY)
+        background = Theme.createSelectorDrawable(
+            Theme.getColor(Theme.key_listSelector), Theme.RIPPLE_MASK_CIRCLE_20DP,
+        )
+        scaleType = ImageView.ScaleType.CENTER_INSIDE
+        contentDescription = LocaleController.getString(contentDescRes)
+        layoutParams = LinearLayout.LayoutParams(dp(44f), dp(44f))
+        setOnClickListener { onClick(this) }
+    }
+
+    private fun showShareMenu(anchor: View) {
+        val opts = ItemOptions.makeOptions(this, anchor)
+        opts.add(R.drawable.msg_archive, LocaleController.getString(R.string.InuLogsShareZip)) {
+            val activity = parentActivity as? LaunchActivity ?: return@add
+            LogsHelper.shareZip(activity, ::onShareDone)
+        }
+        opts.add(R.drawable.msg_log, LocaleController.getString(R.string.InuLogsShareCurrent)) {
+            val activity = parentActivity as? LaunchActivity ?: return@add
+            LogsHelper.shareCurrent(activity, ::onShareDone)
+        }
+        opts.setGravity(Gravity.END).show()
+    }
+
+    private fun setLogsEnabled(enabled: Boolean, view: View) {
+        LogsHelper.setEnabled(enabled)
+        (view as? TextCheckCell)?.isChecked = enabled
+        if (enabled) refreshLogsSize()
+        listView?.adapter?.update(true)
+    }
+
+    private fun onShareDone(ok: Boolean) {
+        if (!ok) BulletinFactory.of(this).createErrorBulletin(
+            LocaleController.getString(R.string.InuLogsShareError)
+        ).show()
+    }
+
+    private var heapRow: View? = null
+    private var heapUsageText: TextView? = null
+
+    private fun getOrCreateHeapRow(): View {
+        heapRow?.let { refreshHeapUsage(); return it }
+        val ctx = context!!
+        val row = object : LinearLayout(ctx) {
+            override fun dispatchDraw(canvas: Canvas) {
+                super.dispatchDraw(canvas)
+                canvas.drawLine(
+                    dp(20f).toFloat(),
+                    height - 1f,
+                    width.toFloat(),
+                    height.toFloat(),
+                    Theme.dividerPaint,
+                )
+            }
+        }.apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = dp(50f)
+            setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite))
+            setPadding(dp(21f), 0, dp(8f), 0)
+        }
+        val usage = TextView(ctx).apply {
+            setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText))
+            setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16f)
+        }
+        heapUsageText = usage
+        row.addView(usage, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        row.addView(buildLogsIconButton(ctx, R.drawable.msg_calls_minimize, R.string.InuLogsMakeHeapDump) {
+            val rt = Runtime.getRuntime()
+            rt.gc()
+            BulletinFactory.of(this).createErrorBulletin("Runtime GC finished").show()
+            refreshHeapUsage()
+        })
+        row.addView(buildLogsIconButton(ctx, R.drawable.msg_download, R.string.InuLogsMakeHeapDump) {
+            confirmAndMakeHeapDump()
+        })
+        heapRow = row
+        refreshHeapUsage()
+        return row
+    }
+
+    private fun confirmAndMakeHeapDump() {
+        val activity = parentActivity as? LaunchActivity ?: return
+        AlertDialog.Builder(activity)
+            .setTitle(LocaleController.getString(R.string.InuLogsMakeHeapDump))
+            .setMessage(AndroidUtilities.replaceTags(LocaleController.getString(R.string.InuLogsHeapDumpWarning)))
+            .setPositiveButton(LocaleController.getString(R.string.Continue)) { _, _ -> makeHeapDump(activity) }
+            .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
+            .show()
+    }
+
+    private fun makeHeapDump(activity: LaunchActivity) {
+        val progress = AlertDialog(activity, AlertDialog.ALERT_TYPE_MESSAGE).apply {
+            setMessage(LocaleController.getString(R.string.InuLogsMakingHeapDump))
+            setCanCancel(false)
+        }
+        progress.show()
+        // entiny: delay heap dump so dialog can render a frame before thread freezes
+        AndroidUtilities.runOnUIThread({
+            var ok = true
+            try {
+                CrashReporter.dumpAndSaveHeap(activity)
+            } catch (e: Throwable) {
+                ok = false
+                FileLog.e(e)
+            } finally {
+                progress.dismiss()
+                refreshHeapUsage()
+            }
+            if (!ok) BulletinFactory.of(this).createErrorBulletin(
+                LocaleController.getString(R.string.InuLogsShareError)
+            ).show()
+        }, 150)
+    }
+
+    private fun refreshHeapUsage() {
+        val rt = Runtime.getRuntime()
+        val used = rt.totalMemory() - rt.freeMemory()
+        heapUsageText?.text = LocaleController.formatString(
+            R.string.InuLogsHeapUsage,
+            AndroidUtilities.formatFileSize(used),
+            AndroidUtilities.formatFileSize(rt.maxMemory()),
+        )
+    }
+
+    private fun logsSizeLabel(size: Long): String = LocaleController.formatString(
+        R.string.InuLogsSize,
+        if (size < 0) "…" else AndroidUtilities.formatFileSize(size),
+    )
+
+    private fun refreshLogsSize() {
+        logsSize = -1L
+        logsSizeText?.text = logsSizeLabel(-1L)
+        Utilities.globalQueue.postRunnable {
+            val size = LogsHelper.computeSize()
+            AndroidUtilities.runOnUIThread {
+                logsSize = size
+                logsSizeText?.text = logsSizeLabel(size)
+            }
+        }
+    }
+
+    companion object {
+        private val TOGGLE_AUTO_UPDATE_CHECK = InuUtils.generateId()
+        private val TOGGLE_UPDATES_INCLUDE_BETA = InuUtils.generateId()
+        private val TOGGLE_HIDE_DEV_BADGES = InuUtils.generateId()
+        private val TOGGLE_LOGS_ENABLED = InuUtils.generateId()
+        private val TOGGLE_LOGS_REDACT = InuUtils.generateId()
+        private val BUTTON_DONATE = InuUtils.generateId()
+        private val BUTTON_COPY_SYSINFO = InuUtils.generateId()
+        private val BUTTON_CLOUD_SYNC = InuUtils.generateId()
+        private val BUTTON_CACHE_MANAGEMENT = InuUtils.generateId()
+        private val BUTTON_DATACENTER_STATUS = InuUtils.generateId()
+        private val TOGGLE_UNIFIED_PUSH = InuUtils.generateId()
+        private val TOGGLE_BACKGROUND_SERVICE = InuUtils.generateId()
+        private val BUTTON_BACKGROUND_SERVICE_CHANNEL = InuUtils.generateId()
+        private val BUTTON_UNIFIED_PUSH_DISTRIBUTOR = InuUtils.generateId()
+        private val BUTTON_UNIFIED_PUSH_GATEWAY = InuUtils.generateId()
+        private val TOGGLE_NOTIF_CHANNEL_SYNC = InuUtils.generateId()
+        private val TOGGLE_PER_CHAT_NOTIF_CHANNELS = InuUtils.generateId()
+
+        @JvmField
+        val PAGE = SearchRegistry.Page(
+            slug = "additional",
+            titleRes = R.string.InuAdditional,
+            iconRes = R.drawable.inu_tabler_device_floppy,
+            factory = ::AdditionalSettingsActivity,
+            entries = listOf(
+                SearchRegistry.Entry("logs-enabled", R.string.InuLogsEnabled, TOGGLE_LOGS_ENABLED),
+                SearchRegistry.Entry("logs-redact", R.string.InuLogsRedact, TOGGLE_LOGS_REDACT),
+                SearchRegistry.Entry("additional-donate", R.string.InuDonateRow, BUTTON_DONATE),
+                SearchRegistry.Entry("hide-dev-badges", R.string.InuHideDevBadges, TOGGLE_HIDE_DEV_BADGES),
+                SearchRegistry.Entry("auto-update-check", R.string.InuAutoUpdateCheck, TOGGLE_AUTO_UPDATE_CHECK),
+                SearchRegistry.Entry("updates-include-beta", R.string.InuUpdatesIncludeBeta, TOGGLE_UPDATES_INCLUDE_BETA),
+                SearchRegistry.Entry("additional-cloud-sync", R.string.InuCloudSync, BUTTON_CLOUD_SYNC),
+                SearchRegistry.Entry("additional-cache-management", R.string.InuCacheManagement, BUTTON_CACHE_MANAGEMENT),
+                SearchRegistry.Entry("additional-datacenter-status", R.string.InuDatacenterStatus, BUTTON_DATACENTER_STATUS),
+                SearchRegistry.Entry("additional-unified-push", R.string.InuUnifiedPush, TOGGLE_UNIFIED_PUSH),
+                SearchRegistry.Entry("additional-background-service", R.string.InuBackgroundService, TOGGLE_BACKGROUND_SERVICE),
+                SearchRegistry.Entry("additional-unified-push-gateway", R.string.InuUnifiedPushGateway, BUTTON_UNIFIED_PUSH_GATEWAY),
+                SearchRegistry.Entry("notif-channel-sync", R.string.InuNotifChannelSync, TOGGLE_NOTIF_CHANNEL_SYNC),
+                SearchRegistry.Entry("per-chat-notif-channels", R.string.InuPerChatNotifChannels, TOGGLE_PER_CHAT_NOTIF_CHANNELS),
+            ),
+        )
+    }
+}

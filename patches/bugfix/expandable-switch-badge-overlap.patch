@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Sat, 4 Jul 2026 00:22:23 +0400
+Subject: fix expandable switch counter badge overlapping the switch on long titles
+
+---
+ .../src/main/java/org/telegram/ui/Cells/TextCheckCell2.java | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/TextCheckCell2.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/TextCheckCell2.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/TextCheckCell2.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/TextCheckCell2.java
+@@ -125,6 +125,12 @@ public class TextCheckCell2 extends FrameLayout {
+ 
+     @Override
+     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
++        if (collapseViewContainer != null && collapseViewContainer.getVisibility() == VISIBLE) {
++            collapseViewContainer.measure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
++            textView.setMaxWidth(MeasureSpec.getSize(widthMeasureSpec) - dp(21 + 76 + 20) - collapseViewContainer.getMeasuredWidth());
++        } else {
++            textView.setMaxWidth(Integer.MAX_VALUE);
++        }
+         if (isMultiline) {
+             super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+         } else {

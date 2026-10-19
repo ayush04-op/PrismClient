@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Tue, 23 Jun 2026 17:23:38 +0400
+Subject: fix rare NPE in MessageController.isAdmin/isOwner
+
+---
+ .../main/java/org/telegram/messenger/MessagesController.java    | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+@@ -7552,6 +7552,7 @@ public class MessagesController extends BaseController implements NotificationCe
+                     }
+                 }
+             }
++            return false;
+         }
+         final TLRPC.ChannelParticipant participant = array.get(uid);
+         return participant instanceof TLRPC.TL_channelParticipantAdmin || participant instanceof TLRPC.TL_channelParticipantCreator;
+@@ -7572,6 +7573,7 @@ public class MessagesController extends BaseController implements NotificationCe
+                     }
+                 }
+             }
++            return false;
+         }
+         final TLRPC.ChannelParticipant participant = array.get(uid);
+         return participant instanceof TLRPC.TL_channelParticipantCreator;

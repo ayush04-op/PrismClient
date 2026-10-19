@@ -1,0 +1,99 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleksii Kulinich <entaytion@gmail.com>
+Date: Sat, 8 Aug 2026 12:56:43 +0300
+Subject: Block sponsored messages and video ads
+
+---
+ .../java/org/telegram/messenger/MessagesController.java   | 1 +
+ .../main/java/org/telegram/messenger/video/VideoAds.java  | 2 +-
+ .../org/telegram/ui/Adapters/DialogsSearchAdapter.java    | 2 +-
+ .../src/main/java/org/telegram/ui/Cells/DialogCell.java   | 8 ++++++++
+ .../src/main/java/org/telegram/ui/ChatActivity.java       | 4 ++--
+ 5 files changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+@@ -24456,6 +24456,7 @@ public class MessagesController extends BaseController implements NotificationCe
+     }
+ 
+     public boolean isSponsoredDisabled() {
++        if (desu.inugram.InuConfig.HIDE_SPONSORED_MESSAGES.getValue()) return true;
+         TLRPC.UserFull userFull = getUserFull(getUserConfig().getClientUserId());
+         if (userFull == null) return false;
+         return !userFull.sponsored_enabled;
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/video/VideoAds.java b/TMessagesProj/src/main/java/org/telegram/messenger/video/VideoAds.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/video/VideoAds.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/video/VideoAds.java
+@@ -195,7 +195,7 @@ public static VideoAds make(
+     private void load() {
+         if (loading || loaded) return;
+ 
+-        if (UserConfig.getInstance(currentAccount).isPremium() && MessagesController.getInstance(currentAccount).isSponsoredDisabled()) {
++        if (desu.inugram.InuConfig.HIDE_SPONSORED_MESSAGES.getValue() || (UserConfig.getInstance(currentAccount).isPremium() && MessagesController.getInstance(currentAccount).isSponsoredDisabled())) {
+             return;
+         }
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Adapters/DialogsSearchAdapter.java b/TMessagesProj/src/main/java/org/telegram/ui/Adapters/DialogsSearchAdapter.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Adapters/DialogsSearchAdapter.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Adapters/DialogsSearchAdapter.java
+@@ -1142,7 +1142,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
+                 ConnectionsManager.getInstance(currentAccount).cancelRequest(sponsoredReqId, true);
+                 sponsoredReqId = 0;
+             }
+-            if (query == null || query.length() < 4 || UserConfig.getInstance(currentAccount).isPremium() && MessagesController.getInstance(currentAccount).isSponsoredDisabled()) {
++            if (query == null || query.length() < 4 || desu.inugram.InuConfig.HIDE_SPONSORED_MESSAGES.getValue() || (UserConfig.getInstance(currentAccount).isPremium() && MessagesController.getInstance(currentAccount).isSponsoredDisabled())) {
+                 sponsoredQuery = null;
+             } else {
+                 final TLRPC.TL_contacts_getSponsoredPeers req = new TLRPC.TL_contacts_getSponsoredPeers();
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+@@ -2672,6 +2672,10 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
+             }
+         }
+ 
++        if (checkMessage && desu.inugram.helpers.chat.BlockedMessagesHelper.shouldHide(message)) {
++            messageString = "";
++            messageNameString = null;
++        }
+         if (checkMessage) {
+             if (messageString == null) {
+                 messageString = "";
+@@ -5959,6 +5963,10 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
+     public SpannableStringBuilder getMessageStringFormatted(int messageFormatType, String restrictionReason, CharSequence messageNameString, boolean applyThumbs) {
+         SpannableStringBuilder stringBuilder;
+         MessageObject captionMessage = getCaptionMessage();
++        if (desu.inugram.helpers.chat.BlockedMessagesHelper.shouldHide(message)
++                || captionMessage != null && desu.inugram.helpers.chat.BlockedMessagesHelper.shouldHide(captionMessage)) {
++            return new SpannableStringBuilder();
++        }
+         CharSequence msgText = message != null ? message.messageText : null;
+         applyName = true;
+         if (!TextUtils.isEmpty(restrictionReason)) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -25274,7 +25274,7 @@ public class ChatActivity extends BaseFragment implements
+     private Pattern sponsoredUrlPattern;
+     private MessageObject botSponsoredMessage;
+     private void addSponsoredMessages(boolean animated) {
+-        if (sponsoredMessagesAdded || chatMode != 0 || !ChatObject.isChannel(currentChat) && !UserObject.isBot(currentUser) || !forwardEndReached[0] || getUserConfig().isPremium() && getMessagesController().isSponsoredDisabled() || isReport()) {
++        if (sponsoredMessagesAdded || chatMode != 0 || !ChatObject.isChannel(currentChat) && !UserObject.isBot(currentUser) || !forwardEndReached[0] || desu.inugram.InuConfig.HIDE_SPONSORED_MESSAGES.getValue() || (getUserConfig().isPremium() && getMessagesController().isSponsoredDisabled()) || isReport()) {
+             return;
+         }
+         MessagesController.SponsoredMessagesInfo res = getMessagesController().getSponsoredMessages(dialog_id);
+@@ -37141,7 +37141,7 @@ public class ChatActivity extends BaseFragment implements
+         private int messagesEndRow;
+ 
+         public ArrayList<MessageObject> getMessages() {
+-            return desu.inugram.helpers.chat.BlockedMessagesHelper.isHideMode() ? inu_visibleMessages : inu_getSourceMessages();
++            return desu.inugram.helpers.chat.BlockedMessagesHelper.refreshVisible(this);
+         }
+ 
+         public final ArrayList<MessageObject> inu_visibleMessages = new ArrayList<>();

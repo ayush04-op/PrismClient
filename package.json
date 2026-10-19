@@ -1,0 +1,42 @@
+{
+  "name": "entinygram",
+  "type": "module",
+  "private": true,
+  "packageManager": "bun@1.4.2",
+  "scripts": {
+    "setup": "bun scripts/setup.ts",
+    "generate-icons": "bun scripts/generate-icons.ts",
+    "export": "bun scripts/export.ts",
+    "rebase": "bun scripts/rebase.ts",
+    "find-patches": "bun scripts/find-patches.ts",
+    "lint-patches": "bun scripts/lint-patches.ts",
+    "entinychecker": "bun scripts/entinychecker.ts",
+    "push-theme": "bun scripts/push-theme.ts",
+    "check-translations": "bun scripts/check-translations.ts",
+    "build-debug": "bun scripts/generate-grants.ts && cd worktree && ./gradlew TMessagesProj_App:assembleDebug",
+    "run-debug": "cd worktree && ./gradlew TMessagesProj_App:installDebug && adb shell am start app.prism.client/org.telegram.ui.LaunchActivity",
+    "prepare": "husky",
+    "generate-tl": "bun scripts/generate-tl.ts",
+    "generate-grants": "bun scripts/generate-grants.ts",
+    "build-debug-pluginless": "cd worktree-pluginless && ./gradlew TMessagesProj_App:assembleDebug"
+  },
+  "dependencies": {
+    "@antfu/eslint-config": "^8.1.0",
+    "@fuman/utils": "^0.0.19",
+    "@iconify-json/tabler": "^1.2.33",
+    "@mtcute/node": "^0.31.0",
+    "eslint": "^10.2.0",
+    "tinyglobby": "^0.2.16",
+    "zx": "^8.8.4",
+    "@inugram/plugin-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.1",
+    "husky": "^9.1.7",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "workspaces": [
+    "sdk/*"
+  ]
+}

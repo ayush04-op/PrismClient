@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleksii Kulinich <entaytion@gmail.com>
+Date: Sun, 27 Sep 2026 16:09:07 +0300
+Subject: [*] theme switch recovery for Android 17 and Monet ROMs
+
+---
+ .../src/main/java/org/telegram/ui/LaunchActivity.java       | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+@@ -301,8 +301,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+     private final PipActivityController pipActivityController = new PipActivityController(this);
+     private final IPipActivityHandler pipActivityHandler = pipActivityController.getHandler();
+ 
+-    private ImageView themeSwitchImageView;
+-    private ImageView themeSwitchSunView;
++    public ImageView themeSwitchImageView;
++    public ImageView themeSwitchSunView;
+     public ActionBarLayout actionBarLayout;
+     private ActionBarLayout layersActionBarLayout;
+     public ActionBarLayout rightActionBarLayout;
+@@ -7020,6 +7020,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+             onResumeStaticCallback.run();
+             onResumeStaticCallback = null;
+         }
++        desu.inugram.helpers.theme.ThemeSwitchHelper.recoverStuckOverlay(this);
+         if (Theme.selectedAutoNightType == Theme.AUTO_NIGHT_TYPE_SYSTEM) {
+             Theme.checkAutoNightThemeConditions();
+         }
+@@ -7454,6 +7455,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+                     }
+                     themeSwitchImageView.setImageBitmap(bitmap);
+                     themeSwitchImageView.setVisibility(View.VISIBLE);
++                    desu.inugram.helpers.theme.ThemeSwitchHelper.scheduleRecovery(this);
+                     float finalRadius = (float) Math.max(Math.sqrt((w - pos[0]) * (w - pos[0]) + (h - pos[1]) * (h - pos[1])), Math.sqrt(pos[0] * pos[0] + (h - pos[1]) * (h - pos[1])));
+                     float finalRadius2 = (float) Math.max(Math.sqrt((w - pos[0]) * (w - pos[0]) + pos[1] * pos[1]), Math.sqrt(pos[0] * pos[0] + pos[1] * pos[1]));
+                     finalRadius = Math.max(finalRadius, finalRadius2);

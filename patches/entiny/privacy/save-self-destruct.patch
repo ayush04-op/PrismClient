@@ -1,0 +1,215 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleksii Kulinich <entaytion@gmail.com>
+Date: Sun, 26 Jul 2026 01:24:46 +0300
+Subject: allow saving self-destructing media
+
+- consolidates the legacy self-destruct file-cache flag into SAVE_SELF_DESTRUCT_MEDIA
+---
+ .../org/telegram/messenger/FileLoader.java    | 24 ++++++++-
+ .../telegram/messenger/MediaController.java   |  9 +++-
+ .../org/telegram/messenger/MessageObject.java |  4 +-
+ .../java/org/telegram/ui/ChatActivity.java    | 50 +++++++++++++++++--
+ 4 files changed, 78 insertions(+), 9 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/FileLoader.java b/TMessagesProj/src/main/java/org/telegram/messenger/FileLoader.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/FileLoader.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/FileLoader.java
+@@ -1289,13 +1289,33 @@ public class FileLoader extends BaseController {
+             }
+         } else {
+             if (MessageObject.getMedia(message) instanceof TLRPC.TL_messageMediaDocument) {
+-                return getPathToAttach(MessageObject.getMedia(message).document, null, forceCache || MessageObject.getMedia(message).ttl_seconds != 0, useFileDatabaseQueue);
++                boolean inu_preserveMedia = desu.inugram.helpers.security.SelfDestructHelper.shouldPreserveMedia(MessageObject.getDialogId(message));
++                File res = getPathToAttach(MessageObject.getMedia(message).document, null, forceCache || (MessageObject.getMedia(message).ttl_seconds != 0 && !inu_preserveMedia), useFileDatabaseQueue);
++                if (inu_preserveMedia && !res.exists()) {
++                    File encRes = new File(res.getPath() + ".enc");
++                    if (encRes.exists()) return encRes;
++                    File cacheRes = getPathToAttach(MessageObject.getMedia(message).document, null, true, useFileDatabaseQueue);
++                    if (cacheRes.exists()) return cacheRes;
++                    File encCacheRes = new File(cacheRes.getPath() + ".enc");
++                    if (encCacheRes.exists()) return encCacheRes;
++                }
++                return res;
+             } else if (MessageObject.getMedia(message) instanceof TLRPC.TL_messageMediaPhoto) {
+                 ArrayList<TLRPC.PhotoSize> sizes = MessageObject.getMedia(message).photo.sizes;
+                 if (sizes.size() > 0) {
+                     TLRPC.PhotoSize sizeFull = getClosestPhotoSizeWithSize(sizes, AndroidUtilities.getPhotoSize(true), false, null, true);
+                     if (sizeFull != null) {
+-                        return getPathToAttach(sizeFull, null, forceCache || MessageObject.getMedia(message).ttl_seconds != 0, useFileDatabaseQueue);
++                        boolean inu_preserveMedia = desu.inugram.helpers.security.SelfDestructHelper.shouldPreserveMedia(MessageObject.getDialogId(message));
++                        File res = getPathToAttach(sizeFull, null, forceCache || (MessageObject.getMedia(message).ttl_seconds != 0 && !inu_preserveMedia), useFileDatabaseQueue);
++                        if (inu_preserveMedia && !res.exists()) {
++                            File encRes = new File(res.getPath() + ".enc");
++                            if (encRes.exists()) return encRes;
++                            File cacheRes = getPathToAttach(sizeFull, null, true, useFileDatabaseQueue);
++                            if (cacheRes.exists()) return cacheRes;
++                            File encCacheRes = new File(cacheRes.getPath() + ".enc");
++                            if (encCacheRes.exists()) return encCacheRes;
++                        }
++                        return res;
+                     }
+                 }
+             } else if (MessageObject.getMedia(message) instanceof TLRPC.TL_messageMediaWebPage) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
+@@ -3721,7 +3721,14 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+                 file = null;
+             }
+         }
+-        final File cacheFile = file != null ? file : FileLoader.getInstance(messageObject.currentAccount).getPathToMessage(messageObject.messageOwner);
++        File resolvedFile = file != null ? file : FileLoader.getInstance(messageObject.currentAccount).getPathToMessage(messageObject.messageOwner);
++        if (resolvedFile != null && !resolvedFile.exists()) {
++            File encFile = new File(resolvedFile.getPath() + ".enc");
++            if (encFile.exists()) {
++                resolvedFile = encFile;
++            }
++        }
++        final File cacheFile = resolvedFile;
+         boolean canStream = SharedConfig.streamMedia && (messageObject.isMusic() || messageObject.isRoundVideo() || messageObject.isVideo() && messageObject.canStreamVideo()) && !messageObject.shouldEncryptPhotoOrVideo() && !DialogObject.isEncryptedDialog(messageObject.getDialogId());
+         if (cacheFile != file && !(exists = cacheFile.exists()) && !canStream) {
+             FileLoader.getInstance(messageObject.currentAccount).loadFile(messageObject.getDocument(), messageObject, FileLoader.PRIORITY_LOW, messageObject.shouldEncryptPhotoOrVideo() ? 2 : 0);
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+@@ -6748,7 +6748,7 @@ public class MessageObject {
+                 }
+             } else if (hasExtendedMediaPreview()) {
+                 type = TYPE_EXTENDED_MEDIA_PREVIEW;
+-            } else if (getMedia(messageOwner).ttl_seconds != 0 && (getMedia(messageOwner).photo instanceof TLRPC.TL_photoEmpty || getDocument() instanceof TLRPC.TL_documentEmpty || getMedia(messageOwner) instanceof TLRPC.TL_messageMediaDocument && getDocument() == null || forceExpired)) {
++            } else if (getMedia(messageOwner).ttl_seconds != 0 && !desu.inugram.helpers.security.SelfDestructHelper.shouldPreserveMedia(getDialogId()) && (getMedia(messageOwner).photo instanceof TLRPC.TL_photoEmpty || getDocument() instanceof TLRPC.TL_documentEmpty || getMedia(messageOwner) instanceof TLRPC.TL_messageMediaDocument && getDocument() == null || forceExpired)) {
+                 contentType = 1;
+                 type = TYPE_DATE;
+             } else if (getMedia(messageOwner) instanceof TLRPC.TL_messageMediaGiveaway) {
+@@ -10114,6 +10114,7 @@ public class MessageObject {
+     }
+ 
+     public boolean needDrawBluredPreview() {
++        if (desu.inugram.helpers.security.SelfDestructHelper.shouldBypassOneTimeGate(getDialogId()) && isSecretMedia()) return false;
+         if (isRepostPreview) {
+             return false;
+         }
+@@ -11729,6 +11730,7 @@ public class MessageObject {
+     }
+ 
+     public boolean canForwardMessage() {
++        if (desu.inugram.helpers.security.SelfDestructHelper.shouldBypassOneTimeGate(getDialogId()) && isSecretMedia()) return true;
+         if (isQuickReply()) return false;
+         if (type == TYPE_GIFT_STARS || type == TYPE_GIFT_THEME_UPDATE || type == TYPE_SUGGEST_BIRTHDAY || type == TYPE_GIFT_OFFER || type == TYPE_SHARING_OFFER || type == TYPE_COMMUNITY_CHANGED) return false;
+         return !(messageOwner instanceof TLRPC.TL_message_secret) && !needDrawBluredPreview() && !isLiveLocation() && type != MessageObject.TYPE_PHONE_CALL && !isSponsored() && (!messageOwner.noforwards || desu.inugram.InuConfig.ALLOW_FORWARD_RESTRICTED.getValue());
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -15937,7 +15937,7 @@ public class ChatActivity extends BaseFragment implements
+         }
+     }
+ 
+-    private Runnable sendSecretMessageRead(MessageObject messageObject, boolean readNow) {
++    public Runnable sendSecretMessageRead(MessageObject messageObject, boolean readNow) {
+         if (messageObject == null || messageObject.isOut() || !messageObject.isSecretMedia() || messageObject.messageOwner.destroyTime != 0 || messageObject.messageOwner.ttl <= 0) {
+             return null;
+         }
+@@ -15966,10 +15966,13 @@ public class ChatActivity extends BaseFragment implements
+         }
+     }
+ 
+-    private Runnable sendSecretMediaDelete(MessageObject messageObject) {
++    public Runnable sendSecretMediaDelete(MessageObject messageObject) {
+         if (messageObject == null || messageObject.isOut() || !messageObject.isSecretMedia() || messageObject.messageOwner.ttl != 0x7FFFFFFF) {
+             return null;
+         }
++        if (desu.inugram.helpers.security.SelfDestructHelper.shouldPreserveMedia(dialog_id)) {
++            return null;
++        }
+         final long taskId = getMessagesController().createDeleteShowOnceTask(dialog_id, messageObject.getId());
+         messageObject.forceExpired = true;
+         if (messageObject.isOutOwner() || !messageObject.isRoundOnce() && !messageObject.isVoiceOnce()) {
+@@ -15980,6 +15983,31 @@ public class ChatActivity extends BaseFragment implements
+         return () -> getMessagesController().doDeleteShowOnceTask(taskId, dialog_id, messageObject.getId());
+     }
+ 
++    public void inu_openSecretMediaViewer(MessageObject messageObject) {
++        // Voice notes and round videos are consumed through SecretVoicePlayer, never through the
++        // photo/video viewer: SecretMediaViewer has no audio UI and getPlaceForPhoto finds no
++        // laid-out image to anchor to, so routing them there opened an empty viewer. Same call
++        // shape needPlayMessage uses for the ordinary tap.
++        if (messageObject != null && (messageObject.isVoiceOnce() || messageObject.isRoundOnce())) {
++            BaseCell baseCell = findMessageCell(messageObject.getId(), false);
++            if (!(baseCell instanceof ChatMessageCell) || secretVoicePlayer != null && secretVoicePlayer.isShown()) {
++                return;
++            }
++            secretVoicePlayer = new SecretVoicePlayer(getContext());
++            secretVoicePlayer.setCell(
++                (ChatMessageCell) baseCell,
++                !messageObject.isOutOwner() ? sendSecretMessageRead(messageObject, true) : null,
++                !messageObject.isOutOwner() ? sendSecretMediaDelete(messageObject) : null
++            );
++            showDialog(secretVoicePlayer);
++            return;
++        }
++        Runnable openAction = sendSecretMessageRead(messageObject, false);
++        Runnable closeAction = sendSecretMediaDelete(messageObject);
++        SecretMediaViewer.getInstance().setParentActivity(getParentActivity());
++        SecretMediaViewer.getInstance().openMedia(messageObject, photoViewerProvider, openAction, closeAction);
++    }
++
+     private void clearChatData(boolean full) {
+         messages.clear();
+         messagesByDays.clear();
+@@ -19435,6 +19463,12 @@ public class ChatActivity extends BaseFragment implements
+                             canSave = true;
+                         }
+                     }
++                    if (!canSave && desu.inugram.helpers.security.SelfDestructHelper.shouldPreserveMedia(messageObject.getDialogId()) && messageObject.isSecretMedia()) {
++                        File f = FileLoader.getInstance(currentAccount).getPathToMessage(messageObject.messageOwner, true, true);
++                        if (f.exists()) {
++                            canSave = true;
++                        }
++                    }
+                     if (canSave) {
+                         if (messageObject.getDocument() != null) {
+                             String mime = messageObject.getDocument().mime_type;
+@@ -19442,7 +19476,7 @@ public class ChatActivity extends BaseFragment implements
+                                 return 5;
+                             }
+                         }
+-                        if (messageObject.messageOwner.ttl <= 0) {
++                        if (messageObject.messageOwner.ttl <= 0 || (desu.inugram.helpers.security.SelfDestructHelper.shouldPreserveMedia(messageObject.getDialogId()) && messageObject.isSecretMedia())) {
+                             return 4;
+                         }
+                     }
+@@ -33777,6 +33811,12 @@ public class ChatActivity extends BaseFragment implements
+                 path = f.getPath();
+             }
+         }
++        if (TextUtils.isEmpty(path) && desu.inugram.helpers.security.SelfDestructHelper.shouldPreserveMedia(messageObject.getDialogId()) && messageObject.isSecretMedia()) {
++            File f = FileLoader.getInstance(currentAccount).getPathToMessage(messageObject.messageOwner, true, true);
++            if (f != null && f.exists()) {
++                path = f.getPath();
++            }
++        }
+         if (TextUtils.isEmpty(path) && messageObject.cachedQuality != null && messageObject.cachedQuality.isCached()) {
+             File f = new File(messageObject.cachedQuality.uri.getPath());
+             if (f != null && f.exists()) {
+@@ -39942,7 +39982,7 @@ public class ChatActivity extends BaseFragment implements
+ 
+         @Override
+         public boolean needPlayMessage(ChatMessageCell cell, MessageObject messageObject, boolean muted) {
+-            if (messageObject.isVoiceOnce() || messageObject.isRoundOnce()) {
++            if ((messageObject.isVoiceOnce() || messageObject.isRoundOnce()) && !desu.inugram.helpers.security.SelfDestructHelper.shouldBypassOneTimeGate(messageObject.getDialogId())) {
+                 if (secretVoicePlayer != null && secretVoicePlayer.isShown()) return false;
+                 try {
+                     AudioManager audioManager = (AudioManager) ApplicationLoader.applicationContext.getSystemService(Context.AUDIO_SERVICE);
+@@ -46389,7 +46429,7 @@ public class ChatActivity extends BaseFragment implements
+             allowPin = false;
+         }
+         allowPin = allowPin && message.getId() > 0 && (message.messageOwner.action == null || message.messageOwner.action instanceof TLRPC.TL_messageActionEmpty) && !message.isExpiredStory() && message.type != MessageObject.TYPE_STORY_MENTION;
+-        boolean noforwards = isPeerNoForwards() || message.messageOwner.noforwards || getDialogId() == UserObject.VERIFY;
++        boolean noforwards = (isEphemeral && !desu.inugram.helpers.security.SelfDestructHelper.shouldBypassOneTimeGate(message.getDialogId())) || isPeerNoForwards() || message.messageOwner.noforwards || getDialogId() == UserObject.VERIFY;
+         boolean noforwardsOrPaidMedia = noforwards || message.type == MessageObject.TYPE_PAID_MEDIA;
+         boolean allowUnpin = !isEphemeral && message.getDialogId() != mergeDialogId && allowPin && (pinnedMessageObjects.containsKey(message.getId()) || groupedMessages != null && !groupedMessages.messages.isEmpty() && pinnedMessageObjects.containsKey(groupedMessages.messages.get(0).getId())) && !message.isExpiredStory();
+         boolean allowEdit = !isEphemeral && message.canEditMessage(currentChat) && !chatActivityEnterView.hasAudioToSend() && message.getDialogId() != mergeDialogId && message.type != MessageObject.TYPE_STORY && message.type != MessageObject.TYPE_POLL;

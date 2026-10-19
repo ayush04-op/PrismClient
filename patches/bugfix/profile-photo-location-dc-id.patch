@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Fri, 17 Jul 2026 01:49:07 +0400
+Subject: correctly handle TL_fileLocationToBeDeprecated dc_id
+
+---
+ .../src/main/java/org/telegram/messenger/ImageLocation.java    | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/ImageLocation.java b/TMessagesProj/src/main/java/org/telegram/messenger/ImageLocation.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/ImageLocation.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/ImageLocation.java
+@@ -387,6 +387,9 @@ public class ImageLocation {
+         imageLocation.stickerSet = stickerSet;
+         if (location instanceof TLRPC.TL_fileLocationToBeDeprecated) {
+             imageLocation.location = (TLRPC.TL_fileLocationToBeDeprecated) location;
++            if (imageLocation.location.dc_id == 0) {
++                imageLocation.location.dc_id = dc_id;
++            }
+             if (photo != null) {
+                 imageLocation.file_reference = photo.file_reference;
+                 imageLocation.access_hash = photo.access_hash;

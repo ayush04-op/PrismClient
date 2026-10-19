@@ -1,10 +1,19 @@
-# GlassGram
+# Prism
 
-Liquid Glass Telegram client (Flutter + TDLib).
+A fast, native Telegram client for Android with a Liquid Glass look.
 
-## Get the APK (no coding needed)
-1. Create a new GitHub repo and upload all files in this folder (keep the `.github` folder).
-2. Repo > Settings > Secrets and variables > Actions > New secret:
-   - `API_ID` and `API_HASH` (from https://my.telegram.org > API development tools)
-3. Repo > Actions > "Build Android APK" > Run workflow (or just push to `main`).
-4. When it finishes, open the run and download `glassgram-apk` at the bottom.
+Prism is built on the work of others — see [CREDITS.md](CREDITS.md). It is **not** an official Telegram app.
+
+## Status
+Early work in progress. Step 1 is a clean, working build; the glass UI comes next.
+
+## Build
+The APK is built by GitHub Actions (`Actions` tab → `Build Prism APK` → Run workflow).
+Add these repository secrets first (Settings → Secrets and variables → Actions):
+- `API_ID`, `API_HASH`: your own keys from https://my.telegram.org
+
+Download the APK from the finished run's **Artifacts**.
+
+## License
+MIT for Prism's own code (see `LICENSE`). The Telegram base code is GPL-2.0-or-later,
+so any distributed build must be accompanied by this source code.

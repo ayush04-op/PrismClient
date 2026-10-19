@@ -1,0 +1,74 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Thu, 11 Jun 2026 22:20:20 +0400
+Subject: keep bot drafts (streaming) at the bottom of the dialog
+
+---
+ .../main/java/org/telegram/ui/ChatActivity.java   | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -24804,13 +24804,17 @@ public class ChatActivity extends BaseFragment implements
+             if (dialog_id != arg.botUserId) return;
+             if (getTopicId() != arg.botTopicId) return;
+ 
+-            saveScrollPosition2();
++            final boolean keepDraftAtBottom = desu.inugram.InuConfig.DISABLE_BOT_DRAFT_TOP.getValue();
+             final int startRow = chatAdapter.messagesStartRow;
++            if (!keepDraftAtBottom) {
++                saveScrollPosition2();
++            }
+             final ArrayList<MessageObject> arr = new ArrayList<>(1);
+             arr.add(arg.messageObject);
+             replaceMessageObjects(arr, 0, true, true);
+ 
+             if (!arr.isEmpty() && getDialogId() > 0) {
++                if (!keepDraftAtBottom) {
+                 if (updateStreamingTopic != null) {
+                     AndroidUtilities.cancelRunOnUIThread(updateStreamingTopic);
+                     updateStreamingTopic = null;
+@@ -24819,9 +24823,12 @@ public class ChatActivity extends BaseFragment implements
+ 
+                 final int firstMessageGroupHeight = calculateHeightUntilOutOwner(startRow);
+                 botDraftHeightController.setPreviousMessageHeight(firstMessageGroupHeight);
++                }
+                 processNewMessages(arr);
+             }
++            if (!keepDraftAtBottom) {
+             botDraftHeightController.setMessageIdToOverride(arg.messageObject.getId(), arg.messageObject.getGroupId());
++            }
+             checkSendButtonBlockedByTyping(true);
+         } else if (id == NotificationCenter.botForumDraftDelete) {
+             final BotForumHelper.BotForumTextDraftDeleteNotification arg = (BotForumHelper.BotForumTextDraftDeleteNotification) args[0];
+@@ -25614,7 +25621,7 @@ public class ChatActivity extends BaseFragment implements
+ 
+         final boolean isBot = UserObject.isBot(currentUser);
+         final boolean isStreamingTopic = isBot && BotForumHelper.getInstance(currentAccount).isStreamingTopic(getDialogId(), getTopicId());
+-        if (arr.size() == 1 && isBot && isStreamingTopic) {
++        if (!desu.inugram.InuConfig.DISABLE_BOT_DRAFT_TOP.getValue() && arr.size() == 1 && isBot && isStreamingTopic) {
+             MessageObject message = arr.get(0);
+ 
+             final boolean isOutButWithHeight = !message.isBotPendingDraft && !message.isOutOwner()
+@@ -25819,7 +25826,7 @@ public class ChatActivity extends BaseFragment implements
+ 
+         checkSendButtonBlockedByTyping(true);
+ 
+-        forceScrollToMessageBottom = hasDraftsReplaces;
++        forceScrollToMessageBottom = !desu.inugram.InuConfig.DISABLE_BOT_DRAFT_TOP.getValue() && hasDraftsReplaces;
+ 
+         if (isBot && isStreamingTopic && !hasDraftsReplaces) {
+             boolean hasMessageFromBot = false;
+@@ -26938,8 +26945,10 @@ public class ChatActivity extends BaseFragment implements
+             if (messageObject.getId() > 0 && old == null && UserObject.isBot(currentUser)) {
+                 old = BotForumHelper.getInstance(currentAccount).onBotForumDraftCheckNewMessages(currentUser.id, (int) getTopicId(), messageObject.getId(), messageObject.messageText.toString());
+                 if (old != null) {
++                    if (!desu.inugram.InuConfig.DISABLE_BOT_DRAFT_TOP.getValue()) {
+                     saveScrollPosition2();
+                     botDraftHeightController.setMessageIdToOverride(messageObject.getId(), messageObject.getGroupId());
++                    }
+                     if (!messages.contains(old)) {
+                         old = null;
+                     } else {

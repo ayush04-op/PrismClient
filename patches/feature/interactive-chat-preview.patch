@@ -1,0 +1,112 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Fri, 24 Apr 2026 13:35:21 +0300
+Subject: prevent tapping the chat preview from expanding it to avoid accidentally opening it, and also make the bubbles interactive while we're at it
+
+---
+ .../org/telegram/ui/ActionBar/ActionBarLayout.java |  8 ++++++++
+ .../main/java/org/telegram/ui/ChatActivity.java    | 11 +++++++----
+ .../main/java/org/telegram/ui/DialogsActivity.java | 14 +++++++++++++-
+ 3 files changed, 28 insertions(+), 5 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java
+@@ -1965,6 +1965,14 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
+         if (fragment == null || checkTransitionAnimation() || delegate != null && check && !delegate.needPresentFragment(this, params) || !fragment.onFragmentCreate()) {
+             return false;
+         }
++        if (inPreviewMode && !preview && desu.inugram.InuConfig.INTERACTIVE_CHAT_PREVIEW.getValue()) {
++            final NavigationParams deferred = params;
++            finishPreviewFragment();
++            AndroidUtilities.runOnUIThread(() -> {
++                if (!inPreviewMode) presentFragment(deferred);
++            }, 250);
++            return false;
++        }
+         final EdgeToEdgeSupportMode edgeToEdgeSupportMode = fragment.getEdgeToEdgeSupportMode();
+         final boolean isSupportEdgeToEdge = edgeToEdgeSupportMode != EdgeToEdgeSupportMode.NONE;
+         final boolean drawNavigationBar = fragment.drawEdgeNavigationBar();
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -17729,8 +17729,9 @@ public class ChatActivity extends BaseFragment implements
+                 return true;
+             }
+ 
+-            if (isInPreviewMode() && allowExpandPreviewByClick) {
++            if (isInPreviewMode()) {
+                 if (ev.getAction() == MotionEvent.ACTION_DOWN) {
++                    pressActionBar = false;
+                     boolean pressedOnPageDownButtons = false, pressedOnAction = false;
+                     int[] off = new int[2];
+                     getLocationInWindow(off);
+@@ -17760,7 +17761,7 @@ public class ChatActivity extends BaseFragment implements
+                             pressedOnAction = true;
+                         }
+                     }
+-                    if (!pressedOnPageDownButtons) {
++                    if (!pressedOnPageDownButtons && (pressedOnAction || allowExpandPreviewByClick)) {
+                         x = ev.getX();
+                         y = ev.getY();
+                         pressTime = SystemClock.elapsedRealtime();
+@@ -17786,8 +17787,10 @@ public class ChatActivity extends BaseFragment implements
+                         }
+                         ev.setAction(MotionEvent.ACTION_CANCEL);
+                     }
++                    pressActionBar = false;
+                     pressTime = -1;
+                 } else if (ev.getAction() == MotionEvent.ACTION_CANCEL) {
++                    pressActionBar = false;
+                     pressTime = -1;
+                 }
+             }
+@@ -40975,12 +40978,12 @@ public class ChatActivity extends BaseFragment implements
+ 
+         @Override
+         public boolean canPerformActions() {
+-            return actionBar != null && !actionBar.isActionModeShowed() && !isReport() && !inPreviewMode;
++            return actionBar != null && !actionBar.isActionModeShowed() && !isReport() && (!inPreviewMode || InuConfig.INTERACTIVE_CHAT_PREVIEW.getValue());
+         }
+ 
+         @Override
+         public boolean canPerformReply() {
+-            return !isReport() && !inPreviewMode;
++            return !isReport() && (!inPreviewMode || InuConfig.INTERACTIVE_CHAT_PREVIEW.getValue());
+         }
+ 
+         @Override
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -8702,6 +8702,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+             });
+         }
+ 
++        if (desu.inugram.InuConfig.INTERACTIVE_CHAT_PREVIEW.getValue()) {
++            ActionBarMenuSubItem openChatItem = new ActionBarMenuSubItem(getParentActivity(), true, false);
++            openChatItem.setTextAndIcon(LocaleController.getString(R.string.SavedOpenChatNoCaps), R.drawable.msg_discussion);
++            openChatItem.setMinimumWidth(160);
++            openChatItem.setOnClickListener(e -> {
++                if (previewActivity[0] != null && previewActivity[0].getParentLayout() != null) {
++                    previewActivity[0].getParentLayout().expandPreviewFragment();
++                }
++            });
++            previewMenu[0].addView(openChatItem);
++        }
++
+         if (!isCommunityCell) {
+             ActionBarMenuSubItem markAsUnreadItem = new ActionBarMenuSubItem(getParentActivity(), true, false);
+             if (cell.getHasUnread()) {
+@@ -8904,7 +8916,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+             } else {
+                 presentFragmentAsPreviewWithMenu(previewActivity[0] = chatActivity1, previewMenu[0]);
+                 if (chatActivity1 != null) {
+-                    chatActivity1.allowExpandPreviewByClick = true;
++                    chatActivity1.allowExpandPreviewByClick = !desu.inugram.InuConfig.INTERACTIVE_CHAT_PREVIEW.getValue();
+                     try {
+                         chatActivity1.getAvatarContainer().getAvatarImageView().performAccessibilityAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null);
+                     } catch (Exception ignore) {

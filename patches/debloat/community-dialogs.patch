@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Fri, 17 Jul 2026 20:19:48 +0400
+Subject: display options for communities in chat list
+
+---
+ .../main/java/org/telegram/ui/Cells/DialogCell.java   | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
+@@ -209,11 +209,17 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
+     public final StoriesUtilities.AvatarStoryParams storyParams = new StoriesUtilities.AvatarStoryParams(false) {
+         @Override
+         public boolean isAvatarClickable(long dialogId, TLRPC.Chat chat, TLRPC.User user) {
++            if (desu.inugram.helpers.dialogs.CommunityDisplayHelper.isInvisible()) {
++                return false;
++            }
+             return (chat != null && chat.linked_community_id != 0 || user != null && user.linked_community_id != 0) && !insideCommunityList;
+         }
+ 
+         @Override
+         public boolean onAvatarClick(View view, long dialogId) {
++            if (!desu.inugram.helpers.dialogs.CommunityDisplayHelper.isRegular()) {
++                return desu.inugram.helpers.dialogs.CommunityDisplayHelper.handleAvatarClick(DialogCell.this, currentAccount, dialogId);
++            }
+             if (parentFragment != null && !insideCommunityList) {
+                 if (dialogId > 0) {
+                     final TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(dialogId);
+@@ -252,6 +258,9 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
+             if (delegate == null) {
+                 return;
+             }
++            if (desu.inugram.helpers.dialogs.CommunityDisplayHelper.handleAvatarLongPress(DialogCell.this, parentFragment, currentAccount)) {
++                return;
++            }
+             delegate.showChatPreview(DialogCell.this);
+         }
+     };
+@@ -4800,7 +4809,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
+                 storyParams.forceState = s;
+             }
+ 
+-            if (!insideCommunityList && (chat != null && chat.linked_community_id != 0 || user != null && user.linked_community_id != 0) && !drawCommunityAvatar && isDialogCell && !isDialogFolder()) {
++            if (!insideCommunityList && !desu.inugram.helpers.dialogs.CommunityDisplayHelper.isInvisible() && (chat != null && chat.linked_community_id != 0 || user != null && user.linked_community_id != 0) && !drawCommunityAvatar && isDialogCell && !isDialogFolder()) {
+                 final float ccx = storyParams.originalAvatarRect.centerX() + dp(20.33f);
+                 final float ccy = storyParams.originalAvatarRect.centerY() + dp(19);
+                 if (communityArrowDrawable == null) {

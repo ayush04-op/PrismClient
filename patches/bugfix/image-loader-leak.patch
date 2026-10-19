@@ -1,0 +1,131 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Mon, 1 Jun 2026 18:25:43 +0400
+Subject: hopefully fix memory leak in ImageLoader
+
+---
+ .../org/telegram/messenger/ImageLoader.java   | 59 ++++++++++++-------
+ 1 file changed, 37 insertions(+), 22 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/ImageLoader.java b/TMessagesProj/src/main/java/org/telegram/messenger/ImageLoader.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/ImageLoader.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/ImageLoader.java
+@@ -136,6 +136,7 @@ public class ImageLoader {
+     private HashMap<String, Integer> forceLoadingImages = new HashMap<>();
+     private static ThreadLocal<byte[]> bytesLocal = new ThreadLocal<>();
+     private static ThreadLocal<byte[]> bytesThumbLocal = new ThreadLocal<>();
++    private static final int MAX_REUSABLE_BYTE_ARRAY_SIZE = 16 * 1024 * 1024;
+     private int currentHttpTasksCount = 0;
+     private int currentArtworkTasksCount = 0;
+     private boolean canForce8888;
+@@ -170,6 +171,23 @@ public class ImageLoader {
+         return false;
+     }
+ 
++    private static byte[] getByteArray(ThreadLocal<byte[]> local, int len) {
++        if (len <= MAX_REUSABLE_BYTE_ARRAY_SIZE) {
++            byte[] data = local.get();
++            if (data != null && data.length > MAX_REUSABLE_BYTE_ARRAY_SIZE) {
++                local.remove();
++                data = null;
++            }
++            if (data == null || data.length < len) {
++                data = new byte[len];
++                local.set(data);
++            }
++            return data;
++        }
++        local.remove();
++        return new byte[len];
++    }
++
+     private static final android.util.LruCache<Integer, BitmapDrawable> inu_strippedCache = new android.util.LruCache<>(64);
+ 
+     public static Drawable createStripedBitmap(ArrayList<TLRPC.PhotoSize> thumbs) {
+@@ -1257,12 +1275,7 @@ public class ImageLoader {
+                                 if (secureDocumentKey != null) {
+                                     RandomAccessFile f = new RandomAccessFile(cacheFileFinal, "r");
+                                     int len = (int) f.length();
+-                                    byte[] bytes = bytesLocal.get();
+-                                    byte[] data = bytes != null && bytes.length >= len ? bytes : null;
+-                                    if (data == null) {
+-                                        bytes = data = new byte[len];
+-                                        bytesLocal.set(bytes);
+-                                    }
++                                    byte[] data = getByteArray(bytesLocal, len);
+                                     f.readFully(data, 0, len);
+                                     f.close();
+                                     EncryptedFileInputStream.decryptBytesWithKeyFile(data, 0, len, secureDocumentKey);
+@@ -1355,12 +1368,7 @@ public class ImageLoader {
+                             RandomAccessFile f = new RandomAccessFile(cacheFileFinal, "r");
+                             int len = (int) f.length();
+                             int offset = 0;
+-                            byte[] bytesThumb = bytesThumbLocal.get();
+-                            byte[] data = bytesThumb != null && bytesThumb.length >= len ? bytesThumb : null;
+-                            if (data == null) {
+-                                bytesThumb = data = new byte[len];
+-                                bytesThumbLocal.set(bytesThumb);
+-                            }
++                            byte[] data = getByteArray(bytesThumbLocal, len);
+                             f.readFully(data, 0, len);
+                             f.close();
+                             boolean error = false;
+@@ -1463,20 +1471,23 @@ public class ImageLoader {
+                         }
+ 
+                         opts.inDither = false;
++                        boolean skipFallbackDecode = false;
+                         if (mediaId != null && mediaThumbPath == null) {
+                             if (mediaIsVideo) {
++                                skipFallbackDecode = true;
+                                 if (mediaId == 0) {
+-                                    AnimatedFileDrawable fileDrawable = new AnimatedFileDrawable(cacheFileFinal, true, 0, 0, null, null, null, 0, 0, true, null);
+-                                    image = fileDrawable.getFrameAtTime(0, true);
+-                                    fileDrawable.recycle();
++                                    image = getVideoFrame(cacheFileFinal);
+                                 } else {
+                                     image = MediaStore.Video.Thumbnails.getThumbnail(ApplicationLoader.applicationContext.getContentResolver(), mediaId, MediaStore.Video.Thumbnails.MINI_KIND, opts);
++                                    if (image == null) {
++                                        image = getVideoFrame(cacheFileFinal);
++                                    }
+                                 }
+                             } else {
+                                 image = MediaStore.Images.Thumbnails.getThumbnail(ApplicationLoader.applicationContext.getContentResolver(), mediaId, MediaStore.Images.Thumbnails.MINI_KIND, opts);
+                             }
+                         }
+-                        if (image == null) {
++                        if (image == null && !skipFallbackDecode) {
+                             if (image == null) {
+                                 FileInputStream is;
+                                 if (secureDocumentKey != null) {
+@@ -1510,12 +1521,7 @@ public class ImageLoader {
+                                     RandomAccessFile f = new RandomAccessFile(cacheFileFinal, "r");
+                                     int len = (int) f.length();
+                                     int offset = 0;
+-                                    byte[] bytes = bytesLocal.get();
+-                                    byte[] data = bytes != null && bytes.length >= len ? bytes : null;
+-                                    if (data == null) {
+-                                        bytes = data = new byte[len];
+-                                        bytesLocal.set(bytes);
+-                                    }
++                                    byte[] data = getByteArray(bytesLocal, len);
+                                     f.readFully(data, 0, len);
+                                     f.close();
+                                     boolean error = false;
+@@ -1660,6 +1666,15 @@ public class ImageLoader {
+             return finalBitmap;
+         }
+ 
++        private Bitmap getVideoFrame(File file) {
++            AnimatedFileDrawable fileDrawable = new AnimatedFileDrawable(file, true, 0, 0, null, null, null, 0, 0, true, null);
++            try {
++                return fileDrawable.getFrameAtTime(0, true);
++            } finally {
++                fileDrawable.recycle();
++            }
++        }
++
+         private void loadLastFrame(RLottieDrawable lottieDrawable, int w, int h, boolean lastFrame, boolean reaction) {
+             Bitmap bitmap;
+             Canvas canvas;

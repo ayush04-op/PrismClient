@@ -1,0 +1,82 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Wed, 13 May 2026 17:51:19 +0200
+Subject: fix stale unread mention from breaking "jump to mention" button
+
+---
+ .../telegram/messenger/MessagesStorage.java   | 27 +++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesStorage.java
+@@ -6179,6 +6179,7 @@ public class MessagesStorage extends BaseController {
+                 if (idx1 == 1) {
+                     archivedDialogs.put(user.id, true);
+                 }
++                if (!read || dialogsWithUnread.indexOfKey(user.id) < 0 && dialogsWithMentions.indexOfKey(user.id) < 0) {
+                 if (isUserCollapsedInCommunity(chatsDict, user)) {
+                     communities[idx1][idx2]++;
+                 } else if (user.bot) {
+@@ -6188,6 +6189,7 @@ public class MessagesStorage extends BaseController {
+                 } else {
+                     nonContacts[idx1][idx2]++;
+                 }
++                }
+                 usersDict.put(user.id, user);
+             }
+         }
+@@ -14292,13 +14294,31 @@ public class MessagesStorage extends BaseController {
+ 
+     private void markMessagesAsReadInternal(LongSparseIntArray inbox, LongSparseIntArray outbox, SparseIntArray encryptedMessages) {
+         SQLitePreparedStatement state = null;
++        SQLiteCursor cursor = null;
+         try {
+             if (!isEmpty(inbox)) {
+                 state = database.executeFast("DELETE FROM unread_push_messages WHERE uid = ? AND mid <= ?");
++                LongSparseIntArray mentionsUpdate = null;
+                 for (int b = 0; b < inbox.size(); b++) {
+                     long key = inbox.keyAt(b);
+                     int messageId = inbox.get(key);
+                     database.executeFast(String.format(Locale.US, "UPDATE messages_v2 SET read_state = read_state | 1 WHERE uid = %d AND mid > 0 AND mid <= %d AND read_state IN(0,2) AND out = 0", key, messageId)).stepThis().dispose();
++                    database.executeFast(String.format(Locale.US, "UPDATE messages_v2 SET read_state = read_state | 2 WHERE uid = %d AND mid > 0 AND mid <= %d AND mention = 1 AND read_state IN(0,1) AND out = 0", key, messageId)).stepThis().dispose();
++                    int newMentions = 0;
++                    cursor = database.queryFinalized(String.format(Locale.US, "SELECT count(mid) FROM messages_v2 WHERE uid = %d AND mention = 1 AND read_state IN(0,1) AND out = 0", key));
++                    if (cursor.next()) newMentions = cursor.intValue(0);
++                    cursor.dispose();
++                    cursor = null;
++                    int oldMentions = 0;
++                    cursor = database.queryFinalized("SELECT unread_count_i FROM dialogs WHERE did = " + key);
++                    if (cursor.next()) oldMentions = cursor.intValue(0);
++                    cursor.dispose();
++                    cursor = null;
++                    if (oldMentions > newMentions && !isForum(key, FORUM_TYPE_CHAT | FORUM_TYPE_BOT | FORUM_TYPE_DIRECT)) {
++                        database.executeFast(String.format(Locale.US, "UPDATE dialogs SET unread_count_i = %d WHERE did = %d", newMentions, key)).stepThis().dispose();
++                        if (mentionsUpdate == null) mentionsUpdate = new LongSparseIntArray();
++                        mentionsUpdate.put(key, newMentions);
++                    }
+ 
+                     state.requery();
+                     state.bindLong(1, key);
+@@ -14307,6 +14327,10 @@ public class MessagesStorage extends BaseController {
+                 }
+                 state.dispose();
+                 state = null;
++                if (mentionsUpdate != null) {
++                    getMessagesController().processDialogsUpdateRead(null, mentionsUpdate);
++                    updateFiltersReadCounter(null, mentionsUpdate, true);
++                }
+             }
+             if (!isEmpty(outbox)) {
+                 for (int b = 0; b < outbox.size(); b++) {
+@@ -14334,6 +14358,9 @@ public class MessagesStorage extends BaseController {
+             if (state != null) {
+                 state.dispose();
+             }
++            if (cursor != null) {
++                cursor.dispose();
++            }
+         }
+     }
+ 

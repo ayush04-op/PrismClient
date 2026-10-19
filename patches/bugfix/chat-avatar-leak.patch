@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Thu, 4 Jun 2026 03:59:31 +0300
+Subject: hopefully fix chat avatar listener leak (causing a ChatActivity memory leak)
+
+---
+ .../ui/Components/ChatAvatarContainer.java    | 19 +++++++++++++------
+ 1 file changed, 13 insertions(+), 6 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+@@ -1033,9 +1033,12 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
+     }
+ 
+     public void onDestroy() {
++        removeNotificationObservers();
+         if (sharedMediaPreloader != null) {
+             sharedMediaPreloader.onDestroy(parentFragment);
++            sharedMediaPreloader = null;
+         }
++        parentFragment = null;
+     }
+ 
+     private void setTypingAnimation(boolean start) {
+@@ -1544,6 +1547,16 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
+     @Override
+     protected void onDetachedFromWindow() {
+         super.onDetachedFromWindow();
++        removeNotificationObservers();
++        if (emojiStatusDrawable != null) {
++            emojiStatusDrawable.detach();
++        }
++        if (botVerificationDrawable != null) {
++            botVerificationDrawable.detach();
++        }
++    }
++
++    private void removeNotificationObservers() {
+         if (parentFragment != null) {
+             NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.didUpdateConnectionState);
+             NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.emojiLoaded);
+@@ -1551,12 +1564,6 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
+                 NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.savedMessagesDialogsUpdate);
+             }
+         }
+-        if (emojiStatusDrawable != null) {
+-            emojiStatusDrawable.detach();
+-        }
+-        if (botVerificationDrawable != null) {
+-            botVerificationDrawable.detach();
+-        }
+     }
+ 
+     @Override

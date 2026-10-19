@@ -1,0 +1,123 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Thu, 11 Jun 2026 15:34:25 +0400
+Subject: hopefully fix cropping not saving sometimes in PhotoViewer
+
+---
+ .../java/org/telegram/ui/PhotoViewer.java     | 46 ++++++++++++++-----
+ 1 file changed, 34 insertions(+), 12 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java b/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
+@@ -7754,7 +7754,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+             if (currentEditMode == EDIT_MODE_CROP && !photoCropView.isReady()) {
+                 return;
+             }
+-            applyCurrentEditMode();
++            if (!applyCurrentEditMode()) return;
+             switchToEditMode(EDIT_MODE_NONE);
+         });
+ 
+@@ -8109,7 +8109,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+                     }
+                     return;
+                 }
+-                applyCurrentEditMode();
++                if (currentEditMode == EDIT_MODE_CROP) {
++                    if (!applyCurrentEditMode()) {
++                        return;
++                    }
++                } else if (sendPhotoType == SELECT_TYPE_AVATAR) {
++                    applyCurrentEditMode();
++                }
+             }
+             if (!replace && parentChatActivity != null) {
+                 TLRPC.Chat chat = parentChatActivity.getCurrentChat();
+@@ -11437,15 +11443,16 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+         }
+     }
+ 
+-    private void applyCurrentEditMode() {
++    private boolean applyCurrentEditMode() {
+         if (currentIndex < 0 || currentIndex >= imagesArrLocals.size()) {
+-            return;
++            return false;
+         }
+         Object object = imagesArrLocals.get(currentIndex);
+         if (!(object instanceof MediaController.MediaEditState)) {
+-            return;
++            return false;
+         }
+         Bitmap bitmap = null;
++        Bitmap currentCroppedBitmap = null;
+         Bitmap[] paintThumbBitmap = new Bitmap[1];
+         List<TLRPC.InputDocument> stickers = null;
+         MediaController.SavedFilterState savedFilterState = null;
+@@ -11454,10 +11461,6 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+         boolean hasChanged = false;
+         MediaController.MediaEditState entry = (MediaController.MediaEditState) imagesArrLocals.get(currentIndex);
+         if (currentEditMode == EDIT_MODE_CROP || currentEditMode == EDIT_MODE_NONE && sendPhotoType == SELECT_TYPE_AVATAR) {
+-            photoCropView.makeCrop(entry);
+-            if (entry.cropState == null && currentEditMode != EDIT_MODE_CROP) {
+-                return;
+-            }
+             if (isCurrentVideo) {
+                 if (!TextUtils.isEmpty(entry.filterPath)) {
+                     bitmap = ImageLoader.loadBitmap(entry.filterPath, null, thumbSize, thumbSize, true);
+@@ -11474,6 +11477,24 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+             } else {
+                 bitmap = centerImage.getBitmap();
+                 orientation = new int[]{centerImage.getOrientation(), centerImage.getInvert()};
++                if (bitmap == null) {
++                    orientation = new int[2];
++                    bitmap = desu.inugram.helpers.media.PhotoViewerHelper.loadEditSourceBitmap(entry, orientation);
++                }
++            }
++            if (bitmap == null) {
++                return false;
++            }
++            photoCropView.makeCrop(entry);
++            if (entry.cropState == null) {
++                return currentEditMode != EDIT_MODE_CROP;
++            }
++            currentCroppedBitmap = createCroppedBitmap(bitmap, entry.cropState, orientation, true);
++            if (currentCroppedBitmap == null) {
++                currentCroppedBitmap = desu.inugram.helpers.media.PhotoViewerHelper.rebakeCroppedBitmap(entry);
++                if (currentCroppedBitmap == null) {
++                    return false;
++                }
+             }
+         } else if (currentEditMode == EDIT_MODE_FILTER) {
+             bitmap = photoFilterView.getBitmap();
+@@ -11515,10 +11536,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+                     stickerMakerView.updateOutlinePath(bitmap);
+                 }
+             }
+-            return;
++            return true;
+         }
+         if (bitmap == null) {
+-            return;
++            return false;
+         }
+ 
+         if (entry.thumbPath != null) {
+@@ -11536,7 +11557,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+             editState.croppedMediaEntities = entry.croppedMediaEntities;
+ 
+             if (entry.cropState != null) {
+-                Bitmap croppedBitmap = createCroppedBitmap(bitmap, entry.cropState, orientation, true);
++                Bitmap croppedBitmap = currentCroppedBitmap;
+                 if (entry.paintPath != null) {
+                     Bitmap paintBitmap = BitmapFactory.decodeFile(entry.fullPaintPath);
+                     Bitmap croppedPaintBitmap = createCroppedBitmap(paintBitmap, entry.cropState, null, false);
+@@ -11804,6 +11825,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+         }
+         ignoreDidSetImage = false;
+         centerImage.setParentView(containerView);
++        return true;
+     }
+ 
+     private void setPhotoChecked() {

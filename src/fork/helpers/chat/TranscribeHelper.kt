@@ -1,0 +1,564 @@
+package desu.inugram.helpers.chat
+
+import android.text.TextUtils
+import android.util.Base64
+import desu.inugram.InuConfig
+import desu.inugram.helpers.ai.AiProviderStore
+import org.json.JSONObject
+import org.telegram.messenger.AndroidUtilities
+import org.telegram.messenger.FileLoader
+import org.telegram.messenger.FileLog
+import org.telegram.messenger.LocaleController
+import org.telegram.messenger.MessageObject
+import org.telegram.messenger.MessagesStorage
+import org.telegram.messenger.NotificationCenter
+import org.telegram.messenger.R
+import org.telegram.tgnet.TLRPC
+import org.telegram.ui.Components.BulletinFactory
+import org.telegram.ui.Components.TranscribeButton
+import java.io.File
+import java.io.IOException
+import java.io.FileInputStream
+import java.io.OutputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+
+object TranscribeHelper {
+
+    private val inFlight = ConcurrentHashMap<String, Boolean>()
+    private val cancelled = ConcurrentHashMap.newKeySet<String>()
+
+    // entiny: dedicated thread pool avoids stalling Utilities.globalQueue during long uploads
+    private val worker: ExecutorService = Executors.newFixedThreadPool(2) { r ->
+        Thread(r, "inu-transcribe").apply { isDaemon = true }
+    }
+
+    private const val MAX_TRANSCRIPTION_BYTES = 32L * 1024L * 1024L
+
+    // entiny: cap inline audio before Base64 4/3 expansion exceeds 20MB provider limits
+    private const val MAX_INLINE_AUDIO_BYTES = 14L * 1024L * 1024L
+
+    private const val MAX_ATTEMPTS = 3
+
+    private const val MAX_RETRY_DELAY_MS = 15_000L
+
+    private class TransientHttpException(message: String, val retryAfterMs: Long = 0L) : IOException(message)
+
+    @JvmStatic
+    fun isTranscribing(messageObject: MessageObject?): Boolean {
+        if (messageObject == null) return false
+        val key = reqKey(messageObject)
+        return inFlight[key] == true
+    }
+
+    @JvmStatic
+    fun cancel(messageObject: MessageObject?) {
+        if (messageObject == null) return
+        val key = reqKey(messageObject)
+        cancelled.add(key)
+        if (inFlight.remove(key) != null) {
+            notifyStateChange(messageObject.currentAccount, messageObject)
+        }
+    }
+
+    @JvmStatic
+    fun shouldUseCustomTranscribe(account: Int): Boolean = InuConfig.AI_TRANSCRIBE_ENABLED.value
+
+    private fun isProviderConfigured(): Boolean {
+        val p = AiProviderStore.voiceProvider() ?: return false
+        return when (p.kind) {
+            InuConfig.TRANSCRIBE_PROVIDER_CF -> p.accountId.isNotBlank() && p.key.isNotBlank()
+            InuConfig.TRANSCRIBE_PROVIDER_CUSTOM -> p.url.isNotBlank()
+            else -> p.key.isNotBlank()
+        }
+    }
+
+    private fun reqKey(messageObject: MessageObject): String {
+        return "${messageObject.currentAccount}_${messageObject.dialogId}_${messageObject.id}"
+    }
+
+    @JvmStatic
+    fun transcribe(account: Int, messageObject: MessageObject?, delegate: Any? = null) {
+        if (messageObject?.messageOwner == null) return
+
+        val key = reqKey(messageObject)
+        if (inFlight[key] == true) return
+        cancelled.remove(key)
+
+        if (!isProviderConfigured()) {
+            org.telegram.ui.LaunchActivity.instance?.let { activity ->
+                if (desu.inugram.helpers.ai.AiComposeHelper.showProviderSetup(activity, AiProviderStore.voiceProvider())) return
+            }
+            BulletinFactory.global().createSimpleBulletin(
+                R.raw.info,
+                LocaleController.getString(R.string.InuAiTranscribeNoKey)
+            ).show()
+            return
+        }
+
+        inFlight[key] = true
+        notifyStateChange(account, messageObject)
+
+        val owner = messageObject.messageOwner
+        val audioFile = FileLoader.getInstance(account).getPathToMessage(owner)
+
+        if (audioFile != null && audioFile.exists() && audioFile.length() > 0) {
+            processAudioFile(account, messageObject, audioFile)
+        } else {
+            val doc = messageObject.document
+            if (doc != null) {
+                FileLoader.getInstance(account).loadFile(doc, messageObject, 1, 0)
+                pollFileDownload(account, messageObject, doc)
+            } else {
+                inFlight.remove(key)
+                notifyStateChange(account, messageObject)
+                showError(LocaleController.getString(R.string.InuAiTranscribeErrorNoAudio))
+            }
+        }
+    }
+
+    private fun pollFileDownload(account: Int, messageObject: MessageObject, doc: TLRPC.Document, attempts: Int = 0) {
+        val key = reqKey(messageObject)
+        if (attempts > 60) {
+            inFlight.remove(key)
+            notifyStateChange(account, messageObject)
+            showError(LocaleController.getString(R.string.InuAiTranscribeErrorDownload))
+            return
+        }
+
+        AndroidUtilities.runOnUIThread({
+            if (isCancelled(key)) return@runOnUIThread
+            val file = FileLoader.getInstance(account).getPathToAttach(doc, true)
+            if (file != null && file.exists() && file.length() > 0) {
+                processAudioFile(account, messageObject, file)
+            } else {
+                pollFileDownload(account, messageObject, doc, attempts + 1)
+            }
+        }, 500)
+    }
+
+    private fun processAudioFile(account: Int, messageObject: MessageObject, file: File) {
+        val key = reqKey(messageObject)
+        worker.execute {
+            try {
+                if (isCancelled(key)) return@execute
+                if (file.length() > MAX_TRANSCRIPTION_BYTES) {
+                    throw IOException(LocaleController.getString(R.string.InuAiTranscribeErrorTooLarge))
+                }
+                val isRound = messageObject.isRoundVideo
+                val mime = if (isRound) "video/mp4" else "audio/ogg"
+                val fileName = if (isRound) "video.mp4" else "voice.ogg"
+
+                val provider = AiProviderStore.voiceProvider() ?: throw IOException("No voice provider selected")
+                val customPrompt = InuConfig.AI_TRANSCRIBE_PROMPT.value.trim()
+
+                val transcribedText = withRetry {
+                    when (provider.kind) {
+                        InuConfig.TRANSCRIBE_PROVIDER_GROQ -> transcribeGroq(provider, file, fileName, mime, customPrompt)
+                        InuConfig.TRANSCRIBE_PROVIDER_GEMINI -> transcribeGemini(provider, file, mime, customPrompt)
+                        InuConfig.TRANSCRIBE_PROVIDER_OPENAI -> transcribeOpenAI(provider, file, fileName, mime, customPrompt)
+                        InuConfig.TRANSCRIBE_PROVIDER_CF -> transcribeCloudflare(provider, file, customPrompt)
+                        InuConfig.TRANSCRIBE_PROVIDER_CUSTOM -> transcribeCustom(provider, file, fileName, mime, customPrompt)
+                        else -> throw IllegalStateException("Unknown provider: ${provider.kind}")
+                    }
+                }
+
+                AndroidUtilities.runOnUIThread {
+                    if (isCancelled(key)) return@runOnUIThread
+                    inFlight.remove(key)
+                    if (!TextUtils.isEmpty(transcribedText)) {
+                        val owner = messageObject.messageOwner
+                        owner.voiceTranscription = transcribedText
+                        owner.voiceTranscriptionFinal = true
+                        owner.voiceTranscriptionOpen = true
+                        TranscribeButton.openVideoTranscription(messageObject)
+                        MessagesStorage.getInstance(account).updateMessageVoiceTranscription(
+                            messageObject.dialogId,
+                            messageObject.id,
+                            transcribedText,
+                            owner
+                        )
+                        NotificationCenter.getInstance(account).postNotificationName(
+                            NotificationCenter.voiceTranscriptionUpdate,
+                            messageObject,
+                            null,
+                            transcribedText,
+                            true,
+                            true
+                        )
+                    } else {
+                        notifyStateChange(account, messageObject)
+                        showError(LocaleController.getString(R.string.InuAiTranscribeErrorEmpty))
+                    }
+                }
+            } catch (e: Exception) {
+                if (isCancelled(key)) return@execute
+                FileLog.e("TranscribeHelper error", e)
+                AndroidUtilities.runOnUIThread {
+                    inFlight.remove(key)
+                    notifyStateChange(account, messageObject)
+                    showError(e.message?.takeIf { it.isNotBlank() } ?: e.javaClass.simpleName)
+                }
+            } finally {
+                cancelled.remove(key)
+            }
+        }
+    }
+
+    private fun <T> withRetry(block: () -> T): T {
+        var attempt = 0
+        while (true) {
+            try {
+                return block()
+            } catch (e: TransientHttpException) {
+                attempt++
+                if (attempt >= MAX_ATTEMPTS || e.retryAfterMs > MAX_RETRY_DELAY_MS) throw e
+                try {
+                    Thread.sleep(maxOf(1500L * attempt, e.retryAfterMs))
+                } catch (ie: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    throw e
+                }
+            }
+        }
+    }
+
+    private fun languageHint(): String = InuConfig.AI_TRANSCRIBE_LANGUAGE.value.trim()
+
+    private fun isCancelled(key: String): Boolean = cancelled.contains(key)
+
+    private fun notifyStateChange(account: Int, messageObject: MessageObject) {
+        AndroidUtilities.runOnUIThread {
+            NotificationCenter.getInstance(account).postNotificationName(
+                NotificationCenter.voiceTranscriptionUpdate,
+                messageObject
+            )
+            NotificationCenter.getInstance(account).postNotificationName(
+                NotificationCenter.updateTranscriptionLock
+            )
+        }
+    }
+
+    private fun showError(msg: String) {
+        BulletinFactory.global().createSimpleBulletin(
+            R.raw.error,
+            LocaleController.formatString(R.string.InuAiTranscribeFailed, msg)
+        ).show()
+    }
+
+    private fun transcribeGroq(p: AiProviderStore.Provider, file: File, fileName: String, mime: String, prompt: String): String {
+        val apiKey = p.key.trim()
+        val url = "https://api.groq.com/openai/v1/audio/transcriptions"
+        val parts = mutableMapOf(
+            "model" to p.voiceModel.trim().ifBlank { "whisper-large-v3-turbo" },
+            "response_format" to "json",
+            "temperature" to "0"
+        )
+        if (prompt.isNotBlank()) parts["prompt"] = prompt
+        languageHint().takeIf { it.isNotBlank() }?.let { parts["language"] = it }
+
+        val headers = mapOf("Authorization" to "Bearer $apiKey")
+        val resp = postMultipart(url, headers, parts, "file", fileName, mime, file)
+        val json = JSONObject(resp)
+        if (json.has("error")) {
+            throw IOException(json.getJSONObject("error").optString("message", "Groq error"))
+        }
+        return json.optString("text", "").trim()
+    }
+
+    private fun transcribeOpenAI(p: AiProviderStore.Provider, file: File, fileName: String, mime: String, prompt: String): String {
+        val apiKey = p.key.trim()
+        val url = "https://api.openai.com/v1/audio/transcriptions"
+        val parts = mutableMapOf(
+            "model" to p.voiceModel.trim().ifBlank { "whisper-1" },
+            "response_format" to "json",
+            "temperature" to "0"
+        )
+        if (prompt.isNotBlank()) parts["prompt"] = prompt
+        languageHint().takeIf { it.isNotBlank() }?.let { parts["language"] = it }
+
+        val headers = mapOf("Authorization" to "Bearer $apiKey")
+        val resp = postMultipart(url, headers, parts, "file", fileName, mime, file)
+        val json = JSONObject(resp)
+        if (json.has("error")) {
+            throw IOException(json.getJSONObject("error").optString("message", "OpenAI error"))
+        }
+        return json.optString("text", "").trim()
+    }
+
+    private fun transcribeCustom(p: AiProviderStore.Provider, file: File, fileName: String, mime: String, prompt: String): String {
+        val base = AiProviderStore.baseUrl(p)
+        if (base.isEmpty()) throw IOException("Custom endpoint URL is empty")
+        val rawUrl = "$base/audio/transcriptions"
+        val apiKey = p.key.trim()
+        val model = p.voiceModel.trim().ifBlank { "whisper-1" }
+        val parts = mutableMapOf(
+            "model" to model,
+            "response_format" to "json",
+            "temperature" to "0"
+        )
+        if (prompt.isNotBlank()) parts["prompt"] = prompt
+        languageHint().takeIf { it.isNotBlank() }?.let { parts["language"] = it }
+
+        val headers = mutableMapOf<String, String>()
+        if (apiKey.isNotBlank()) headers["Authorization"] = "Bearer $apiKey"
+
+        val resp = postMultipart(rawUrl, headers, parts, "file", fileName, mime, file)
+        val json = JSONObject(resp)
+        if (json.has("error")) {
+            throw IOException(json.getJSONObject("error").optString("message", "Custom API error"))
+        }
+        return json.optString("text", "").trim()
+    }
+
+    private fun transcribeGemini(p: AiProviderStore.Provider, file: File, mime: String, prompt: String): String {
+        if (file.length() > MAX_INLINE_AUDIO_BYTES) {
+            throw IOException(LocaleController.formatString(R.string.InuAiTranscribeErrorTooLargeInline, "Gemini"))
+        }
+        val apiKey = p.key.trim()
+        val model = p.voiceModel.trim().ifBlank { "gemini-3.5-flash" }
+        val url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey"
+
+        val instruction = buildString {
+            append(
+                if (prompt.isNotBlank()) prompt
+                else "Transcribe the audio verbatim in its original language. Output ONLY the transcription text without speaker labels, introductions, or commentary."
+            )
+            languageHint().takeIf { it.isNotBlank() }?.let {
+                append(" The audio is spoken in \"")
+                append(it)
+                append("\"; transcribe it in that language.")
+            }
+        }
+
+        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 30_000
+            readTimeout = 120_000
+            doOutput = true
+            // entiny: chunked streaming prevents buffering entire Base64 audio in memory
+            setChunkedStreamingMode(0)
+            setRequestProperty("Content-Type", "application/json")
+        }
+
+        val head = "{\"contents\":[{\"parts\":[" +
+            JSONObject().put("text", instruction).toString() +
+            ",{\"inlineData\":{\"mimeType\":" + JSONObject.quote(mime) + ",\"data\":\""
+        val tail = "\"}}]}],\"generationConfig\":{\"temperature\":0}}"
+
+        conn.outputStream.buffered().use { out ->
+            out.write(head.toByteArray())
+            streamBase64(file, out)
+            out.write(tail.toByteArray())
+        }
+
+        val code = conn.responseCode
+        val resp = (if (code in 200..299) conn.inputStream else conn.errorStream)
+            ?.bufferedReader()?.use { it.readText() } ?: ""
+        conn.disconnect()
+
+        if (code !in 200..299) throw geminiError(code, resp)
+
+        val parts = JSONObject(resp)
+            .optJSONArray("candidates")?.optJSONObject(0)
+            ?.optJSONObject("content")?.optJSONArray("parts")
+            ?: return ""
+        // entiny: concatenate all candidate parts to avoid truncating long Gemini transcripts
+        return buildString {
+            for (i in 0 until parts.length()) {
+                append(parts.optJSONObject(i)?.optString("text").orEmpty())
+            }
+        }.trim()
+    }
+
+    private fun geminiError(code: Int, resp: String): IOException {
+        val error = runCatching { JSONObject(resp).getJSONObject("error") }.getOrNull()
+        val detail = error?.optString("message").orEmpty().ifBlank { resp }.take(300)
+
+        if (code != 429) {
+            val message = "Gemini API error ($code): $detail"
+            return if (code >= 500) TransientHttpException(message) else IOException(message)
+        }
+
+        var retryMs = 0L
+        var quotaId = ""
+        var quotaValue = ""
+        val details = error?.optJSONArray("details")
+        if (details != null) {
+            for (i in 0 until details.length()) {
+                val d = details.optJSONObject(i) ?: continue
+                val type = d.optString("@type")
+                when {
+                    type.endsWith("RetryInfo") -> retryMs = parseProtoDuration(d.optString("retryDelay"))
+                    type.endsWith("QuotaFailure") -> {
+                        val violation = d.optJSONArray("violations")?.optJSONObject(0)
+                        quotaId = violation?.optString("quotaId").orEmpty()
+                        quotaValue = violation?.optString("quotaValue").orEmpty()
+                    }
+                }
+            }
+        }
+
+        if (quotaValue == "0") {
+            return IOException(LocaleController.getString(R.string.InuAiTranscribeErrorNoFreeQuota))
+        }
+        if (quotaId.contains("PerDay", ignoreCase = true)) {
+            return IOException(LocaleController.getString(R.string.InuAiTranscribeErrorDailyQuota))
+        }
+        return TransientHttpException(
+            LocaleController.getString(R.string.InuAiTranscribeErrorRateLimited),
+            retryMs
+        )
+    }
+
+    private fun parseProtoDuration(value: String): Long {
+        val seconds = value.trim().removeSuffix("s").toDoubleOrNull() ?: return 0L
+        return (seconds * 1000).toLong().coerceAtLeast(0L)
+    }
+
+    private fun retryAfterMs(conn: HttpURLConnection): Long {
+        val header = conn.getHeaderField("Retry-After")?.trim().orEmpty()
+        val seconds = header.toLongOrNull() ?: return 0L
+        return (seconds * 1000).coerceAtLeast(0L)
+    }
+
+    // entiny: stream Base64 in 3-byte-aligned chunks to avoid mid-stream padding corruption
+    private fun streamBase64(file: File, out: OutputStream) {
+        val buf = ByteArray(3 * 16 * 1024)
+        FileInputStream(file).use { input ->
+            while (true) {
+                var read = 0
+                while (read < buf.size) {
+                    val n = input.read(buf, read, buf.size - read)
+                    if (n < 0) break
+                    read += n
+                }
+                if (read <= 0) break
+                out.write(Base64.encode(if (read == buf.size) buf else buf.copyOf(read), Base64.NO_WRAP))
+                if (read < buf.size) break
+            }
+        }
+    }
+
+    // entiny: only standard whisper models accept raw binary; others require Base64 JSON payload
+    private val CF_BINARY_MODELS = setOf("@cf/openai/whisper", "@cf/openai/whisper-tiny-en")
+
+    private fun transcribeCloudflare(p: AiProviderStore.Provider, file: File, prompt: String): String {
+        val accountId = p.accountId.trim()
+        val apiToken = p.key.trim()
+        if (accountId.isEmpty() || apiToken.isEmpty()) {
+            throw IOException("Cloudflare Account ID or API Token missing")
+        }
+        val model = p.voiceModel.trim().ifBlank { "@cf/openai/whisper" }
+        val binary = CF_BINARY_MODELS.contains(model.lowercase())
+        if (!binary && file.length() > MAX_INLINE_AUDIO_BYTES) {
+            throw IOException(LocaleController.formatString(R.string.InuAiTranscribeErrorTooLargeInline, "Cloudflare"))
+        }
+        val url = "https://api.cloudflare.com/client/v4/accounts/$accountId/ai/run/$model"
+
+        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 30_000
+            readTimeout = 120_000
+            doOutput = true
+            setChunkedStreamingMode(0)
+            setRequestProperty("Authorization", "Bearer $apiToken")
+            setRequestProperty("Content-Type", if (binary) "application/octet-stream" else "application/json")
+        }
+        if (binary) {
+            FileInputStream(file).use { input ->
+                conn.outputStream.use { output -> input.copyTo(output) }
+            }
+        } else {
+            val head = StringBuilder("{\"task\":\"transcribe\"")
+            languageHint().takeIf { it.isNotBlank() }?.let { head.append(",\"language\":").append(JSONObject.quote(it)) }
+            prompt.takeIf { it.isNotBlank() }?.let { head.append(",\"prompt\":").append(JSONObject.quote(it)) }
+            head.append(",\"audio\":\"")
+            conn.outputStream.buffered().use { out ->
+                out.write(head.toString().toByteArray())
+                streamBase64(file, out)
+                out.write("\"}".toByteArray())
+            }
+        }
+        val code = conn.responseCode
+        val retryAfter = retryAfterMs(conn)
+        val resp = (if (code in 200..299) conn.inputStream else conn.errorStream)
+            ?.bufferedReader()?.use { it.readText() } ?: ""
+        conn.disconnect()
+
+        if (code !in 200..299) {
+            val message = "Cloudflare error ($code): ${resp.take(300)}"
+            throw if (code == 429 || code >= 500) TransientHttpException(message, retryAfter) else IOException(message)
+        }
+
+        val json = JSONObject(resp)
+        if (json.optBoolean("success", false)) {
+            val result = json.optJSONObject("result")
+            return result?.optString("text", "")?.trim() ?: ""
+        }
+        val errors = json.optJSONArray("errors")
+        val errMsg = if (errors != null && errors.length() > 0) errors.getJSONObject(0).optString("message", "CF error") else "CF error"
+        throw IOException(errMsg)
+    }
+
+    private fun postMultipart(
+        urlStr: String,
+        headers: Map<String, String>,
+        parts: Map<String, String>,
+        fileField: String,
+        fileName: String,
+        fileMime: String,
+        file: File
+    ): String {
+        val boundary = "Boundary-" + UUID.randomUUID().toString()
+        val lineEnd = "\r\n"
+        val twoHyphens = "--"
+
+        val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 30_000
+            readTimeout = 120_000
+            doOutput = true
+            // entiny: chunked streaming avoids OOM from buffering multipart audio in memory
+            setChunkedStreamingMode(0)
+            setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
+            for ((k, v) in headers) setRequestProperty(k, v)
+        }
+
+        conn.outputStream.buffered().use { out ->
+            for ((k, v) in parts) {
+                out.write(("$twoHyphens$boundary$lineEnd").toByteArray())
+                out.write(("Content-Disposition: form-data; name=\"$k\"$lineEnd$lineEnd").toByteArray())
+                out.write(("$v$lineEnd").toByteArray())
+            }
+            out.write(("$twoHyphens$boundary$lineEnd").toByteArray())
+            out.write(("Content-Disposition: form-data; name=\"$fileField\"; filename=\"$fileName\"$lineEnd").toByteArray())
+            out.write(("Content-Type: $fileMime$lineEnd$lineEnd").toByteArray())
+            FileInputStream(file).use { input -> input.copyTo(out) }
+            out.write(lineEnd.toByteArray())
+            out.write(("$twoHyphens$boundary$twoHyphens$lineEnd").toByteArray())
+        }
+
+        val code = conn.responseCode
+        val retryAfter = retryAfterMs(conn)
+        val resp = (if (code in 200..299) conn.inputStream else conn.errorStream)
+            ?.bufferedReader()?.use { it.readText() } ?: ""
+        conn.disconnect()
+
+        if (code !in 200..299) {
+            val err = try {
+                val j = JSONObject(resp)
+                if (j.has("error")) j.getJSONObject("error").optString("message", resp) else resp
+            } catch (_: Exception) {
+                resp
+            }
+            val message = "HTTP $code: ${err.take(300)}"
+            throw if (code == 429 || code >= 500) TransientHttpException(message, retryAfter) else IOException(message)
+        }
+        return resp
+    }
+}

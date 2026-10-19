@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Sun, 7 Jun 2026 23:41:38 +0400
+Subject: make sponsored messages respect data saver. this is likely the intended stock behavior, but downloading a 15mb ad video while roaming sucks.
+
+---
+ .../java/org/telegram/messenger/DownloadController.java  | 9 ---------
+ .../main/java/org/telegram/ui/Cells/ChatMessageCell.java | 2 +-
+ 2 files changed, 1 insertion(+), 10 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/DownloadController.java b/TMessagesProj/src/main/java/org/telegram/messenger/DownloadController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/DownloadController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/DownloadController.java
+@@ -616,9 +616,6 @@ public class DownloadController extends BaseController implements NotificationCe
+             }
+             return true;
+         }
+-        if (messageObject.sponsoredMedia != null) {
+-            return true;
+-        }
+         if (messageObject.isHiddenSensitive())
+             return false;
+         return canDownloadMediaInternal(messageObject) == 1;
+@@ -659,9 +656,6 @@ public class DownloadController extends BaseController implements NotificationCe
+             }
+             return 2;
+         }
+-        if (messageObject.sponsoredMedia != null) {
+-            return 2;
+-        }
+         if (messageObject.isHiddenSensitive())
+             return 0;
+         return canDownloadMediaInternal(messageObject);
+@@ -677,9 +671,6 @@ public class DownloadController extends BaseController implements NotificationCe
+             }
+             return 2;
+         }
+-        if (messageObject.sponsoredMedia != null) {
+-            return 2;
+-        }
+         if (messageObject.isHiddenSensitive())
+             return 0;
+         return canDownloadMediaInternal(messageObject, overrideSize);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+@@ -8745,7 +8745,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                             } else {
+                                 boolean photoExist = messageObject.mediaExists;
+                                 String fileName = FileLoader.getAttachFileName(currentPhotoObject);
+-                                if (hasGamePreview || photoExist || DownloadController.getInstance(currentAccount).canDownloadMedia(currentMessageObject) || FileLoader.getInstance(currentAccount).isLoadingFile(fileName) || currentMessageObject.isSponsored()) {
++                                if (hasGamePreview || photoExist || DownloadController.getInstance(currentAccount).canDownloadMedia(currentMessageObject) || FileLoader.getInstance(currentAccount).isLoadingFile(fileName)) {
+                                     photoNotSet = false;
+                                     if (currentPhotoLocation != null) {
+                                         photoImage.setImage(currentPhotoLocation, currentPhotoFilter, currentPhotoThumbLocation, currentPhotoFilterThumb, currentPhotoObjectThumbStripped, 0, null, messageObject, 0);

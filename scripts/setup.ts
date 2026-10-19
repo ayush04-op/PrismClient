@@ -1,0 +1,274 @@
+import fs from 'node:fs/promises'
+import { join } from 'node:path'
+import { $ } from 'zx'
+import { worktreeDir as defaultWorktreeDir, ICON_SELECTION, patchesDir, rootDir } from './config.js'
+import { generateGrants } from './generate-grants.js'
+import { generateTl } from './generate-tl.js'
+import {
+  applySubmodulePatches,
+  cd,
+  cloneUpstream,
+  configureGitLineEndings,
+  ensureDir,
+  ensureGitExclude,
+  ensureUpstreamRemote,
+  getAllPatchNames,
+  getAppliedPatchNames,
+  hasGitRepo,
+  hasLocalBranch,
+  hasStgitStack,
+  linkForkSource,
+  patchNameFromSeriesEntry,
+  readPinnedUpstreamCommit,
+  readSeries,
+  step,
+  success,
+  syncSubmodules,
+} from './lib.js'
+import { svgBodyToVectorDrawable } from './svg-to-vector.js'
+
+const BRANCH = 'inugram'
+const args = process.argv.slice(2)
+const force = args.includes('--force')
+const ci = args.includes('--ci')
+const noSubmodules = args.includes('--no-submodules')
+const pluginless = args.includes('--pluginless')
+const worktreeDir = pluginless ? join(rootDir, 'worktree-pluginless') : defaultWorktreeDir
+const excludedSubmodules = pluginless ? ['TMessagesProj_App/jni/lsplant'] : []
+
+function sameOrder(actual: string[], expected: string[]) {
+  return actual.length === expected.length && actual.every((value, index) => value === expected[index])
+}
+
+async function ensureWorktree(commit: string) {
+  if (!hasGitRepo(worktreeDir)) {
+    await cloneUpstream(worktreeDir, commit)
+    return
+  }
+  step(`Reusing existing checkout in ${worktreeDir}`)
+  await configureGitLineEndings(worktreeDir)
+  await ensureUpstreamRemote(worktreeDir)
+}
+
+async function ensureBranch(commit: string) {
+  const repo = cd(worktreeDir)
+  const existed = await hasLocalBranch(worktreeDir, BRANCH)
+
+  if (existed) {
+    step(`Checking out ${BRANCH}`)
+    await repo`git checkout ${BRANCH}`
+  } else {
+    step(`Creating local work branch at ${commit}`)
+    await repo`git checkout -B ${BRANCH} ${commit}`
+  }
+
+  return existed
+}
+
+async function assertCleanWorktree(action: string) {
+  const repo = cd(worktreeDir)
+  const dirty = (await repo`git status --porcelain`).stdout.trim()
+  if (dirty) {
+    throw new Error(`Refusing to ${action}: worktree is dirty: ${dirty}`)
+  }
+}
+
+async function ensureStgitStack(commit: string, branchExisted: boolean, force: boolean) {
+  const repo = cd(worktreeDir)
+  await repo`git config stgit.namelength 120`
+  await repo`git config commit.gpgsign false`
+  await repo`git config tag.gpgsign false`
+
+  if (await hasStgitStack(worktreeDir, BRANCH)) {
+    step('Stgit stack already initialized')
+    // reconcile metadata in case the branch was moved by a plain git op
+    if (force) await repo`stg repair`
+    return
+  }
+
+  if (branchExisted) {
+    const head = (await repo`git rev-parse HEAD`).stdout.trim()
+    if (head !== commit) {
+      if (!force) {
+        throw new Error(
+          `Branch ${BRANCH} exists without StGit metadata and is not at ${commit} (re-run with --force to reset it)`,
+        )
+      }
+      await assertCleanWorktree(`reset ${BRANCH}`)
+      step(`Resetting ${BRANCH} to ${commit}`)
+      await repo`git reset --hard ${commit}`
+    }
+  }
+
+  step('Initializing stgit')
+  await repo`stg init`
+}
+
+async function generateIconDrawables(repoDir: string) {
+  const outDir = join(repoDir, 'TMessagesProj/src/main/res/drawable')
+  await ensureDir(outDir)
+  let dirty = false
+  for (const { pack, icons, options } of ICON_SELECTION) {
+    for (const name of icons) {
+      const icon = pack.icons[name]
+      if (!icon) throw new Error(`Icon not found: ${pack}/${name}`)
+
+      const xml = svgBodyToVectorDrawable(icon.body, pack.width!, pack.height!, options)
+      const fileName = `inu_${pack.prefix}_${name.replaceAll('-', '_')}.xml`
+      const absPath = join(outDir, fileName)
+      const stat = await fs.lstat(absPath).catch(() => null)
+
+      if (stat?.isSymbolicLink()) {
+        await fs.unlink(absPath)
+      }
+
+      const current = stat?.isFile() ? await fs.readFile(absPath, 'utf8').catch(() => null) : null
+      if (current !== xml) {
+        step(`Generating ${fileName}`)
+        await fs.writeFile(absPath, xml)
+        dirty = true
+      }
+      await ensureGitExclude(repoDir, `TMessagesProj/src/main/res/drawable/${fileName}`)
+    }
+  }
+  return dirty
+}
+
+async function writeBuildProperties() {
+  const name = 'inu-build.properties'
+  await ensureGitExclude(worktreeDir, name)
+  const target = join(worktreeDir, name)
+  const contents = `inu.pluginless=${pluginless}\n`
+  if (await fs.readFile(target, 'utf8').catch(() => null) === contents) return false
+  await fs.writeFile(target, contents)
+  return true
+}
+
+async function ensureAdGuardFilter() {
+  // AdGuard URL Tracking filter (list 17). Bundled as an asset; gitignored.
+  const target = join(rootDir, 'src/res/assets/adguard_url_tracking.txt')
+  if (await fs.stat(target).then(() => true, () => false)) return
+  const url = 'https://filters.adtidy.org/android/filters/17.txt'
+  step(`Downloading AdGuard URL Tracking filter -> ${target}`)
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Failed to download ${url}: ${res.status} ${res.statusText}`)
+  await ensureDir(join(rootDir, 'src/res/assets'))
+  await fs.writeFile(target, await res.text())
+}
+
+async function importSeries(seriesEntries: string[]) {
+  const repo = cd(worktreeDir)
+  await repo`git config core.autocrlf false`
+  for (const entry of seriesEntries) {
+    const patchName = patchNameFromSeriesEntry(entry)
+    step(`Importing ${entry} as ${patchName}`)
+    const patchPath = join(patchesDir, entry).replaceAll('\\', '/')
+    await repo`stg import --3way -n ${patchName} ${patchPath}`
+  }
+}
+
+function isPrefix(prefix: string[], full: string[]) {
+  return prefix.length <= full.length && prefix.every((name, i) => name === full[i])
+}
+
+async function isStackOnCommit(commit: string) {
+  const base = (await cd(worktreeDir)`stg id {base}`).stdout.trim()
+  return base.startsWith(commit)
+}
+
+async function ensurePatches(expected: string[], seriesEntries: string[], commit: string) {
+  const repo = cd(worktreeDir)
+  const existing = await getAllPatchNames(worktreeDir)
+  if (!await isStackOnCommit(commit)) {
+    throw new Error(`Stack base is not the pinned upstream ${commit} (use --force to reset)`)
+  }
+
+  if (existing.length === 0) {
+    await importSeries(seriesEntries)
+  } else if (sameOrder(existing, expected)) {
+    // up to date
+  } else if (isPrefix(existing, expected)) {
+    const applied = await getAppliedPatchNames(worktreeDir)
+    if (!sameOrder(applied, existing)) {
+      step('Pushing existing patches before import')
+      await repo`stg push -a`
+    }
+    await importSeries(seriesEntries.slice(existing.length))
+  } else {
+    throw new Error('Existing StGit stack diverges from series (use --force to reset)')
+  }
+
+  const applied = await getAppliedPatchNames(worktreeDir)
+  if (!sameOrder(applied, expected)) {
+    step('Pushing remaining patches')
+    await repo`stg push -a`
+  }
+}
+
+async function forceReimportPatches(seriesEntries: string[], commit: string) {
+  const repo = cd(worktreeDir)
+
+  await assertCleanWorktree('force-reimport')
+
+  const existing = await getAllPatchNames(worktreeDir)
+  const applied = await getAppliedPatchNames(worktreeDir)
+
+  if (applied.length > 0) {
+    step(`Popping ${existing.length} patch(es)`)
+    await repo`stg pop -a`
+  }
+  for (const name of existing.reverse()) {
+    step(`Deleting ${name}`)
+    await repo`stg delete ${name}`
+  }
+
+  if (!await isStackOnCommit(commit)) {
+    const known = await $({ cwd: worktreeDir, nothrow: true })`git cat-file -e ${commit}^{commit}`
+    if (known.exitCode !== 0) {
+      step(`Fetching upstream ${commit}`)
+      await repo`git fetch upstream ${commit}`
+    }
+    step(`Moving stack base to ${commit}`)
+    await repo`stg rebase ${commit}`
+  }
+
+  await importSeries(seriesEntries)
+}
+
+const commit = await readPinnedUpstreamCommit()
+const seriesEntries = (await readSeries()).filter(entry => !pluginless || entry !== 'feature/plugins.patch')
+
+if (ci) {
+  if (hasGitRepo(worktreeDir)) {
+    throw new Error(`--ci needs a fresh worktree (${worktreeDir} already exists)`)
+  }
+  await cloneUpstream(worktreeDir, commit, true)
+  const repo = cd(worktreeDir)
+  for (const entry of seriesEntries) {
+    step(`Applying ${entry}`)
+    const patchPath = join(patchesDir, entry).replaceAll('\\', '/')
+    await repo`git apply --index --allow-empty ${patchPath}`
+  }
+} else {
+  await ensureWorktree(commit)
+  const branchExisted = await ensureBranch(commit)
+  await ensureStgitStack(commit, branchExisted, force)
+  if (force) {
+    await forceReimportPatches(seriesEntries, commit)
+  } else {
+    await ensurePatches(seriesEntries.map(patchNameFromSeriesEntry), seriesEntries, commit)
+  }
+}
+
+const configuredBuild = await writeBuildProperties()
+const syncedSubmodules = noSubmodules ? false : await syncSubmodules(worktreeDir, excludedSubmodules, ci)
+const patchedSubmodules = noSubmodules ? false : await applySubmodulePatches(worktreeDir, excludedSubmodules)
+await ensureAdGuardFilter()
+await ensureGitExclude(worktreeDir, '.kotlin')
+await ensureGitExclude(worktreeDir, '.cxx')
+if (!pluginless) await cd(worktreeDir)`git config submodule.TMessagesProj_App/jni/lsplant.ignore all`
+const linkedAny = await linkForkSource(worktreeDir, pluginless)
+const generatedAny = await generateIconDrawables(worktreeDir)
+const generatedTl = pluginless ? false : await generateTl()
+const generatedGrants = pluginless ? false : await generateGrants()
+success(configuredBuild || linkedAny || generatedAny || generatedTl || generatedGrants || syncedSubmodules || patchedSubmodules ? 'Setup complete' : 'Up to date')

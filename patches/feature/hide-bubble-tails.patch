@@ -1,0 +1,167 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.pet>
+Date: Mon, 20 Jul 2026 01:39:19 +0400
+Subject: an option to hide bubble tails
+
+---
+ .../ui/ActionBar/MessageDrawable.java         | 42 ++++++++++++++++++-
+ .../telegram/ui/Cells/ChatMessageCell.java    | 11 +++--
+ 2 files changed, 49 insertions(+), 4 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java
+@@ -78,6 +78,8 @@ public class MessageDrawable extends Drawable {
+             {-1, -1, -1, -1}
+     };
+     private Drawable[][] backgroundDrawable = new Drawable[4][4];
++    private boolean inu_lastBackgroundTails = desu.inugram.InuConfig.BUBBLE_TAILS.getValue();
++    private boolean inu_lastShadowTails = desu.inugram.InuConfig.BUBBLE_TAILS.getValue();
+     private int[][] backgroundDrawableColor = new int[][]{
+             {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff},
+             {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff},
+@@ -326,6 +328,16 @@ public class MessageDrawable extends Drawable {
+     }
+ 
+     public Drawable getBackgroundDrawable() {
++        boolean inu_tails = desu.inugram.InuConfig.BUBBLE_TAILS.getValue();
++        if (inu_lastBackgroundTails != inu_tails) {
++            inu_lastBackgroundTails = inu_tails;
++            for (int a = 0; a < backgroundDrawable.length; a++) {
++                for (int b = 0; b < backgroundDrawable[a].length; b++) {
++                    backgroundDrawable[a][b] = null;
++                    currentBackgroundDrawableRadius[a][b] = -1;
++                }
++            }
++        }
+         int newRad;
+         if (overrideRoundRadius != 0) {
+             newRad = overrideRoundRadius;
+@@ -452,6 +464,13 @@ public class MessageDrawable extends Drawable {
+         if (gradientShader == null && !isSelected && crossfadeFromDrawable == null) {
+             return null;
+         }
++        boolean inu_tails = desu.inugram.InuConfig.BUBBLE_TAILS.getValue();
++        if (inu_lastShadowTails != inu_tails) {
++            inu_lastShadowTails = inu_tails;
++            for (int a = 0; a < currentShadowDrawableRadius.length; a++) {
++                currentShadowDrawableRadius[a] = -1;
++            }
++        }
+         int newRad = dp(SharedConfig.bubbleRadius);
+         int idx;
+         if (isTopNear && isBottomNear) {
+@@ -684,6 +703,8 @@ public class MessageDrawable extends Drawable {
+                 int radToUse = botButtonsBottom ? nearRad : rad;
+                 if (currentType == TYPE_MEDIA) {
+                     path.moveTo(bounds.right - dp(8) - radToUse, bounds.bottom - padding);
++                } else if (!desu.inugram.InuConfig.BUBBLE_TAILS.getValue()) {
++                    path.moveTo(bounds.right - dp(8) - (isBottomNear ? nearRad : rad), bounds.bottom - padding);
+                 } else {
+                     path.moveTo(bounds.right - dp(2.6f), bounds.bottom - padding);
+                 }
+@@ -734,9 +755,16 @@ public class MessageDrawable extends Drawable {
+                 }
+             } else {
+                 if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
++                    if (!desu.inugram.InuConfig.BUBBLE_TAILS.getValue()) {
++                        int radToUse = isBottomNear ? nearRad : rad;
++                        path.lineTo(bounds.right - dp(8), bounds.bottom - padding - radToUse);
++                        rect.set(bounds.right - dp(8) - radToUse * 2, bounds.bottom - padding - radToUse * 2, bounds.right - dp(8), bounds.bottom - padding);
++                        path.arcTo(rect, 0, 90, false);
++                    } else {
+                     path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad - dp(3));
+                     rect.set(bounds.right - dp(8), bounds.bottom - padding - smallRad * 2 - dp(9), bounds.right - dp(7) + smallRad * 2, bounds.bottom - padding - dp(1));
+                     path.arcTo(rect, 180, -83, false);
++                    }
+                 } else {
+                     path.lineTo(bounds.right - dp(8), top - topY + currentBackgroundHeight);
+                 }
+@@ -747,6 +775,8 @@ public class MessageDrawable extends Drawable {
+ 
+                 if (currentType == TYPE_MEDIA) {
+                     path.moveTo(bounds.left + dp(8) + radToUse, bounds.bottom - padding);
++                } else if (!desu.inugram.InuConfig.BUBBLE_TAILS.getValue()) {
++                    path.moveTo(bounds.left + dp(8) + (isBottomNear || botButtonsBottom ? nearRad : rad), bounds.bottom - padding);
+                 } else {
+                     path.moveTo(bounds.left + dp(2.6f), bounds.bottom - padding);
+                 }
+@@ -791,9 +821,16 @@ public class MessageDrawable extends Drawable {
+                 }
+             } else {
+                 if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
++                    if (!desu.inugram.InuConfig.BUBBLE_TAILS.getValue()) {
++                        int radToUse = isBottomNear || botButtonsBottom ? nearRad : rad;
++                        path.lineTo(bounds.left + dp(8), bounds.bottom - padding - radToUse);
++                        rect.set(bounds.left + dp(8), bounds.bottom - padding - radToUse * 2, bounds.left + dp(8) + radToUse * 2, bounds.bottom - padding);
++                        path.arcTo(rect, 180, -90, false);
++                    } else {
+                     path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad - dp(3));
+                     rect.set(bounds.left + dp(7) - smallRad * 2, bounds.bottom - padding - smallRad * 2 - dp(9), bounds.left + dp(8), bounds.bottom - padding - dp(1));
+                     path.arcTo(rect, 0, 83, false);
++                    }
+                 } else {
+                     path.lineTo(bounds.left + dp(8), top - topY + currentBackgroundHeight);
+                 }
+@@ -863,12 +900,15 @@ public class MessageDrawable extends Drawable {
+         Rect lastRect = new Rect();
+         boolean lastDrawFullTop;
+         boolean lastDrawFullBottom;
++        boolean inu_lastTails = true;
+ 
+         public boolean invalidatePath(Rect bounds, boolean drawFullBottom, boolean drawFullTop) {
+-            boolean invalidate = lastRect.isEmpty() || lastRect.top != bounds.top || lastRect.bottom != bounds.bottom || lastRect.right != bounds.right || lastRect.left != bounds.left || lastDrawFullTop != drawFullTop || lastDrawFullBottom != drawFullBottom || !drawFullTop || !drawFullBottom;
++            boolean inu_tails = desu.inugram.InuConfig.BUBBLE_TAILS.getValue();
++            boolean invalidate = lastRect.isEmpty() || lastRect.top != bounds.top || lastRect.bottom != bounds.bottom || lastRect.right != bounds.right || lastRect.left != bounds.left || lastDrawFullTop != drawFullTop || lastDrawFullBottom != drawFullBottom || !drawFullTop || !drawFullBottom || inu_lastTails != inu_tails;
+             lastDrawFullTop = drawFullTop;
+             lastDrawFullBottom = drawFullBottom;
+             lastRect.set(bounds);
++            inu_lastTails = inu_tails;
+             return invalidate;
+         }
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+@@ -13424,7 +13424,12 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                         path.addCircle(rect.centerX(), rect.centerY(), dp(selectorDrawableMaskType[num] == 3 ? 16 : 20), Path.Direction.CW);
+                     } else if (selectorDrawableMaskType[num] == 2) {
+                         boolean out = currentMessageObject != null && currentMessageObject.isOutOwner();
++                        boolean inu_tails = desu.inugram.InuConfig.BUBBLE_TAILS.getValue();
+                         for (int a = 0; a < 4; a++) {
++                            if (!inu_tails && a == (out ? 2 : 3)) {
++                                radii[a * 2] = radii[a * 2 + 1] = dp(pinnedBottom ? Math.min(5, SharedConfig.bubbleRadius) : SharedConfig.bubbleRadius);
++                                continue;
++                            }
+                             if (!instantTextNewLine) {
+                                 if (a == (out ? 3 : 2)) {
+                                     radii[a * 2] = radii[a * 2 + 1] = dp(SharedConfig.bubbleRadius);
+@@ -13437,7 +13442,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                             }
+                             radii[a * 2] = radii[a * 2 + 1] = 0;
+                         }
+-                        if (!out && !drawPinnedBottom && currentPosition == null && (currentPosition == null || pollInstantViewTouchesBottom)) {
++                        if (inu_tails && !out && !drawPinnedBottom && currentPosition == null && (currentPosition == null || pollInstantViewTouchesBottom)) {
+                             path.moveTo(rect.left + dp(6), rect.top);
+                             path.lineTo(rect.left + dp(6), rect.bottom - dp(6) - dp(2 + 3));
+                             AndroidUtilities.rectTmp.set(
+@@ -23330,7 +23335,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+                 buttonX -= dp(10);
+             }
+             commentButtonRect.set(
+-                    buttonX - dp((currentMessageObject == null || !currentMessageObject.isOutOwner()) && !drawPinnedBottom && currentPosition == null && (currentMessageObject == null || currentMessageObject.type != MessageObject.TYPE_POLL || pollInstantViewTouchesBottom) ? 6 : 0),
++                    buttonX - dp(desu.inugram.InuConfig.BUBBLE_TAILS.getValue() && (currentMessageObject == null || !currentMessageObject.isOutOwner()) && !drawPinnedBottom && currentPosition == null && (currentMessageObject == null || currentMessageObject.type != MessageObject.TYPE_POLL || pollInstantViewTouchesBottom) ? 6 : 0),
+                     (int) buttonY,
+                     endX - dp(14),
+                     layoutHeight - dp(h) + 1
+@@ -26058,7 +26063,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+ 
+                 instantButtonRect.set(textX, instantY, textX + instantWidth, instantY + dp(44));
+                 if (selectorDrawable[0] != null && selectorDrawableMaskType[0] == 2) {
+-                    selectorDrawable[0].setBounds(textX - dp(pollInstantViewTouchesBottom ? 6 : 0), instantY, textX + instantWidth, instantY + dp(44));
++                    selectorDrawable[0].setBounds(textX - dp(pollInstantViewTouchesBottom && desu.inugram.InuConfig.BUBBLE_TAILS.getValue() ? 6 : 0), instantY, textX + instantWidth, instantY + dp(44));
+                     selectorDrawable[0].draw(canvas);
+                 }
+                 if (currentMessageObject.isPoll() && pollInstantButtonDrawable != null) {

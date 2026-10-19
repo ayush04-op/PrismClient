@@ -1,0 +1,41 @@
+apply plugin: 'org.jetbrains.kotlin.jvm'
+
+layout.buildDirectory = rootProject.layout.buildDirectory.dir('InuCore')
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation "org.jetbrains.kotlin:kotlin-test:2.1.20"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:2.1.20"
+}
+
+test {
+    useJUnit()
+}
+
+
+if (rootProject.ext.inuPluginless) {
+    sourceSets.main.kotlin.exclude('desu/inugram/core/plugins/**')
+    sourceSets.main.resources.exclude('tl_tables.txt')
+    sourceSets.test.kotlin.exclude('desu/inugram/core/plugins/**')
+}

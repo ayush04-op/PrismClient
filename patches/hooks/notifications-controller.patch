@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Mon, 25 May 2026 19:59:57 +0400
+Subject: hooks inside NotificationsController
+
+---
+ .../org/telegram/messenger/NotificationsController.java  | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+@@ -98,7 +98,7 @@ import java.util.List;
+ import java.util.Locale;
+ import java.util.Map;
+ import java.util.concurrent.CountDownLatch;
+-import java.util.function.Consumer;
++import java.util.function.Consumer;import desu.inugram.helpers.NotificationsHelper;
+ 
+ public class NotificationsController extends BaseController implements NotificationCenter.NotificationCenterDelegate {
+ 
+@@ -1125,6 +1125,7 @@ public class NotificationsController extends BaseController implements Notificat
+ 
+             for (int a = 0; a < messageObjects.size(); a++) {
+                 MessageObject messageObject = messageObjects.get(a);
++                if (desu.inugram.helpers.NotificationsHelper.shouldSuppressMessageNotification(messageObject)) continue;
+                 if (messageObject.messageOwner != null && (messageObject.isImportedForward() ||
+                         messageObject.messageOwner.action instanceof TLRPC.TL_messageActionSetMessagesTTL ||
+                         messageObject.messageOwner.silent && (messageObject.messageOwner.action instanceof TLRPC.TL_messageActionContactSignUp || messageObject.messageOwner.action instanceof TLRPC.TL_messageActionUserJoined)) ||
+@@ -4155,7 +4156,7 @@ public class NotificationsController extends BaseController implements Notificat
+     }
+ 
+     private void showOrUpdateNotification(boolean notifyAboutLast) {
+-        if (!getUserConfig().isClientActivated() || pushMessages.isEmpty() && storyPushMessages.isEmpty() || !SharedConfig.showNotificationsForAllAccounts && currentAccount != UserConfig.selectedAccount) {
++        if (!getUserConfig().isClientActivated() || pushMessages.isEmpty() && storyPushMessages.isEmpty() || NotificationsHelper.shouldSuppressNotifications(currentAccount) || !SharedConfig.showNotificationsForAllAccounts && currentAccount != UserConfig.selectedAccount) {
+             dismissNotification();
+             return;
+         }
+@@ -4639,7 +4640,7 @@ public class NotificationsController extends BaseController implements Notificat
+             PendingIntent contentIntent = PendingIntent.getActivity(ApplicationLoader.applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+ 
+             mBuilder.setContentTitle(name)
+-                    .setSmallIcon(R.drawable.notification)
++                    .setSmallIcon(NotificationsHelper.smallIconRes())
+                     .setAutoCancel(true)
+                     .setNumber(total_unread_count)
+                     .setContentIntent(contentIntent)
+@@ -5641,7 +5642,7 @@ public class NotificationsController extends BaseController implements Notificat
+ 
+             NotificationCompat.Builder builder = new NotificationCompat.Builder(ApplicationLoader.applicationContext)
+                     .setContentTitle(name)
+-                    .setSmallIcon(R.drawable.notification)
++                    .setSmallIcon(NotificationsHelper.smallIconRes())
+                     .setContentText(text.toString())
+                     .setAutoCancel(true)
+                     .setNumber(dialogKey.story ? storyPushMessages.size() : messageObjects.size())

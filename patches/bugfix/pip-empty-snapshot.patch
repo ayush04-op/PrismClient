@@ -1,0 +1,107 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Sat, 20 Jun 2026 16:21:05 +0400
+Subject: hopefully fix pip opening with failed red snapshot
+
+---
+ .../telegram/messenger/AndroidUtilities.java  |  5 +--
+ .../java/org/telegram/ui/PhotoViewer.java     | 36 +++++++++----------
+ 2 files changed, 21 insertions(+), 20 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/AndroidUtilities.java b/TMessagesProj/src/main/java/org/telegram/messenger/AndroidUtilities.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/AndroidUtilities.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/AndroidUtilities.java
+@@ -1064,12 +1064,13 @@ public class AndroidUtilities {
+     }
+ 
+     @RequiresApi(api = Build.VERSION_CODES.N)
+-    public static void getBitmapFromSurface(SurfaceView surfaceView, Bitmap surfaceBitmap, Runnable done) {
++    public static void getBitmapFromSurface(SurfaceView surfaceView, Bitmap surfaceBitmap, Utilities.Callback<Boolean> done) {
+         if (surfaceView == null || ApplicationLoader.applicationHandler == null || !surfaceView.getHolder().getSurface().isValid()) {
++            done.run(false);
+             return;
+         }
+         PixelCopy.request(surfaceView, surfaceBitmap, copyResult -> {
+-            done.run();
++            done.run(copyResult == PixelCopy.SUCCESS);
+         }, ApplicationLoader.applicationHandler);
+     }
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java b/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
+@@ -1660,8 +1660,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+                         }
+                     } else {
+                         currentBitmap = Bitmaps.createBitmap(videoSurfaceView.getWidth(), videoSurfaceView.getHeight(), Bitmap.Config.ARGB_8888);
+-                        AndroidUtilities.getBitmapFromSurface(videoSurfaceView, currentBitmap, () -> {
+-                            if (currentBitmap != null) {
++                        AndroidUtilities.getBitmapFromSurface(videoSurfaceView, currentBitmap, success -> {
++                            if (success && currentBitmap != null) {
+                                 if (textureImageView != null) {
+                                     textureImageView.setVisibility(View.VISIBLE);
+                                     textureImageView.setImageBitmap(currentBitmap);
+@@ -6581,8 +6581,12 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+ 
+                 if (usedSurfaceView) {
+                     Bitmap toBitmap = Bitmap.createBitmap(videoSurfaceView.getWidth(), videoSurfaceView.getHeight(), Bitmap.Config.ARGB_8888);
+-                    AndroidUtilities.getBitmapFromSurface(videoSurfaceView, toBitmap, () -> {
+-                        onFrame.run(toBitmap);
++                    AndroidUtilities.getBitmapFromSurface(videoSurfaceView, toBitmap, success -> {
++                        if (success) {
++                            onFrame.run(toBitmap);
++                        } else {
++                            onFrame.run(SendMessagesHelper.createVideoThumbnailAtTime(entry.path, time, null, true));
++                        }
+                     });
+                 } else {
+                     Bitmap src = videoTextureView.getBitmap(videoTextureView.getWidth(), videoTextureView.getHeight());
+@@ -9048,8 +9052,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+                     try {
+                         if (usedSurfaceView) {
+                             Bitmap toBitmap = Bitmap.createBitmap(bitmap);
+-                            AndroidUtilities.getBitmapFromSurface(videoSurfaceView, toBitmap, () -> {
+-                                if (animation == null) return;
++                            AndroidUtilities.getBitmapFromSurface(videoSurfaceView, toBitmap, success -> {
++                                if (!success || animation == null) return;
+                                 animation.replaceAnimatedBitmap(toBitmap);
+                                 animation.invalidateInternal();
+                             });
+@@ -9139,27 +9143,23 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+                     Bitmap bitmap = Bitmaps.createBitmap(videoSurfaceView.getWidth(), videoSurfaceView.getHeight(), Bitmap.Config.ARGB_8888);
+                     awaitBeforeAnimation = true;
+                     final boolean[] started = new boolean[1];
+-                    AndroidUtilities.getBitmapFromSurface(videoSurfaceView, bitmap, () -> {
+-                        if (textureImageView != null) {
++                    AndroidUtilities.getBitmapFromSurface(videoSurfaceView, bitmap, success -> {
++                        if (started[0]) {
++                            return;
++                        }
++                        // on failed capture keep the live surface and let it animate instead of flashing an empty (red) snapshot
++                        if (success && textureImageView != null) {
+                             textureImageView.setImageBitmap(bitmap);
+                             textureImageView.setVisibility(View.VISIBLE);
+                             if (videoSurfaceView != null) {
+                                 videoSurfaceView.setVisibility(View.INVISIBLE);
+                             }
+-                            if (!started[0]) {
+-                                started[0] = true;
+-                                start.run();
+-                            }
+                         }
++                        started[0] = true;
++                        start.run();
+                     });
+                     AndroidUtilities.runOnUIThread(() -> {
+                         if (!started[0]) {
+-                            if (textureImageView != null) {
+-                                textureImageView.setVisibility(View.VISIBLE);
+-                            }
+-                            if (videoSurfaceView != null) {
+-                                videoSurfaceView.setVisibility(View.INVISIBLE);
+-                            }
+                             started[0] = true;
+                             start.run();
+                         }

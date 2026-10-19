@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Damir Modyarov <damir@otomir23.me>
+Date: Tue, 28 Apr 2026 15:27:42 +0300
+Subject: add custom resource loader for icon replacement
+
+---
+ .../ui/Components/ProfileActionsView.java        |  2 +-
+ .../java/org/telegram/ui/LaunchActivity.java     | 16 ++++++++++++++++
+ 2 files changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ProfileActionsView.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ProfileActionsView.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ProfileActionsView.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ProfileActionsView.java
+@@ -565,7 +565,7 @@ public class ProfileActionsView extends View {
+                         hit.isLoading = true;
+                         invalidate();
+                     }
+-                    if (hit.supportsAnimate != 0) {
++                    if (hit.supportsAnimate != 0 && desu.inugram.InuConfig.ICON_REPLACEMENT.getValue() == desu.inugram.InuConfig.IconReplacementItem.OFF) {
+                         hit.updateDrawable(true, hit.supportsAnimate);
+                     }
+                     hit.startTime = System.currentTimeMillis();
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+@@ -27,7 +27,9 @@ import android.content.Context;
+ import android.content.Intent;
+ import android.content.IntentFilter;
+ import android.content.SharedPreferences;
++import android.content.res.AssetManager;
+ import android.content.res.Configuration;
++import android.content.res.Resources;
+ import android.database.Cursor;
+ import android.graphics.Bitmap;
+ import android.graphics.Canvas;
+@@ -394,6 +396,20 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+     private FrameMetricsOverlayView frameMetricsOverlayView;
+     // private RefreshRateController refreshRateController;
+ 
++    private desu.inugram.helpers.icons.IconsResources customResources;
++
++    @Override
++    public Resources getResources() {
++        Resources baseResources = super.getResources();
++        if (desu.inugram.InuConfig.ICON_REPLACEMENT.getValue() == desu.inugram.InuConfig.IconReplacementItem.OFF) {
++            return baseResources;
++        }
++        if (customResources == null || !customResources.wrapsResources(baseResources)) {
++            customResources = new desu.inugram.helpers.icons.IconsResources(baseResources);
++        }
++        return customResources;
++    }
++
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         isActive = true;

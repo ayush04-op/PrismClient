@@ -1,0 +1,84 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleksii Kulinich <entaytion@gmail.com>
+Date: Thu, 17 Sep 2026 00:05:12 +0300
+Subject: [+] pill stack
+
+---
+ .../main/java/org/telegram/ui/ActionBar/ActionBarMenu.java | 2 +-
+ .../org/telegram/ui/Components/FragmentSearchField.java    | 3 +++
+ .../src/main/java/org/telegram/ui/DialogsActivity.java     | 7 +++++++
+ 3 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarMenu.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarMenu.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarMenu.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarMenu.java
+@@ -585,7 +585,7 @@ public class ActionBarMenu extends LinearLayout {
+         float w = 0;
+         for (int i = 0, count = getChildCount(); i < count; i++) {
+             View view = getChildAt(i);
+-            if (view instanceof ActionBarMenuItem && view.getVisibility() == View.VISIBLE) {
++            if ((view instanceof ActionBarMenuItem || view instanceof desu.inugram.helpers.pillstack.PillStackController.PillRow) && view.getVisibility() == View.VISIBLE) {
+                 w += view.getMeasuredWidth() * view.getAlpha();
+             }
+         }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/FragmentSearchField.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/FragmentSearchField.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/FragmentSearchField.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/FragmentSearchField.java
+@@ -67,6 +67,7 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
+     public final EditTextBoldCursor editText;
+     private BlurredBackgroundDrawable blurredBackgroundDrawable;
+     public desu.inugram.ui.BlurBehindHelper inu_blurHelper;
++    public desu.inugram.helpers.pillstack.PillStackController inu_pillStackController;
+ 
+     public FragmentSearchField(Context context, Theme.ResourcesProvider resourcesProvider) {
+         super(context);
+@@ -308,6 +309,8 @@ public class FragmentSearchField extends FrameLayout implements FactorAnimator.T
+             }
+         }
+ 
++        if (inu_pillStackController != null) inu_pillStackController.updateColors();
++
+         invalidate();
+     }
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -3373,6 +3373,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+             fragmentSearchField.updateColors();
+         }
+ 
++        if (initialDialogsType == DIALOGS_TYPE_DEFAULT) {
++            fragmentSearchField.inu_pillStackController = desu.inugram.helpers.pillstack.PillStackHelper.attach(this, fragmentSearchField, fragmentSearchField.editText);
++        }
++
+         fragmentSearchField.setCloseButtonOnClickListener(() -> {
+             if (searchViewPager != null && searchViewPager.actionModeShowing()) {
+                 searchViewPager.hideActionMode();
+@@ -3393,6 +3397,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+             @Override
+             public void onSearchExpand() {
+                 searching = true;
++                if (fragmentSearchField != null && fragmentSearchField.inu_pillStackController != null) fragmentSearchField.inu_pillStackController.onSearchStateChanged(true);
+                 if (switchItem != null) {
+                     switchItem.setVisibility(View.GONE);
+                 }
+@@ -3456,6 +3461,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+                 }
+ 
+                 searching = false;
++                if (fragmentSearchField != null && fragmentSearchField.inu_pillStackController != null) fragmentSearchField.inu_pillStackController.onSearchStateChanged(false);
+                 searchWas = false;
+                 if (viewPages[0] != null) {
+                     viewPages[0].listView.setEmptyView(folderId == 0 ? viewPages[0].progressView : null);
+@@ -5579,6 +5585,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+ 
+             @Override
+             public void openAnimationStarted(boolean open) {
++                if (fragmentSearchField != null && fragmentSearchField.inu_pillStackController != null) fragmentSearchField.inu_pillStackController.onSideFragmentChanged(open);
+                 rightFragmentTransitionInProgress = true;
+                 rightFragmentTransitionIsOpen = open;
+                 contentView.requestLayout();

@@ -1,0 +1,252 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleksii Kulinich <entaytion@gmail.com>
+Date: Fri, 28 Aug 2026 23:16:12 +0300
+Subject: Add option to send any gallery video as a round video note
+
+---
+ .../messenger/SendMessagesHelper.java         |   9 ++
+ .../java/org/telegram/ui/PhotoViewer.java     | 127 +++++++++++++-----
+ 2 files changed, 105 insertions(+), 31 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+@@ -10859,6 +10859,15 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
+         if (media.isEmpty()) {
+             return;
+         }
++        if (media.size() == 1 && media.get(0).videoEditedInfo != null && media.get(0).videoEditedInfo.roundVideo) {
++            // The grouped/document dispatch below (and prepareSendingPhoto's video branch) never
++            // preserve VideoEditedInfo.roundVideo, so a video sent this way always lands as a
++            // regular video document instead of a round message. prepareSendingVideo is the only
++            // path that actually sets TL_documentAttributeVideo.round_message.
++            final SendingMediaInfo info = media.get(0);
++            prepareSendingVideo(accountInstance, info.path, info.videoEditedInfo, info.coverPath, info.coverPhoto, dialogId, replyToMsg, replyToTopMsg, storyItem, quote, info.entities, info.ttl, editingMessageObject, notify, scheduleDate, scheduleRepeatPeriod, forceDocument, info.hasMediaSpoilers, info.caption, sendMessageChatArguments, effectId, info.stars, monoForumPeerId, suggestionParams, invertMedia);
++            return;
++        }
+         for (int a = 0, N = media.size(); a < N; a++) {
+             if (media.get(a).ttl > 0) {
+                 groupMedia = false;
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java b/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
+@@ -366,6 +366,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+     private boolean allowOrder = true;
+ 
+     private boolean muteVideo;
++    private boolean inu_sendAsRoundVideo;
+ 
+     private boolean isUnalivePhoto() {
+         if (sendPhotoType == SELECT_TYPE_STICKER) return true;
+@@ -7460,11 +7461,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+             final boolean showSendAsFile = !canEdit && !isCurrentVideo && !captionEdit.hasTimer();
+             final boolean showSchedule = !canEdit && canScheduleMessage && !hasTtl;
+             final boolean showWithoutSound = !(canEdit && canReplace) && !userIsSelf;
++            final boolean showSendAsRound = isCurrentVideo && !captionEdit.hasTimer();
+             final boolean multipleSelected = placeProvider != null && placeProvider.getSelectedCount() > 1;
+             final boolean spoilerEnabled = canSpoiler && ((MediaController.PhotoEntry) currentObject).hasSpoiler;
+ 
+             final ItemOptions options = ItemOptions.makeOptions(containerView, new DarkThemeResourceProvider(), view)
+                 .addIf(showSendAsFile, R.drawable.msg_sendfile, getString(multipleSelected ? R.string.SendAsFiles : R.string.SendAsFile), () -> sendPressed(true, 0, 0, false, true, false))
++                .addIf(showSendAsRound, R.drawable.inu_tabler_circle, getString(R.string.InuSendAsRoundVideo), this::inu_sendAsRoundVideoPressed)
+                 .addIf(canReplace, R.drawable.msg_send, getString(R.string.SendAsNewPhoto), () -> sendPressed(true, 0, 0))
+                 .addIf(canReplace, R.drawable.msg_replace, getString(R.string.ReplacePhoto), this::replacePressed)
+                 .addIf(showSchedule, R.drawable.msg_calendar2, getString(userIsSelf ? R.string.SetReminder : R.string.ScheduleMessage), this::showScheduleDatePickerDialog)
+@@ -8022,6 +8025,53 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+         sendPressed(false, 0, 0, true, false, false);
+     }
+ 
++    // Builds the centered-square CropState directly instead of going through the interactive
++    // crop editor: that path only runs applyCurrentEditMode() when sendPhotoType == AVATAR (see
++    // sendPressed's outer guard below), so for a plain gallery video the UI crop transform is
++    // never actually applied. Deriving the crop from originalWidth/originalHeight here sidesteps
++    // that entirely.
++    private void inu_sendAsRoundVideoPressed() {
++        if (!isCurrentVideo || isCaptionOpen()) {
++            return;
++        }
++        inu_sendAsRoundVideo = true;
++        // switchToEditMode(EDIT_MODE_CROP) is never entered for this flow, and that's the only
++        // place startTime/endTime/estimatedDuration normally get recomputed - reset them here so
++        // they reflect the full, untrimmed length of the video actually being sent instead of
++        // whatever was left over from a previous edit in this long-lived PhotoViewer instance.
++        videoCutStart = 0f;
++        videoCutEnd = 1f;
++        startTime = -1;
++        endTime = -1;
++        estimatedDuration = (long) videoDuration;
++        sendPressed(true, 0, 0);
++    }
++
++    private MediaController.CropState inu_buildRoundCropState() {
++        MediaController.CropState crop = new MediaController.CropState();
++        crop.cropPx = 0f;
++        crop.cropPy = 0f;
++        crop.cropScale = 1f;
++        crop.cropRotate = 0f;
++        if (originalWidth > originalHeight) {
++            crop.cropPw = originalHeight / (float) originalWidth;
++            crop.cropPh = 1f;
++        } else if (originalHeight > originalWidth) {
++            crop.cropPw = 1f;
++            crop.cropPh = originalWidth / (float) originalHeight;
++        } else {
++            crop.cropPw = crop.cropPh = 1f;
++        }
++        crop.transformWidth = 360;
++        crop.transformHeight = 360;
++        crop.transformRotation = 0;
++        crop.mirrored = false;
++        crop.freeform = false;
++        crop.lockedAspectRatio = 1f;
++        crop.initied = true;
++        return crop;
++    }
++
+     private void sendPressed(boolean notify, int scheduleDate, int scheduleRepeatPeriod, boolean replace, boolean forceDocument, boolean confirmed) {
+         if (isCaptionOpen()) {
+             return;
+@@ -9898,36 +9948,46 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+             videoEditedInfo.resultHeight = resultHeight;
+             videoEditedInfo.bitrate = muteVideo || sendPhotoType == SELECT_TYPE_AVATAR ? -1 : bitrate;
+         }
+-        videoEditedInfo.cropState = editState.cropState;
+-        if (videoEditedInfo.cropState != null) {
+-            videoEditedInfo.rotationValue += videoEditedInfo.cropState.transformRotation;
+-            while (videoEditedInfo.rotationValue >= 360) {
+-                videoEditedInfo.rotationValue -= 360;
+-            }
+-            if (videoEditedInfo.rotationValue == 90 || videoEditedInfo.rotationValue == 270) {
+-                videoEditedInfo.cropState.transformWidth = (int) (videoEditedInfo.resultWidth * videoEditedInfo.cropState.cropPh);
+-                videoEditedInfo.cropState.transformHeight = (int) (videoEditedInfo.resultHeight * videoEditedInfo.cropState.cropPw);
+-            } else {
+-                videoEditedInfo.cropState.transformWidth = (int) (videoEditedInfo.resultWidth * videoEditedInfo.cropState.cropPw);
+-                videoEditedInfo.cropState.transformHeight = (int) (videoEditedInfo.resultHeight * videoEditedInfo.cropState.cropPh);
+-            }
+-            if (sendPhotoType == SELECT_TYPE_AVATAR) {
+-                if (videoEditedInfo.cropState.transformWidth > 800) {
+-                    videoEditedInfo.cropState.transformWidth = 800;
++        if (inu_sendAsRoundVideo) {
++            // Built directly from originalWidth/originalHeight rather than editState.cropState:
++            // the interactive-crop path below only gets applied for sendPhotoType == AVATAR (see
++            // sendPressed's applyCurrentEditMode() guard), so for a plain gallery video there is
++            // no live crop transform to read here.
++            videoEditedInfo.resultWidth = videoEditedInfo.resultHeight = 360;
++            videoEditedInfo.bitrate = 1000000;
++            videoEditedInfo.cropState = inu_buildRoundCropState();
++        } else {
++            videoEditedInfo.cropState = editState.cropState;
++            if (videoEditedInfo.cropState != null) {
++                videoEditedInfo.rotationValue += videoEditedInfo.cropState.transformRotation;
++                while (videoEditedInfo.rotationValue >= 360) {
++                    videoEditedInfo.rotationValue -= 360;
++                }
++                if (videoEditedInfo.rotationValue == 90 || videoEditedInfo.rotationValue == 270) {
++                    videoEditedInfo.cropState.transformWidth = (int) (videoEditedInfo.resultWidth * videoEditedInfo.cropState.cropPh);
++                    videoEditedInfo.cropState.transformHeight = (int) (videoEditedInfo.resultHeight * videoEditedInfo.cropState.cropPw);
++                } else {
++                    videoEditedInfo.cropState.transformWidth = (int) (videoEditedInfo.resultWidth * videoEditedInfo.cropState.cropPw);
++                    videoEditedInfo.cropState.transformHeight = (int) (videoEditedInfo.resultHeight * videoEditedInfo.cropState.cropPh);
++                }
++                if (sendPhotoType == SELECT_TYPE_AVATAR) {
++                    if (videoEditedInfo.cropState.transformWidth > 800) {
++                        videoEditedInfo.cropState.transformWidth = 800;
++                    }
++                    if (videoEditedInfo.cropState.transformHeight > 800) {
++                        videoEditedInfo.cropState.transformHeight = 800;
++                    }
++                    videoEditedInfo.cropState.transformWidth = videoEditedInfo.cropState.transformHeight = Math.min(videoEditedInfo.cropState.transformWidth, videoEditedInfo.cropState.transformHeight);
+                 }
+-                if (videoEditedInfo.cropState.transformHeight > 800) {
+-                    videoEditedInfo.cropState.transformHeight = 800;
++                if (BuildVars.LOGS_ENABLED) {
++                    FileLog.d("original transformed w = " + videoEditedInfo.cropState.transformWidth + " h = " + videoEditedInfo.cropState.transformHeight + " r = " + videoEditedInfo.rotationValue);
++                }
++                int[] fixedSize = fixVideoWidthHeight(videoEditedInfo.cropState.transformWidth, videoEditedInfo.cropState.transformHeight);
++                videoEditedInfo.cropState.transformWidth = fixedSize[0];
++                videoEditedInfo.cropState.transformHeight = fixedSize[1];
++                if (BuildVars.LOGS_ENABLED) {
++                    FileLog.d("fixed transformed w = " + videoEditedInfo.cropState.transformWidth + " h = " + videoEditedInfo.cropState.transformHeight);
+                 }
+-                videoEditedInfo.cropState.transformWidth = videoEditedInfo.cropState.transformHeight = Math.min(videoEditedInfo.cropState.transformWidth, videoEditedInfo.cropState.transformHeight);
+-            }
+-            if (BuildVars.LOGS_ENABLED) {
+-                FileLog.d("original transformed w = " + videoEditedInfo.cropState.transformWidth + " h = " + videoEditedInfo.cropState.transformHeight + " r = " + videoEditedInfo.rotationValue);
+-            }
+-            int[] fixedSize = fixVideoWidthHeight(videoEditedInfo.cropState.transformWidth, videoEditedInfo.cropState.transformHeight);
+-            videoEditedInfo.cropState.transformWidth = fixedSize[0];
+-            videoEditedInfo.cropState.transformHeight = fixedSize[1];
+-            if (BuildVars.LOGS_ENABLED) {
+-                FileLog.d("fixed transformed w = " + videoEditedInfo.cropState.transformWidth + " h = " + videoEditedInfo.cropState.transformHeight);
+             }
+         }
+         if (sendPhotoType == SELECT_TYPE_AVATAR) {
+@@ -9935,6 +9995,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+             videoEditedInfo.originalBitrate = originalBitrate;
+         }
+         videoEditedInfo.muted = muteVideo || sendPhotoType == SELECT_TYPE_AVATAR;
++        videoEditedInfo.roundVideo = inu_sendAsRoundVideo;
+         return videoEditedInfo;
+     }
+ 
+@@ -11463,7 +11524,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+         int[] orientation = null;
+         boolean hasChanged = false;
+         MediaController.MediaEditState entry = (MediaController.MediaEditState) imagesArrLocals.get(currentIndex);
+-        if (currentEditMode == EDIT_MODE_CROP || currentEditMode == EDIT_MODE_NONE && sendPhotoType == SELECT_TYPE_AVATAR) {
++        if (currentEditMode == EDIT_MODE_CROP || currentEditMode == EDIT_MODE_NONE && (sendPhotoType == SELECT_TYPE_AVATAR)) {
+             if (isCurrentVideo) {
+                 if (!TextUtils.isEmpty(entry.filterPath)) {
+                     bitmap = ImageLoader.loadBitmap(entry.filterPath, null, thumbSize, thumbSize, true);
+@@ -11562,7 +11623,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+             entry.imagePath = null;
+         }
+ 
+-        if (currentEditMode == EDIT_MODE_CROP || currentEditMode == EDIT_MODE_NONE && sendPhotoType == SELECT_TYPE_AVATAR) {
++        if (currentEditMode == EDIT_MODE_CROP || currentEditMode == EDIT_MODE_NONE && (sendPhotoType == SELECT_TYPE_AVATAR)) {
+             editState.cropState = entry.cropState;
+             editState.croppedPaintPath = entry.croppedPaintPath;
+             editState.croppedMediaEntities = entry.croppedMediaEntities;
+@@ -11829,7 +11890,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+         ignoreDidSetImage = true;
+         boolean setImage;
+         if (isCurrentVideo) {
+-            setImage = currentEditMode == EDIT_MODE_CROP || currentEditMode == EDIT_MODE_NONE && sendPhotoType == SELECT_TYPE_AVATAR;
++            setImage = currentEditMode == EDIT_MODE_CROP || currentEditMode == EDIT_MODE_NONE && (sendPhotoType == SELECT_TYPE_AVATAR);
+         } else {
+             setImage = currentEditMode == EDIT_MODE_FILTER;
+         }
+@@ -14164,6 +14225,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+         topCaptionEdit.setTimerVisible(false, false);
+         rotateItem.setVisibility(View.GONE);
+         mirrorItem.setVisibility(View.GONE);
++        inu_sendAsRoundVideo = false;
+ 
+         pickerView.getLayoutParams().height = LayoutHelper.WRAP_CONTENT;
+         docInfoTextView.setVisibility(View.GONE);
+@@ -15092,6 +15154,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+                             rotateItem.setTag(null);
+                             mirrorItem.setVisibility(View.GONE);
+                             mirrorItem.setTag(null);
++                            inu_sendAsRoundVideo = false;
+                             AndroidUtilities.updateViewVisibilityAnimated(muteButton, false, 1f, animated);
+                             AndroidUtilities.updateViewVisibilityAnimated(livePhotoButton, false, 1f, animated);
+                             AndroidUtilities.updateViewVisibilityAnimated(editCoverButton, false, 1f, animated);
+@@ -15126,6 +15189,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+                                 rotateItem.setTag(1);
+                                 mirrorItem.setVisibility(View.VISIBLE);
+                                 mirrorItem.setTag(1);
++                                inu_sendAsRoundVideo = false;
+                                 AndroidUtilities.updateViewVisibilityAnimated(muteButton, false, 1f, animated);
+                                 AndroidUtilities.updateViewVisibilityAnimated(livePhotoButton, false, 1f, animated);
+                                 AndroidUtilities.updateViewVisibilityAnimated(editCoverButton, false, 1f, animated);
+@@ -15145,6 +15209,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+                 } else {
+                     showVideoTimeline(false, animated);
+                     videoAvatarTooltip.setVisibility(View.GONE);
++                    inu_sendAsRoundVideo = false;
+                     AndroidUtilities.updateViewVisibilityAnimated(muteButton, false, 1f, animated);
+                     AndroidUtilities.updateViewVisibilityAnimated(livePhotoButton, false, 1f, animated);
+                     AndroidUtilities.updateViewVisibilityAnimated(editCoverButton, false, 1f, animated);

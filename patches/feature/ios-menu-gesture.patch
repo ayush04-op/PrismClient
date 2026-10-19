@@ -1,0 +1,94 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Mon, 20 Apr 2026 12:50:31 +0300
+Subject: improved ios-style release-to-activate gestures: plain backgrounds, gesture detection
+
+---
+ .../org/telegram/ui/Components/ItemOptions.java     | 13 ++++---------
+ .../main/java/org/telegram/ui/MainTabsActivity.java |  7 +++----
+ 2 files changed, 7 insertions(+), 13 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ItemOptions.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ItemOptions.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ItemOptions.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ItemOptions.java
+@@ -1837,7 +1837,6 @@ public class ItemOptions {
+ 
+     private View.OnTouchListener hoverReleaseListener;
+     private View hoveredItem;
+-    private final int[] hoverLoc = new int[2];
+ 
+     private void installHoverReleaseListener() {
+         if (scrimView == null) return;
+@@ -1882,17 +1881,13 @@ public class ItemOptions {
+         View hit = findItemAt(layout, rawX, rawY);
+         if (hit != hoveredItem) {
+             if (hoveredItem != null) {
+-                hoveredItem.setPressed(false);
++                desu.inugram.helpers.LongPressDragMenuHelper.setHover(hoveredItem, false);
+             }
+             hoveredItem = hit;
+             if (hoveredItem != null) {
+-                hoveredItem.setPressed(true);
++                desu.inugram.helpers.LongPressDragMenuHelper.setHover(hoveredItem, true);
+             }
+         }
+-        if (hoveredItem != null) {
+-            hoveredItem.getLocationOnScreen(hoverLoc);
+-            hoveredItem.drawableHotspotChanged(rawX - hoverLoc[0], rawY - hoverLoc[1]);
+-        }
+     }
+ 
+     private void releaseHover(int rawX, int rawY) {
+@@ -1900,14 +1895,14 @@ public class ItemOptions {
+         if (hoveredItem != null) {
+             View target = hoveredItem;
+             hoveredItem = null;
+-            target.setPressed(false);
++            desu.inugram.helpers.LongPressDragMenuHelper.setHover(target, false);
+             target.performClick();
+         }
+     }
+ 
+     private void cancelHover() {
+         if (hoveredItem != null) {
+-            hoveredItem.setPressed(false);
++            desu.inugram.helpers.LongPressDragMenuHelper.setHover(hoveredItem, false);
+             hoveredItem = null;
+         }
+     }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/MainTabsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/MainTabsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/MainTabsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/MainTabsActivity.java
+@@ -344,7 +344,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
+         tabs[INDEX_CHATS].setOnLongClickListener(this::openFoldersSelector);
+         tabs[INDEX_CONTACTS].setOnLongClickListener(this::openContactsSelector);
+         tabs[INDEX_CALLS].setOnLongClickListener(this::openCallsSelector);
+-        tabs[INDEX_PROFILE].setOnLongClickListener(this::openAccountSelector);
++        desu.inugram.helpers.LongPressDragMenuHelper.attach(tabs[INDEX_PROFILE], this::openAccountSelector);
+ 
+         tabsView.addTabToIgnoreClick(tabs[INDEX_CHATS]);
+         tabsView.addTabToIgnoreClick(tabs[INDEX_CONTACTS]);
+@@ -636,7 +636,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
+         }
+     }
+ 
+-    public boolean openAccountSelector(View button) {
++    public ItemOptions openAccountSelector(View button) {
+         final ArrayList<Integer> accountNumbers = new ArrayList<>();
+ 
+         accountNumbers.clear();
+@@ -705,11 +705,10 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
+         final ShapeDrawable bg = Theme.createRoundRectDrawable(dp(28), getThemedColor(Theme.key_windowBackgroundWhite));
+         bg.getPaint().setShadowLayer(dp(6), 0, dp(1), Theme.multAlpha(0xFF000000, 0.15f));
+         o.setScrimViewBackground(bg);
+-        o.show();
+ 
+         HintsController.Hint.AccountSwitchHint.doNotShowAgain();
+ 
+-        return true;
++        return o;
+     }
+ 
+     public LinearLayout accountView(int account, boolean selected) {

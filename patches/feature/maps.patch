@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Wed, 6 May 2026 21:48:27 +0200
+Subject: our own google maps token + support for maplibre
+
+---
+ .../src/main/java/org/telegram/ui/LocationActivity.java         | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LocationActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LocationActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LocationActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LocationActivity.java
+@@ -760,7 +760,7 @@ public class LocationActivity extends BaseFragment implements NotificationCenter
+         mapTypeButton.setAdditionalYOffset(-dp(10));
+         mapTypeButton.addSubItem(map_list_menu_map, R.drawable.msg_map, getString(R.string.Map), getResourceProvider());
+         mapTypeButton.addSubItem(map_list_menu_satellite, R.drawable.msg_satellite, getString(R.string.Satellite), getResourceProvider());
+-        mapTypeButton.addSubItem(map_list_menu_hybrid, R.drawable.msg_hybrid, getString(R.string.Hybrid), getResourceProvider());
++        if (desu.inugram.helpers.maps.MapsHelper.isHybridAvailable()) mapTypeButton.addSubItem(map_list_menu_hybrid, R.drawable.msg_hybrid, getString(R.string.Hybrid), getResourceProvider());
+         mapTypeButton.setContentDescription(getString(R.string.AccDescrMoreOptions));
+         Drawable drawable = Theme.createSimpleSelectorCircleDrawable(dp(40), getThemedColor(Theme.key_location_actionBackground), getThemedColor(Theme.key_location_actionPressedBackground));
+         ScaleStateListAnimator.apply(mapTypeButton);

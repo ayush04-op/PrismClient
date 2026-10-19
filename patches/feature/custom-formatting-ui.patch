@@ -1,0 +1,76 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: alina sireneva <alina@tei.su>
+Date: Mon, 20 Apr 2026 09:36:16 +0300
+Subject: custom formatting ui for rich text fields with better ux
+
+---
+ .../telegram/ui/Components/EditTextBoldCursor.java |  6 ++++--
+ .../telegram/ui/Components/EditTextCaption.java    |  5 +++--
+ .../telegram/ui/Components/EditTextEffects.java    | 14 +++++++++++++-
+ 3 files changed, 20 insertions(+), 5 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextBoldCursor.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextBoldCursor.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextBoldCursor.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextBoldCursor.java
+@@ -1207,8 +1207,10 @@ public class EditTextBoldCursor extends EditTextEffects {
+             };
+             callback.onCreateActionMode(floatingActionMode, floatingActionMode.getMenu());
+             extendActionMode(floatingActionMode, floatingActionMode.getMenu());
+-            floatingActionMode.invalidate();
+-            getViewTreeObserver().addOnPreDrawListener(floatingToolbarPreDrawListener);
++            if (!desu.inugram.ui.FormattingPopup.tryHandle(this, floatingActionMode.getMenu())) {
++                floatingActionMode.invalidate();
++                getViewTreeObserver().addOnPreDrawListener(floatingToolbarPreDrawListener);
++            }
+             invalidate();
+             return floatingActionMode;
+         } else {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextCaption.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextCaption.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextCaption.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextCaption.java
+@@ -81,7 +81,7 @@ public class EditTextCaption extends EditTextBoldCursor implements FloatingToolb
+     private int lineCount;
+     private boolean isInitLineCount;
+     private final Theme.ResourcesProvider resourcesProvider;
+-    private AlertDialog creationLinkDialog;
++    public AlertDialog creationLinkDialog;
+     public boolean adaptiveCreateLinkDialog;
+ 
+     public interface EditTextCaptionDelegate {
+@@ -243,7 +243,8 @@ public class EditTextCaption extends EditTextBoldCursor implements FloatingToolb
+         }
+         final int setSelection = QuoteSpan.putQuoteToEditable(getText(), start, end, collapse);
+         if (setSelection >= 0) {
+-            setSelection(setSelection);
++            // length filter may swallow the inserted '\n', leaving setSelection past length
++            setSelection(Math.min(setSelection, length()));
+             resetFontMetricsCache();
+         }
+         invalidateQuotes(true);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextEffects.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextEffects.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextEffects.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/EditTextEffects.java
+@@ -450,7 +450,19 @@ public class EditTextEffects extends EditText {
+         invalidateSpoilers();
+     }
+ 
+-    protected void invalidateSpoilers() {
++    public void inu_setSpoilersRevealedNoText(boolean revealed) {
++        isSpoilersRevealed = revealed;
++        Spannable text = getText();
++        if (text != null) {
++            TextStyleSpan[] spans = text.getSpans(0, text.length(), TextStyleSpan.class);
++            for (TextStyleSpan span : spans) {
++                if (span.isSpoiler()) span.setSpoilerRevealed(revealed);
++            }
++        }
++        invalidateSpoilers();
++    }
++
++    public void invalidateSpoilers() {
+         if (spoilers == null) return; // A null-check for super constructor, because it calls onTextChanged
+         spoilersPool.addAll(spoilers);
+         spoilers.clear();

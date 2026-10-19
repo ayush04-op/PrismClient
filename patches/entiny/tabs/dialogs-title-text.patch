@@ -1,0 +1,106 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleksii Kulinich <entaytion@gmail.com>
+Date: Tue, 1 Sep 2026 11:15:02 +0300
+Subject: Show custom title text on the dialogs list, with an option for the archive
+
+---
+ .../java/org/telegram/ui/DialogsActivity.java | 58 +++++++++++++++++++
+ 1 file changed, 58 insertions(+)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -1573,6 +1573,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+                                     viewPages[0].dialogsAdapter.resume();
+                                     viewPages[1].dialogsAdapter.pause();
+                                 }
++                                // The swipe has settled -- committed to the target page, or snapped
++                                // back to the original one (backAnimation) -- so viewPages[0] is
++                                // authoritative and this is where the name is allowed to change.
++                                inu_updateSettledFolderTitle();
+                                 viewPages[1].setVisibility(View.GONE);
+                                 showScrollbars(true);
+                                 tabsAnimationInProgress = false;
+@@ -3056,6 +3060,17 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+     private Drawable premiumStar;
+ 
+     public void updateStatus(TLRPC.User user, boolean animated) {
++        if (!desu.inugram.helpers.security.ParanoiaHelper.isDisguised() && actionBar != null && communityId == 0 &&
++                (folderId == 0 || desu.inugram.InuConfig.DIALOGS_TITLE_TEXT_OVERRIDE_ARCHIVE.getValue())) {
++            if (folderId == 0 && desu.inugram.InuConfig.DIALOGS_TITLE_TEXT.getValue() == desu.inugram.InuConfig.DialogsTitleTextItem.FOLDER) {
++                // getDialogsTitle() has no FOLDER branch and falls through to the app name, so
++                // running it here would drop the current folder's name on every status update
++                // (emoji status, premium, mainUserInfoChanged).
++                inu_updateSettledFolderTitle();
++            } else {
++                actionBar.setTitle(desu.inugram.helpers.chat.ChatHelper.getDialogsTitle(currentAccount), statusDrawable);
++            }
++        }
+         if (dialogStoriesCell != null) {
+             dialogStoriesCell.updateStatus(user, animated);
+         }
+@@ -3726,6 +3741,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+                         checkListLoad(viewPages[0]);
+                         viewPages[0].dialogsAdapter.resume();
+                         viewPages[1].dialogsAdapter.pause();
++                        inu_updateSettledFolderTitle();
+                     }
+                 }
+ 
+@@ -6942,6 +6958,35 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+         switchToCurrentSelectedMode(false);
+     }
+ 
++    // Applies whichever folder viewPages[0] currently holds. Safe to call at any time: it reads
++    // the settled page, so it is a no-op-equivalent repeat rather than a mid-transition guess.
++    private void inu_updateSettledFolderTitle() {
++        if (viewPages == null || viewPages.length == 0 || viewPages[0] == null) {
++            return;
++        }
++        ArrayList<MessagesController.DialogFilter> filters = getMessagesController().getDialogFilters();
++        if (viewPages[0].selectedType >= 0 && viewPages[0].selectedType < filters.size()) {
++            inu_updateFolderTitle(filters.get(viewPages[0].selectedType));
++        }
++    }
++
++    // Only ever called for a settled page: the two transition-completion hooks (tabsAnimation
++    // onAnimationEnd, onPageScrolled progress==1) and switchToCurrentSelectedMode when no
++    // transition is in flight. Never while a swipe is mid-flight -- see the comment there.
++    private void inu_updateFolderTitle(MessagesController.DialogFilter filter) {
++        if (actionBar == null || folderId != 0 || communityId != 0 || filter == null) {
++            return;
++        }
++        if (desu.inugram.InuConfig.DIALOGS_TITLE_TEXT.getValue() != desu.inugram.InuConfig.DialogsTitleTextItem.FOLDER) {
++            return;
++        }
++        desu.inugram.helpers.chat.ChatHelper.folderTitle = filter.isDefault() ? null : desu.inugram.helpers.dialogs.FolderHelper.getTabInfo(filter).first;
++        actionBar.setTitle(desu.inugram.helpers.chat.ChatHelper.getDialogsTitle(currentAccount));
++        if (dialogStoriesCell != null) {
++            dialogStoriesCell.updateItems(true, false);
++        }
++    }
++
+     public void switchToCurrentSelectedMode(boolean animated) {
+         for (int a = 0; a < viewPages.length; a++) {
+             viewPages[a].listView.stopScroll();
+@@ -6968,6 +7013,19 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+             viewPages[1].isLocked = filter.locked;
+         }
+ 
++        if (!animated && !startedTracking && !tabsAnimationInProgress) {
++            // Only apply the title when no transition is in flight. animated==true is the
++            // transition *starting* (prepareForMoving / tab tap), where `filter` is the target
++            // page -- committing to it here means every way a swipe can be abandoned has to undo
++            // it, and two of them can't: the drag-reversal reset below prepareForMoving returns
++            // false for, and the touch-interrupt path that calls removeAllListeners() before
++            // cancel() so the animator's settle listener never runs. Both leave the target
++            // folder's name stuck on a page the user never moved to. The settle-time hooks
++            // (tabsAnimation onAnimationEnd, onPageScrolled progress==1) apply the name once the
++            // transition has actually committed, so there is nothing to undo.
++            inu_updateFolderTitle(filter);
++        }
++
+         viewPages[a].dialogsAdapter.setDialogsType(viewPages[a].dialogsType);
+         viewPages[a].layoutManager.scrollToPositionWithOffset(viewPages[a].dialogsType == DIALOGS_TYPE_DEFAULT && hasHiddenArchive() && viewPages[a].archivePullViewState == ARCHIVE_ITEM_STATE_HIDDEN ? 1 : 0, (int) scrollYOffset);
+         checkListLoad(viewPages[a]);
