@@ -32,6 +32,14 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Patch old tdlib plugin for new Android Gradle
+        run: |
+          D=$(find "$HOME/.pub-cache/hosted/pub.dev" -maxdepth 1 -type d -name 'tdlib-*' | head -1)
+          G="$D/android/build.gradle"
+          PKG=$(grep -oP 'package="\K[^"]+' "$D/android/src/main/AndroidManifest.xml" || echo com.tdlib.plugin)
+          grep -q namespace "$G" || sed -i "0,/android {/s//android {\n    namespace \"$PKG\"/" "$G"
+          echo "patched $G with namespace $PKG"
+
       - name: Analyze (report errors)
         continue-on-error: true
         run: |

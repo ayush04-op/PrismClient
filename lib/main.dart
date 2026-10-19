@@ -14,7 +14,7 @@ Future<void> main() async {
     ProviderScope(
       child: LiquidGlassWidgets.wrap(
         child: const GlassGramApp(),
-        brightnessResolver: () => Brightness.dark,
+        brightnessResolver: (_) => Brightness.dark,
       ),
     ),
   );

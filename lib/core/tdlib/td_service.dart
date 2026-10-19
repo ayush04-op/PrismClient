@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:path_provider/path_provider.dart';
@@ -36,15 +37,16 @@ class TdService {
     // Non-blocking poll (timeout 0). Phase 5: move to a dedicated isolate.
     _poller = Timer.periodic(const Duration(milliseconds: 25), (_) {
       for (var i = 0; i < 50; i++) {
-        final event = TdPlugin.instance.tdReceive(0); // ADAPTER
-        if (event == null) break;
-        _updates.add(event);
+        final raw = TdPlugin.instance.tdReceive(0); // ADAPTER
+        if (raw == null) break;
+        final obj = td.convertToObject(raw);
+        if (obj != null) _updates.add(obj);
       }
     });
   }
 
   void send(td.TdFunction function) {
-    TdPlugin.instance.tdSend(_clientId, function); // ADAPTER
+    TdPlugin.instance.tdSend(_clientId, jsonEncode(function.toJson())); // ADAPTER
   }
 
   /// Answer TDLib's `authorizationStateWaitTdlibParameters`.
