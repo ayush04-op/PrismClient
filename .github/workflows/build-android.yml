@@ -26,6 +26,17 @@ jobs:
           flutter create --org com.glassgram --project-name glassgram --platforms android .
           rm -rf test
 
+      - name: Download Inter font (SF Pro-style, SIL OFL)
+        run: |
+          mkdir -p assets/fonts /tmp/inter
+          curl -fsSL -o /tmp/inter.zip https://github.com/rsms/inter/releases/download/v4.0/Inter-4.0.zip
+          unzip -q /tmp/inter.zip -d /tmp/inter
+          for w in Regular Medium SemiBold Bold; do
+            f=$(find /tmp/inter -name "Inter-$w.ttf" | head -1)
+            [ -n "$f" ] || { echo "::error::Inter-$w.ttf not found"; exit 1; }
+            cp "$f" assets/fonts/
+          done
+
       - name: Write .env from secrets
         run: |
           printf 'API_ID=%s\nAPI_HASH=%s\n' "${{ secrets.API_ID }}" "${{ secrets.API_HASH }}" > .env

@@ -31,21 +31,28 @@ class _MeshBackgroundState extends State<MeshBackground> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
     return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: _c,
-        builder: (context, _) {
-          final t = _c.value * 2 * math.pi;
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              const ColoredBox(color: Color(0xFF05060F)),
-              for (final (color, phase, speed) in _blobs)
-                Align(
-                  alignment: Alignment(
-                    0.8 * math.sin(t * speed + phase),
-                    0.8 * math.cos(t * speed * 0.8 + phase * 1.3),
-                  ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const ColoredBox(color: Color(0xFF05060F)),
+          for (final (color, phase, speed) in _blobs)
+            RepaintBoundary(
+              // Gradient is painted once; only its transform changes per frame.
+              child: AnimatedBuilder(
+                animation: _c,
+                builder: (context, child) {
+                  final t = _c.value * 2 * math.pi;
+                  return Transform.translate(
+                    offset: Offset(
+                      0.4 * size.width * math.sin(t * speed + phase),
+                      0.4 * size.height * math.cos(t * speed * 0.8 + phase * 1.3),
+                    ),
+                    child: child,
+                  );
+                },
+                child: Center(
                   child: Container(
                     width: 380,
                     height: 380,
@@ -57,9 +64,9 @@ class _MeshBackgroundState extends State<MeshBackground> with SingleTickerProvid
                     ),
                   ),
                 ),
-            ],
-          );
-        },
+              ),
+            ),
+        ],
       ),
     );
   }

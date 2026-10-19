@@ -29,7 +29,9 @@ class GlassGramApp extends ConsumerWidget {
       title: 'GlassGram',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
+      scrollBehavior: const _SmoothScroll(),
       darkTheme: ThemeData(
+        fontFamily: 'Inter',
         brightness: Brightness.dark,
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -41,4 +43,16 @@ class GlassGramApp extends ConsumerWidget {
       routerConfig: ref.watch(routerProvider),
     );
   }
+}
+
+/// iOS-style bouncing physics, drag with any pointer.
+class _SmoothScroll extends MaterialScrollBehavior {
+  const _SmoothScroll();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+
+  @override
+  Widget buildOverscrollIndicator(BuildContext context, Widget child, ScrollableDetails details) => child;
 }
