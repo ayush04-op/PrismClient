@@ -37,13 +37,13 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> _init() async {
+    _sub = _td.updates.listen(_onEvent); // subscribe before starting
     try {
       await _td.start();
     } catch (e) {
-      state = state.copyWith(error: '$e');
+      state = state.copyWith(error: 'Could not start TDLib: $e');
       return;
     }
-    _sub = _td.updates.listen(_onEvent);
     _td.send(td.GetAuthorizationState());
   }
 
@@ -75,6 +75,14 @@ class AuthController extends Notifier<AuthState> {
       state = state.copyWith(step: AuthStep.ready, busy: false, clearError: true);
     } else if (s is td.AuthorizationStateClosed) {
       state = state.copyWith(step: AuthStep.closed);
+    } else if (s is td.AuthorizationStateWaitRegistration) {
+      state = state.copyWith(
+        step: AuthStep.phone,
+        busy: false,
+        error: 'This number has no Telegram account yet. Sign up in the official app first.',
+      );
+    } else {
+      state = state.copyWith(busy: false, error: 'Unsupported login step: ${s.runtimeType}');
     }
   }
 

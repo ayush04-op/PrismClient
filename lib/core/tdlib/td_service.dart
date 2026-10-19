@@ -5,14 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tdlib/td_api.dart' as td;
-import 'package:tdlib/td_client.dart';
 import 'package:tdlib/tdlib.dart';
 
-/// Thin wrapper around the TDLib JSON client.
-///
-/// ADAPTER NOTE: the three calls marked `// ADAPTER` are the only places that
-/// touch the `tdlib` package's low-level client API. If the package version
-/// differs, adjust only those lines.
+/// Thin wrapper around TDLib using the `tdlib` package's documented API:
+/// `tdCreate()`, `tdSend(clientId, request)` and `tdReceive(timeout)`.
 class TdService {
   TdService._();
   static final TdService instance = TdService._();
@@ -23,7 +19,7 @@ class TdService {
 
   final _updates = StreamController<td.TdObject>.broadcast();
 
-  /// Last raw TDLib messages, shown on screen while debugging.
+  /// Last TDLib messages, shown on screen while debugging.
   final ValueNotifier<String> debugLog = ValueNotifier('starting…');
 
   /// Every object TDLib emits (updates, errors, responses).
@@ -34,36 +30,51 @@ class TdService {
     _started = true;
 
     try {
-      await TdPlugin.initialize(); // ADAPTER (iOS: pass libtdjson name)
+      await TdPlugin.initialize();
+      _clientId = tdCreate();
+      debugLog.value = 'client $_clientId created';
     } catch (e) {
       debugLog.value = 'init failed: $e';
       rethrow;
     }
-    _clientId = TdPlugin.instance.tdCreate(); // ADAPTER
 
     send(td.SetLogVerbosityLevel(newVerbosityLevel: 1));
 
-    // Non-blocking poll (timeout 0). Phase 5: move to a dedicated isolate.
-    _poller = Timer.periodic(const Duration(milliseconds: 25), (_) {
-      for (var i = 0; i < 50; i++) {
-        final raw = TdPlugin.instance.tdReceive(0); // ADAPTER
-        if (raw == null) break;
-        if (!raw.contains('updateOption') && !raw.contains('updateConnectionState')) {
-          debugLog.value = raw.length > 220 ? raw.substring(0, 220) : raw;
+    // Non-blocking poll (timeout 0). Moves to a background isolate in Phase 3+.
+    _poller = Timer.periodic(const Duration(milliseconds: 20), (_) {
+      try {
+        for (var i = 0; i < 100; i++) {
+          final event = tdReceive(0);
+          if (event == null) break;
+          if (event is! td.UpdateOption && event is! td.UpdateConnectionState) {
+            debugLog.value = _short(event);
+          }
+          _updates.add(event);
         }
-        final obj = td.convertToObject(raw);
-        if (obj != null) _updates.add(obj);
+      } catch (e) {
+        debugLog.value = 'receive error: $e';
       }
     });
   }
 
-  void send(td.TdFunction function) {
-    TdPlugin.instance.tdSend(_clientId, jsonEncode(function.toJson())); // ADAPTER
+  String _short(td.TdObject o) {
+    try {
+      final s = jsonEncode(o.toJson());
+      return s.length > 200 ? s.substring(0, 200) : s;
+    } catch (_) {
+      return o.runtimeType.toString();
+    }
   }
+
+  void send(td.TdFunction function) => tdSend(_clientId, function);
 
   /// Answer TDLib's `authorizationStateWaitTdlibParameters`.
   Future<void> sendParameters() async {
-    debugLog.value = 'sending parameters (api_id length ${dotenv.env['API_ID']?.trim().length ?? 0})';
+    final apiId = int.tryParse((dotenv.env['API_ID'] ?? '').trim()) ?? 0;
+    final apiHash = (dotenv.env['API_HASH'] ?? '').trim();
+    if (apiId == 0 || apiHash.isEmpty) {
+      debugLog.value = 'API_ID / API_HASH missing in this build (check GitHub secrets)';
+    }
     final dir = await getApplicationSupportDirectory();
     send(
       td.SetTdlibParameters(
@@ -75,10 +86,10 @@ class TdService {
         useChatInfoDatabase: true,
         useMessageDatabase: true,
         useSecretChats: false,
-        apiId: int.tryParse((dotenv.env['API_ID'] ?? '').trim()) ?? 0,
-        apiHash: (dotenv.env['API_HASH'] ?? '').trim(),
+        apiId: apiId,
+        apiHash: apiHash,
         systemLanguageCode: 'en',
-        deviceModel: 'GlassGram',
+        deviceModel: 'Android',
         systemVersion: 'Flutter',
         applicationVersion: '0.1.0',
         enableStorageOptimizer: true,
