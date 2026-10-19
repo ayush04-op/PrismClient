@@ -27,6 +27,7 @@ class AuthState {
 class AuthController extends Notifier<AuthState> {
   StreamSubscription<td.TdObject>? _sub;
   final _td = TdService.instance;
+  String? _pendingPhone; // phone typed before TDLib was ready
 
   @override
   AuthState build() {
@@ -61,6 +62,11 @@ class AuthController extends Notifier<AuthState> {
       _td.sendParameters();
     } else if (s is td.AuthorizationStateWaitPhoneNumber) {
       state = state.copyWith(step: AuthStep.phone, busy: false);
+      final pending = _pendingPhone;
+      if (pending != null) {
+        _pendingPhone = null;
+        submitPhone(pending);
+      }
     } else if (s is td.AuthorizationStateWaitCode) {
       state = state.copyWith(step: AuthStep.code, busy: false, clearError: true);
     } else if (s is td.AuthorizationStateWaitPassword) {
@@ -74,6 +80,10 @@ class AuthController extends Notifier<AuthState> {
 
   void submitPhone(String phone) {
     state = state.copyWith(busy: true, clearError: true);
+    if (state.step == AuthStep.loading) {
+      _pendingPhone = phone; // sent as soon as TDLib is ready
+      return;
+    }
     _td.send(td.SetAuthenticationPhoneNumber(phoneNumber: phone.trim(), settings: null));
   }
 
