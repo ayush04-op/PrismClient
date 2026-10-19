@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tdlib/td_api.dart' as td;
@@ -27,9 +26,6 @@ class TdService {
   /// Last raw TDLib messages, shown on screen while debugging.
   final ValueNotifier<String> debugLog = ValueNotifier('starting…');
 
-  /// Last raw TDLib messages, shown on screen while debugging.
-  final ValueNotifier<String> debugLog = ValueNotifier('starting…');
-
   /// Every object TDLib emits (updates, errors, responses).
   Stream<td.TdObject> get updates => _updates.stream;
 
@@ -38,12 +34,7 @@ class TdService {
     _started = true;
 
     try {
-      try {
       await TdPlugin.initialize(); // ADAPTER (iOS: pass libtdjson name)
-    } catch (e) {
-      debugLog.value = 'init failed: $e';
-      rethrow;
-    }
     } catch (e) {
       debugLog.value = 'init failed: $e';
       rethrow;
@@ -60,9 +51,6 @@ class TdService {
         if (!raw.contains('updateOption') && !raw.contains('updateConnectionState')) {
           debugLog.value = raw.length > 220 ? raw.substring(0, 220) : raw;
         }
-        if (!raw.contains('updateOption') && !raw.contains('updateConnectionState')) {
-          debugLog.value = raw.length > 220 ? raw.substring(0, 220) : raw;
-        }
         final obj = td.convertToObject(raw);
         if (obj != null) _updates.add(obj);
       }
@@ -76,7 +64,6 @@ class TdService {
   /// Answer TDLib's `authorizationStateWaitTdlibParameters`.
   Future<void> sendParameters() async {
     debugLog.value = 'sending parameters (api_id length ${dotenv.env['API_ID']?.trim().length ?? 0})';
-    debugLog.value = 'sending parameters (apiId=${dotenv.env['API_ID']?.trim().length ?? 0} chars)';
     final dir = await getApplicationSupportDirectory();
     send(
       td.SetTdlibParameters(

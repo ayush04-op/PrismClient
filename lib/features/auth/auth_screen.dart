@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/tdlib/td_service.dart';
-import '../../core/tdlib/td_service.dart';
 import '../../core/theme/mesh_background.dart';
 import 'auth_controller.dart';
 
