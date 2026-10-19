@@ -1,0 +1,29 @@
+name: glassgram
+description: GlassGram - a Liquid Glass Telegram client.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.9.0
+  flutter: '>=3.41.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  liquid_glass_widgets: ^1.11.0
+  tdlib: ^1.6.0
+  flutter_riverpod: ^2.6.1
+  go_router: ^14.6.2
+  shared_preferences: ^2.3.3
+  flutter_dotenv: ^5.2.1
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
