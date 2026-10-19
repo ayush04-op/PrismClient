@@ -1,0 +1,6 @@
+.env
+build/
+.dart_tool/
+.flutter-plugins*
+android/
+ios/
