@@ -43,6 +43,7 @@ import org.telegram.ui.LauncherIconController
 object InuHooks {
     @JvmStatic
     fun preInit(context: Context) {
+        desu.inugram.prism.PrismSafe.begin(context)
         CrashReporter.install()
         InuConfig.load(context)
         desu.inugram.helpers.network.CensorshipHelper.init()
@@ -55,7 +56,7 @@ object InuHooks {
     @JvmStatic
     fun init(context: Context) {
         FontHelper.init(context)
-        desu.inugram.prism.PrismFont.seedDefault(context)
+        if (!desu.inugram.prism.PrismSafe.isSafe()) desu.inugram.prism.PrismFont.seedDefault(context)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             FontHelper.installGlobal()
         }
