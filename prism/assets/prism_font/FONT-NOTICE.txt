@@ -1,0 +1,3 @@
+Anthropic Serif (Text) is not part of Prism's own code. It was obtained as a free download from its
+distributor (Moonbear) and is bundled as Prism's default font. Its rights stay with its owners.
+To remove it, delete the .otf files in this folder; Prism then uses the standard Telegram font.

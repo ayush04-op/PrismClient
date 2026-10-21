@@ -10,3 +10,5 @@ Prism would not exist without these projects. Thank you.
 - **Telegram for Android** by [DrKLO / Telegram FZ-LLC](https://github.com/DrKLO/Telegram) — the base
   application (GPL-2.0-or-later).
 - Other forks credited inside entinyGram's own `FEATURES.md`.
+- **Anthropic Serif (Text)** — default font, a third-party font bundled under its distributor's terms
+  (see `prism/assets/prism_font/FONT-NOTICE.txt`).

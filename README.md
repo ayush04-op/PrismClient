@@ -14,9 +14,16 @@ Add these repository secrets first (Settings → Secrets and variables → Actio
 
 Download the APK from the finished run's **Artifacts**.
 
-## License
-MIT for Prism's own code (see `LICENSE`). The Telegram base code is GPL-2.0-or-later,
-so any distributed build must be accompanied by this source code.
+## Open source
+Prism is free and open source. Source: https://github.com/ayush04-op/PrismClient
+
+- Prism's own additions are under the MIT license (`LICENSE`).
+- The app is built on Telegram for Android, which is **GPL-2.0-or-later** (`LICENSES/Telegram-GPL-2.0.txt`),
+  so the combined app is distributed under the GPL and its full source is this repository.
+- Built on entinyGram (MIT) and Inugram; see [CREDITS.md](CREDITS.md).
+- The default font (Anthropic Serif Text) is a third-party font with its own terms; see `prism/assets/prism_font/FONT-NOTICE.txt`.
+
+Prism is an unofficial client and is not affiliated with Telegram.
 
 ## Customising (Prism overlay)
 Everything Prism adds on top of the base patch stack lives in `prism/` and `src/fork/prism/`:
