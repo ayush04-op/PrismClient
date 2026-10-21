@@ -69,6 +69,8 @@ jobs:
           if [ -d prism/assets ]; then cp -r prism/assets/. "$W/TMessagesProj/src/main/assets/"; fi
           # app name shown under the launcher icon, in notifications and the intro
           find "$W/TMessagesProj/src/main/res" -name strings.xml | xargs sed -i -E '/name="(AppName|AppNameBeta|AppUpdate|AppUpdateBeta|Page1Title)"/ s/entinyGram/Prism/g'
+          # the app's own name inside English UI text (service names like Telegram Premium stay as they are)
+          sed -i -E 's/\*\*Telegram\*\*/**Prism**/g; s/Welcome to Telegram/Welcome to Prism/; s/Telegram (needs|uses %s|lets you|provides)/Prism \1/g; s/(llow|llows) Telegram/\1 Prism/g' "$W/TMessagesProj/src/main/res/values/strings.xml"
           grep -n 'name="AppName"' "$W/TMessagesProj/src/main/res/values/strings.xml"
 
       - name: Rebrand and inject your Telegram keys

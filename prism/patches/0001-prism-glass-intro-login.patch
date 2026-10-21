@@ -15,7 +15,7 @@ index a340a8e7..f276141d 100644
          value = preferences.getInt("lite_mode6", defaultValue);
          if (loaded) {
 diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
-index f9241e6a..1bc84527 100644
+index f9241e6a..4207c4fb 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
 +++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
 @@ -1148,7 +1148,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
@@ -23,7 +23,7 @@ index f9241e6a..1bc84527 100644
              return new LoginActivity();
          }
 -        return new IntroActivity();
-+        return new desu.inugram.prism.PrismIntroActivity();
++        return new LoginActivity();
      }
  
      public FireworksOverlay getFireworksOverlay() {
@@ -32,7 +32,7 @@ index f9241e6a..1bc84527 100644
                  rightActionBarLayout.rebuildLogout();
              }
 -            presentFragment(new IntroActivity().setOnLogout());
-+            presentFragment(new desu.inugram.prism.PrismIntroActivity().setOnLogout());
++            presentFragment(new LoginActivity());
              if (desu.inugram.helpers.security.PasscodeHelper.lockIfHiddenAccountsLeft()) {
                  showPasscodeActivity(false, false, -1, -1, null, null);
              }

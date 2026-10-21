@@ -15,6 +15,14 @@ object PrismLogin {
      */
     @JvmStatic
     fun decorate(context: Context, page: View, card: ViewGroup) {
+        try {
+            decorateUnsafe(context, page, card)
+        } catch (t: Throwable) {
+            org.telegram.messenger.FileLog.e(t) // never let styling break login
+        }
+    }
+
+    private fun decorateUnsafe(context: Context, page: View, card: ViewGroup) {
         val dark = Theme.isCurrentThemeDark()
         val tier = PrismTier.tier()
         val scene = AuroraScene(dark)
