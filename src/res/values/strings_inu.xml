@@ -68,7 +68,7 @@
     <string name="InuDrawerKeepOptionsMenuInfo">Show the chats list menu button next to the side menu</string>
     <string name="InuShowDrawerAccounts">Show accounts in drawer</string>
     <string name="InuShowDrawerAccountsInfo">Show the expandable account switcher below your profile.</string>
-    <string name="InuSettings">entinyGram Settings</string>
+    <string name="InuSettings">Prism Settings</string>
     <string name="InuSettingsInfo">through the land and wind I follow you</string>
     <string name="InuGeneral">General</string>
     <string name="InuWideChannelPosts">Wide posts</string>
@@ -77,7 +77,7 @@
     <string name="InuWideChannelPostsPreviewReply">Forwarded channel post</string>
     <string name="InuWideChannelPostsPreviewReplyLabel">Channel posts</string>
     <string name="InuAutoUpdateCheck">Check for updates</string>
-    <string name="InuAutoUpdateCheckInfo">Periodically check the entinyGram CI channel for new releases and offer to download them.</string>
+    <string name="InuAutoUpdateCheckInfo">Periodically check the Prism CI channel for new releases and offer to download them.</string>
     <string name="InuUpdatesIncludeBeta">Catch beta updates</string>
     <string name="InuPushHeader">Push notifications</string>
     <string name="InuUnifiedPush">UnifiedPush</string>
@@ -506,7 +506,7 @@
     <string name="InuBubbleTails">Bubble tails</string>
     <string name="InuSendAsRoundVideo">Send as round video</string>
     <string name="InuMiscPreviewForwardedFrom">inu</string>
-    <string name="InuMiscPreviewForwardedMessage">woof! entinyGram or inuGram? 🐶</string>
+    <string name="InuMiscPreviewForwardedMessage">woof! Prism or inuGram? 🐶</string>
     <string name="InuMiscPreviewEditedMessage">both are the best, doggo base 🐶⚡</string>
     <string name="InuDeleteForBoth">\"Delete for both\" by default</string>
     <string name="InuDeleteForBothMessages">Messages</string>
@@ -1034,7 +1034,7 @@
     <string name="InuCodeBlock">Code block</string>
     <string name="InuCut">Cut</string>
     <string name="InuCodeLanguage">Code language</string>
-    <string name="InuVersion">entinyGram %1$s (%2$s)</string>
+    <string name="InuVersion">Prism %1$s (%2$s)</string>
     <string name="InuDataBackup">Backup &amp; Sync</string>
 
     <string name="InuSearchFilter">Filter by media</string>
@@ -1129,11 +1129,11 @@
     <string name="InuBackupImportSheetCancel">No, leave as is</string>
     <string name="InuBackupSettings">Backup &amp; reset</string>
     <string name="InuBackupReset">Reset settings</string>
-    <string name="InuBackupResetConfirm">All entinyGram settings will be reset to their default values. Your chats, accounts, and Telegram\'s own settings stay the same.\n\nThis cannot be undone.</string>
+    <string name="InuBackupResetConfirm">All Prism settings will be reset to their default values. Your chats, accounts, and Telegram\'s own settings stay the same.\n\nThis cannot be undone.</string>
     <string name="InuBackupResetSuccess">Reset %1$d settings</string>
     <string name="InuBackupResetNoChanges">Settings are already at their defaults</string>
     <string name="InuCloudSync">Sync settings</string>
-    <string name="InuCloudSyncDesc">Backs up your entinyGram settings to Telegram cloud via [CloudStorage API](https://core.telegram.org/bots/webapps#cloudstorage) — your data never touches our servers.</string>
+    <string name="InuCloudSyncDesc">Backs up your Prism settings to Telegram cloud via [CloudStorage API](https://core.telegram.org/bots/webapps#cloudstorage) — your data never touches our servers.</string>
     <string name="InuCloudSyncNow">Sync now</string>
     <string name="InuCloudSyncing">Syncing…</string>
     <string name="InuCloudRestore">Restore from cloud</string>
@@ -1210,7 +1210,7 @@
     <string name="InuMentionInsertTitle">Insert mention</string>
     <string name="InuPasscode">Passcode</string>
     <string name="InuPasscodeNeeded">Set up a Telegram passcode first.</string>
-    <string name="InuPasscodeShowInSettings">Show in entinyGram settings</string>
+    <string name="InuPasscodeShowInSettings">Show in Prism settings</string>
     <string name="InuPasscodeShowInSettingsInfo">When off, this page opens only via the link below — save it now.</string>
     <string name="InuPasscodeAccountsInfo">Per-account passcodes: enter one at the lock screen to unlock and switch to that account.</string>
     <string name="InuPasscodeStateNone">Not configured</string>
@@ -1269,13 +1269,13 @@
     <string name="InuGoToMessagePrompt">Message ID</string>
     <string name="InuPrivacySecurity">Privacy &amp; Security</string>
     <string name="InuPerAccountPasscode">Per-account passcode</string>
-    <string name="InuHideInugramSettings">Hide entinyGram settings</string>
+    <string name="InuHideInugramSettings">Hide Prism settings</string>
     <string name="InuParanoiaDisableNotifications">Disable notifications</string>
     <string name="InuParanoiaHideOtherAccounts">Hide other accounts</string>
     <string name="InuParanoiaHideFolders">Hide folders</string>
     <string name="InuParanoiaHideMyStories">Hide my stories</string>
     <string name="InuParanoiaDisguise">Disguise as Telegram</string>
-    <string name="InuParanoiaDisguiseInfo">Only the launcher icon and name change; notifications still say \"entinyGram\".</string>
+    <string name="InuParanoiaDisguiseInfo">Only the launcher icon and name change; notifications still say \"Prism\".</string>
     <string name="InuDisguiseName" translatable="false">Telegram</string>
     <string name="InuParanoiaMode">Paranoia mode</string>
     <string name="InuParanoiaModeInfo">Hides \"dangerous\" chats and optionally disguises the app — be ready for a snooper.</string>
@@ -1301,17 +1301,17 @@
     <string name="InuBotSettings">Bot Settings</string>
     <string name="InuBotHelp">Bot Help</string>
 
-    <string name="InuCrashTitle">entinyGram crashed last time</string>
-    <string name="InuCrashTitleOom">entinyGram ran out of memory</string>
+    <string name="InuCrashTitle">Prism crashed last time</string>
+    <string name="InuCrashTitleOom">Prism ran out of memory</string>
     <string name="InuCrashDesc">Sorry about that. You can share the crash log with the developer to help fix it.</string>
     <string name="InuCrashDescOom">Sorry about that. Crash logs aren\'t very useful for out-of-memory issues — a heap dump is what helps.</string>
     <string name="InuCrashDescHeapDump">A heap dump was also saved. DO NOT SHARE IT! It contains private data! Take a look at it yourself, if you want, and share your findings — that would help a lot.</string>
-    <string name="InuCrashOomEnableLogs">Enable debug mode in entinyGram Settings > About to create a heap dump on every future OOM.</string>
+    <string name="InuCrashOomEnableLogs">Enable debug mode in Prism Settings > About to create a heap dump on every future OOM.</string>
     <string name="InuCrashShare">Share crash log</string>
     <string name="InuCrashShareHeapDump">Save heap dump</string>
     <string name="InuCrashDiscard">Discard</string>
     <string name="InuCrashChannel">Crash recovery</string>
-    <string name="InuCrashNotifTitle">entinyGram crashed</string>
+    <string name="InuCrashNotifTitle">Prism crashed</string>
     <string name="InuCrashNotifText">Tap to restart</string>
 
     <string name="InuLogs">Debug</string>
@@ -1805,7 +1805,7 @@
     <string name="InuDeletedMarkStyleEyeCrossed">Eye Crossed</string>
     <string name="InuDeletedMarkPreviewText">Hey! This is a secret 🤫</string>
     <string name="InuDeletedMarkPreviewSender">Alina</string>
-    <string name="InuHideDevBadges">Disable entinyGram badges</string>
+    <string name="InuHideDevBadges">Disable Prism badges</string>
     <string name="InuHideDevBadgesInfo">They don\'t mean anything, don\'t give any advantage — just a thank-you from the developer</string>
     <string name="InuDevBadge">entinyGram team</string>
     <string name="InuDevBadgeInfo">This account is recognized by the entinyGram team.</string>
@@ -2015,7 +2015,7 @@
     <string name="InuPluginsErrorNoManifest">Not a valid plugin (missing metadata header)</string>
     <string name="InuPluginsErrorRead">Couldn\'t read the selected file</string>
     <string name="InuPluginsErrorWrite">Couldn\'t save the plugin file</string>
-    <string name="InuPluginsErrorApiVersion">Needs a newer entinyGram (plugin API %1$d, this app has %2$d)</string>
+    <string name="InuPluginsErrorApiVersion">Needs a newer Prism (plugin API %1$d, this app has %2$d)</string>
     <string name="InuPluginsErrorPlatform">Not made for this platform (needs %1$s)</string>
     <string name="InuPluginsErrorBadGrant">Invalid permissions requested (%1$s)</string>
     <string name="InuPluginsErrorUnconsentedGrants">Requests permissions that weren\'t reviewed at install (%1$s); update the plugin to review them</string>
@@ -2042,7 +2042,7 @@
 
     <string name="InuAppIconCrimson">Crimson</string>
     <string name="InuAppIconBy">by %1$s</string>
-    <string name="InuAppIconDescDefault">The classic entinyGram dish</string>
+    <string name="InuAppIconDescDefault">The classic Prism dish</string>
     <string name="InuAppIconDescOld">Where it all began</string>
     <string name="InuAppIconDescInuTribute">A nod to the project\'s roots</string>
     <string name="InuAppIconDescRadar">Sweeping the airwaves</string>
@@ -2075,7 +2075,7 @@
     <string name="InuRecentChatsSummary">Quick chat switcher bar</string>
     <string name="InuFeedSummary">Aggregated posts from your channels</string>
     <string name="InuEditedArchive">Edited archive</string>
-    <string name="InuGroupChatArchives">Group archives in entinyGram folder</string>
+    <string name="InuGroupChatArchives">Group archives in Prism folder</string>
     <string name="InuLogsRedact">Redact sensitive data</string>
     <string name="InuLogsRedactInfo">Replace phone numbers, IDs, tokens, IPs and usernames in logs with stable placeholders as they are written</string>
     <string name="InuProfileJoinDate">Join Date</string>
@@ -2100,4 +2100,15 @@
     <string name="InuRetroSettings">Retro settings</string>
     <string name="InuRetroSettingsInfo">Settings as an old-style profile list. Needs a restart.</string>
     <string name="InuRetroCredit">*ported from the retro-views plugin (@sophietelle)*</string>
+    <string name="PrismCredits">Credits</string>
+    <string name="PrismCreditsCreator">Created by</string>
+    <string name="PrismCreditsBuiltOn">Built on the work of</string>
+    <string name="PrismDeveloper">Developer</string>
+    <string name="PrismSourceCode">Source code</string>
+    <string name="PrismCreatedWith">Created with ❤️ by Ayush</string>
+    <string name="PrismCreditEntiny">Patch stack and features Prism starts from (MIT)</string>
+    <string name="PrismCreditInugram">The patchset entinyGram builds on</string>
+    <string name="PrismCreditTelegram">The official Telegram Android app (GPL-2.0)</string>
+    <string name="PrismTagline">Fast. Fluid. Glass.</string>
+    <string name="PrismCreditsNotOfficial">Prism is an unofficial client and is not affiliated with Telegram.</string>
 </resources>

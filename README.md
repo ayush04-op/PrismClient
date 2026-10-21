@@ -17,3 +17,10 @@ Download the APK from the finished run's **Artifacts**.
 ## License
 MIT for Prism's own code (see `LICENSE`). The Telegram base code is GPL-2.0-or-later,
 so any distributed build must be accompanied by this source code.
+
+## Customising (Prism overlay)
+Everything Prism adds on top of the base patch stack lives in `prism/` and `src/fork/prism/`:
+- `prism/patches/*.patch`: small edits to Telegram's own files (intro, login, lite-mode defaults)
+- `prism/res/`: logo, launcher icon
+- `prism/assets/prism_font/`: drop a `.ttf`/`.otf` here to make it the default font
+- `src/fork/prism/`: the welcome screen, aurora background and glass components

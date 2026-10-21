@@ -55,6 +55,7 @@ object InuHooks {
     @JvmStatic
     fun init(context: Context) {
         FontHelper.init(context)
+        desu.inugram.prism.PrismFont.seedDefault(context)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             FontHelper.installGlobal()
         }

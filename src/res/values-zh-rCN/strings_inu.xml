@@ -2,7 +2,7 @@
 <resources>
     <string name="InuOpenInDiscussion">在讨论中打开</string>
     <string name="InuBanUserConfirm">将 %1$s 从本群封禁？</string>
-    <string name="InuSettings">entinyGram 设置</string>
+    <string name="InuSettings">Prism 设置</string>
     <string name="InuSettingsInfo">汪汪在干啥？</string>
     <string name="InuGeneral">通用</string>
     <string name="InuWideChannelPosts">宽屏帖子</string>
@@ -11,7 +11,7 @@
     <string name="InuWideChannelPostsPreviewReply">已转发的频道帖子</string>
     <string name="InuWideChannelPostsPreviewReplyLabel">频道帖子</string>
     <string name="InuAutoUpdateCheck">检查更新</string>
-    <string name="InuAutoUpdateCheckInfo">定期检查 entinyGram CI 频道的新版本并提示下载。</string>
+    <string name="InuAutoUpdateCheckInfo">定期检查 Prism CI 频道的新版本并提示下载。</string>
     <string name="InuUpdatesIncludeBeta">接收测试版更新</string>
     <string name="InuPushHeader">推送通知</string>
     <string name="InuUnifiedPush">UnifiedPush</string>
@@ -476,7 +476,7 @@
     <string name="InuCodeBlock">代码块</string>
     <string name="InuCut">剪切</string>
     <string name="InuCodeLanguage">代码语言</string>
-    <string name="InuVersion">entinyGram v%1$s (构建 %2$s)</string>
+    <string name="InuVersion">Prism v%1$s (构建 %2$s)</string>
     <string name="InuSearchFilter">按媒体过滤</string>
     <string name="InuSearchFilterPhotos">照片</string>
     <string name="InuSearchFilterVideos">视频</string>
@@ -558,11 +558,11 @@
     <string name="InuBackupImportSheetCancel">否，保持不变</string>
     <string name="InuBackupSettings">备份与重置</string>
     <string name="InuBackupReset">重置设置</string>
-    <string name="InuBackupResetConfirm">所有 entinyGram 设置将被重置为默认值。您的聊天、账号和 Telegram 自身设置将保持不变。\n\n此操作无法撤销。</string>
+    <string name="InuBackupResetConfirm">所有 Prism 设置将被重置为默认值。您的聊天、账号和 Telegram 自身设置将保持不变。\n\n此操作无法撤销。</string>
     <string name="InuBackupResetSuccess">已重置 %1$d 项设置</string>
     <string name="InuBackupResetNoChanges">设置已是默认值</string>
     <string name="InuCloudSync">同步设置</string>
-    <string name="InuCloudSyncDesc">通过 [CloudStorage API](https://core.telegram.org/bots/webapps#cloudstorage) 将 entinyGram 设置备份到 Telegram 云端——数据不会发送到我们的服务器。</string>
+    <string name="InuCloudSyncDesc">通过 [CloudStorage API](https://core.telegram.org/bots/webapps#cloudstorage) 将 Prism 设置备份到 Telegram 云端——数据不会发送到我们的服务器。</string>
     <string name="InuCloudSyncNow">立即同步</string>
     <string name="InuCloudSyncing">同步中…</string>
     <string name="InuCloudRestore">从云端恢复</string>
@@ -627,7 +627,7 @@
     <string name="InuMentionInsertTitle">插入提及</string>
     <string name="InuPasscode">密码锁</string>
     <string name="InuPasscodeNeeded">请先设置 Telegram 密码锁。</string>
-    <string name="InuPasscodeShowInSettings">在 entinyGram 设置中显示</string>
+    <string name="InuPasscodeShowInSettings">在 Prism 设置中显示</string>
     <string name="InuPasscodeShowInSettingsInfo">关闭时，本页**只能**通过下方链接打开。请立即保存 —— 一旦生成将不再更改。</string>
     <string name="InuPasscodeAccountsInfo">每个账号可以有自己的密码。在锁屏输入它会解锁应用并切换到该账号。</string>
     <string name="InuPasscodeStateNone">未设置</string>
@@ -666,11 +666,11 @@
     <string name="InuMenuBottomRowFull">快捷操作栏已满 (最多 4 个)</string>
     <string name="InuPrivacySecurity">隐私与安全</string>
     <string name="InuPerAccountPasscode">每个账号独立密码</string>
-    <string name="InuHideInugramSettings">隐藏 entinyGram 设置</string>
+    <string name="InuHideInugramSettings">隐藏 Prism 设置</string>
     <string name="InuParanoiaDisableNotifications">禁用通知</string>
     <string name="InuParanoiaHideOtherAccounts">隐藏其他账号</string>
     <string name="InuParanoiaDisguise">伪装成 Telegram</string>
-    <string name="InuParanoiaDisguiseInfo">仅更改启动器图标和名称；通知中仍会显示「entinyGram」。</string>
+    <string name="InuParanoiaDisguiseInfo">仅更改启动器图标和名称；通知中仍会显示「Prism」。</string>
     <string name="InuParanoiaMode">偏执模式</string>
     <string name="InuParanoiaModeInfo">偏执模式让你为他人查看手机做好「准备」：隐藏任何「危险」聊天，并可选择伪装成原版应用。</string>
     <string name="InuParanoiaLauncherShortcut">启动器快捷方式</string>
@@ -784,12 +784,12 @@
     <string name="InuParanoiaWhitelist">白名单模式</string>
     <string name="InuBotSettings">机器人设置</string>
     <string name="InuBotHelp">机器人帮助</string>
-    <string name="InuCrashTitle">entinyGram 上次崩溃了</string>
+    <string name="InuCrashTitle">Prism 上次崩溃了</string>
     <string name="InuCrashDesc">抱歉。你可以与开发者分享崩溃日志以帮助修复。</string>
     <string name="InuCrashShare">分享崩溃日志</string>
     <string name="InuCrashDiscard">丢弃</string>
     <string name="InuCrashChannel">崩溃恢复</string>
-    <string name="InuCrashNotifTitle">entinyGram 崩溃了</string>
+    <string name="InuCrashNotifTitle">Prism 崩溃了</string>
     <string name="InuCrashNotifText">点击重启</string>
     <string name="InuLogs">调试</string>
     <string name="InuLogsEnabled">调试模式</string>
@@ -889,10 +889,10 @@
     <string name="InuStripTrackingParamsOnOpen">打开链接时</string>
     <string name="InuStripTrackingParamsOnPaste">粘贴时</string>
     <string name="InuStripTrackingParamsSourceRow">过滤器源</string>
-    <string name="InuCrashTitleOom">entinyGram 内存不足</string>
+    <string name="InuCrashTitleOom">Prism 内存不足</string>
     <string name="InuCrashDescOom">抱歉。崩溃日志对内存不足问题帮助不大 —— 堆转储才有用。</string>
     <string name="InuCrashDescHeapDump">同时保存了堆转储。请勿分享！里面包含隐私数据！如果愿意，可以自己查看一下，并把你的发现告诉开发者——会非常有帮助。</string>
-    <string name="InuCrashOomEnableLogs">在 entinyGram 设置 > 关于 中启用调试模式，以便在今后每次内存不足时生成堆转储。</string>
+    <string name="InuCrashOomEnableLogs">在 Prism 设置 > 关于 中启用调试模式，以便在今后每次内存不足时生成堆转储。</string>
     <string name="InuCrashShareHeapDump">保存堆转储</string>
     <string name="InuBiometricConfirm">生物识别确认</string>
     <string name="InuBiometricConfirmTitle">确认你的身份</string>
@@ -1247,7 +1247,7 @@
     <string name="InuTypingSpoofActive">当前活跃</string>
     <string name="InuTypingSpoofPickChat">选择聊天</string>
     <string name="InuTypingSpoofQuickListInfo">打开与聊天顶部菜单中相同的输入伪造选择界面，无需先打开该聊天。</string>
-    <string name="InuHideDevBadges">禁用 entinyGram 徽章</string>
+    <string name="InuHideDevBadges">禁用 Prism 徽章</string>
     <string name="InuHideDevBadgesInfo">它们没有任何含义，也不提供任何优势——只是开发者的一份感谢</string>
     <string name="InuLanguages">语言</string>
     <string name="InuLocalPremium">本地 Telegram Premium</string>
@@ -1779,7 +1779,7 @@
     <string name="InuPluginsErrorNoManifest">不是有效插件（缺少元数据头）</string>
     <string name="InuPluginsErrorRead">无法读取所选文件</string>
     <string name="InuPluginsErrorWrite">无法保存插件文件</string>
-    <string name="InuPluginsErrorApiVersion">需要更新版本的 entinyGram（插件 API %1$d，此应用为 %2$d）</string>
+    <string name="InuPluginsErrorApiVersion">需要更新版本的 Prism（插件 API %1$d，此应用为 %2$d）</string>
     <string name="InuPluginsErrorPlatform">并非为此平台制作（需要 %1$s）</string>
     <string name="InuPluginsErrorBadGrant">请求了无效权限（%1$s）</string>
     <string name="InuPluginsErrorUnconsentedGrants">请求了安装时未经审核的权限（%1$s）；请更新插件以审核这些权限</string>
@@ -1857,7 +1857,7 @@
     <string name="InuRecentChatsSummary">在聊天之间快速切换</string>
     <string name="InuFeedSummary">频道聚合动态</string>
     <string name="InuEditedArchive">已编辑消息存档</string>
-    <string name="InuGroupChatArchives">将存档分组到 entinyGram 文件夹</string>
+    <string name="InuGroupChatArchives">将存档分组到 Prism 文件夹</string>
     <string name="InuAllowForwardRestrictedWarning">即使开启此选项，Telegram 仍可能拦截部分转发。如果看到“Plain forwarding is not allowed.”，请改为复制文本或保存媒体。</string>
     <string name="InuAppIconAmongUs">Among Us</string>
     <string name="InuAppIconBlush">腮红</string>
@@ -1870,7 +1870,7 @@
     <string name="InuAppIconDescBlush">柔和的粉色渐变为黄色</string>
     <string name="InuAppIconDescConstellation">由信号连接的星星</string>
     <string name="InuAppIconDescCrimson">樱花黄昏中的血月</string>
-    <string name="InuAppIconDescDefault">经典的 entinyGram 碟形天线</string>
+    <string name="InuAppIconDescDefault">经典的 Prism 碟形天线</string>
     <string name="InuAppIconDescDish">只有碟形天线，别无其他</string>
     <string name="InuAppIconDescGold">纯金镀层</string>
     <string name="InuAppIconDescGoogle26">柔和白底上的亮蓝色</string>

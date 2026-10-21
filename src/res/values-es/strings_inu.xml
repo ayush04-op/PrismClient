@@ -68,7 +68,7 @@
     <string name="InuDrawerKeepOptionsMenuInfo">Muestra el botón de menú de la lista de chats junto al menú lateral</string>
     <string name="InuShowDrawerAccounts">Mostrar cuentas en el menú</string>
     <string name="InuShowDrawerAccountsInfo">Muestra el selector de cuentas desplegable bajo tu perfil.</string>
-    <string name="InuSettings">Ajustes de entinyGram</string>
+    <string name="InuSettings">Ajustes de Prism</string>
     <string name="InuSettingsInfo">A través de la tierra y el viento te sigo</string>
     <string name="InuGeneral">General</string>
     <string name="InuWideChannelPosts">Publicaciones anchas</string>
@@ -77,7 +77,7 @@
     <string name="InuWideChannelPostsPreviewReply">Publicación de canal reenviada</string>
     <string name="InuWideChannelPostsPreviewReplyLabel">Publicaciones de canal</string>
     <string name="InuAutoUpdateCheck">Buscar actualizaciones</string>
-    <string name="InuAutoUpdateCheckInfo">Buscar periódicamente nuevas versiones en el canal CI de entinyGram y ofrecer descargarlas.</string>
+    <string name="InuAutoUpdateCheckInfo">Buscar periódicamente nuevas versiones en el canal CI de Prism y ofrecer descargarlas.</string>
     <string name="InuUpdatesIncludeBeta">Recibir actualizaciones beta</string>
     <string name="InuPushHeader">Notificaciones Push</string>
     <string name="InuUnifiedPush">UnifiedPush</string>
@@ -515,7 +515,7 @@ Sistema: %6$s
     <string name="InuBubbleTails">Colas de las burbujas</string>
     <string name="InuSendAsRoundVideo">Enviar como vídeo redondo</string>
     <string name="InuMiscPreviewForwardedFrom">inu</string>
-    <string name="InuMiscPreviewForwardedMessage">¡guau! ¿entinyGram o inuGram? 🐶</string>
+    <string name="InuMiscPreviewForwardedMessage">¡guau! ¿Prism o inuGram? 🐶</string>
     <string name="InuMiscPreviewEditedMessage">ambos son los mejores, base perruna 🐶⚡</string>
     <string name="InuDeleteForBoth">«Eliminar para todos» por defecto</string>
     <string name="InuDeleteForBothMessages">Mensajes</string>
@@ -1044,7 +1044,7 @@ Toca para personalizar…</string>
     <string name="InuCodeBlock">Bloque de código</string>
     <string name="InuCut">Cortar</string>
     <string name="InuCodeLanguage">Lenguaje del código</string>
-    <string name="InuVersion">entinyGram %1$s (%2$s)</string>
+    <string name="InuVersion">Prism %1$s (%2$s)</string>
     <string name="InuDataBackup">Copia de seguridad y Sincronización</string>
 
     <string name="InuSearchFilter">Filtrar por archivos</string>
@@ -1139,13 +1139,13 @@ Toca para personalizar…</string>
     <string name="InuBackupImportSheetCancel">No, dejar como está</string>
     <string name="InuBackupSettings">Copia y restablecimiento</string>
     <string name="InuBackupReset">Restablecer ajustes</string>
-    <string name="InuBackupResetConfirm">Todos los ajustes de entinyGram volverán a sus valores predeterminados. Tus chats, cuentas y los ajustes propios de Telegram no cambian.
+    <string name="InuBackupResetConfirm">Todos los ajustes de Prism volverán a sus valores predeterminados. Tus chats, cuentas y los ajustes propios de Telegram no cambian.
 
 Esta acción no se puede deshacer.</string>
     <string name="InuBackupResetSuccess">Se restablecieron %1$d ajustes</string>
     <string name="InuBackupResetNoChanges">Los ajustes ya están en sus valores predeterminados</string>
     <string name="InuCloudSync">Sincronizar ajustes</string>
-    <string name="InuCloudSyncDesc">Guarda una copia de tus ajustes de entinyGram en la nube de Telegram mediante la [API CloudStorage](https://core.telegram.org/bots/webapps#cloudstorage): tus datos nunca pasan por nuestros servidores.</string>
+    <string name="InuCloudSyncDesc">Guarda una copia de tus ajustes de Prism en la nube de Telegram mediante la [API CloudStorage](https://core.telegram.org/bots/webapps#cloudstorage): tus datos nunca pasan por nuestros servidores.</string>
     <string name="InuCloudSyncNow">Sincronizar ahora</string>
     <string name="InuCloudSyncing">Sincronizando…</string>
     <string name="InuCloudRestore">Restaurar desde la nube</string>
@@ -1224,7 +1224,7 @@ Esta acción no se puede deshacer.</string>
     <string name="InuMentionInsertTitle">Insertar mención</string>
     <string name="InuPasscode">Código de acceso</string>
     <string name="InuPasscodeNeeded">Configura primero un código de acceso de Telegram.</string>
-    <string name="InuPasscodeShowInSettings">Mostrar en los ajustes de entinyGram</string>
+    <string name="InuPasscodeShowInSettings">Mostrar en los ajustes de Prism</string>
     <string name="InuPasscodeShowInSettingsInfo">Si está desactivado, esta página solo se abre con el enlace de abajo: guárdalo ahora.</string>
     <string name="InuPasscodeAccountsInfo">Códigos por cuenta: introduce uno en la pantalla de bloqueo para desbloquear y cambiar a esa cuenta.</string>
     <string name="InuPasscodeStateNone">Sin configurar</string>
@@ -1283,13 +1283,13 @@ Esta acción no se puede deshacer.</string>
     <string name="InuGoToMessagePrompt">ID del mensaje</string>
     <string name="InuPrivacySecurity">Privacidad y seguridad</string>
     <string name="InuPerAccountPasscode">Código de acceso por cuenta</string>
-    <string name="InuHideInugramSettings">Ocultar ajustes de entinyGram</string>
+    <string name="InuHideInugramSettings">Ocultar ajustes de Prism</string>
     <string name="InuParanoiaDisableNotifications">Desactivar notificaciones</string>
     <string name="InuParanoiaHideOtherAccounts">Ocultar otras cuentas</string>
     <string name="InuParanoiaHideFolders">Ocultar carpetas</string>
     <string name="InuParanoiaHideMyStories">Ocultar mis historias</string>
     <string name="InuParanoiaDisguise">Disfrazar como Telegram</string>
-    <string name="InuParanoiaDisguiseInfo">Solo cambian el icono y el nombre del lanzador; las notificaciones siguen diciendo «entinyGram».</string>
+    <string name="InuParanoiaDisguiseInfo">Solo cambian el icono y el nombre del lanzador; las notificaciones siguen diciendo «Prism».</string>
     <string name="InuDisguiseName" translatable="false">Telegram</string>
     <string name="InuParanoiaMode">Modo paranoia</string>
     <string name="InuParanoiaModeInfo">Oculta chats «peligrosos» y, opcionalmente, disfraza la app: prepárate para un curioso.</string>
@@ -1315,17 +1315,17 @@ Esta acción no se puede deshacer.</string>
     <string name="InuBotSettings">Ajustes del bot</string>
     <string name="InuBotHelp">Ayuda del bot</string>
 
-    <string name="InuCrashTitle">entinyGram se cerró la última vez</string>
-    <string name="InuCrashTitleOom">entinyGram se quedó sin memoria</string>
+    <string name="InuCrashTitle">Prism se cerró la última vez</string>
+    <string name="InuCrashTitleOom">Prism se quedó sin memoria</string>
     <string name="InuCrashDesc">Lo sentimos. Puedes compartir el registro del fallo con el desarrollador para ayudar a corregirlo.</string>
     <string name="InuCrashDescOom">Lo sentimos. Los registros de fallos no sirven mucho para problemas de memoria: lo que ayuda es un volcado del heap.</string>
     <string name="InuCrashDescHeapDump">También se guardó un volcado del heap. ¡NO LO COMPARTAS! ¡Contiene datos privados! Échale un vistazo tú mismo si quieres y comparte lo que encuentres: ayudaría mucho.</string>
-    <string name="InuCrashOomEnableLogs">Activa el modo de depuración en Ajustes de entinyGram &gt; Acerca de para crear un volcado del heap en cada futuro OOM.</string>
+    <string name="InuCrashOomEnableLogs">Activa el modo de depuración en Ajustes de Prism &gt; Acerca de para crear un volcado del heap en cada futuro OOM.</string>
     <string name="InuCrashShare">Compartir registro del fallo</string>
     <string name="InuCrashShareHeapDump">Guardar volcado del heap</string>
     <string name="InuCrashDiscard">Descartar</string>
     <string name="InuCrashChannel">Recuperación tras fallo</string>
-    <string name="InuCrashNotifTitle">entinyGram se cerró</string>
+    <string name="InuCrashNotifTitle">Prism se cerró</string>
     <string name="InuCrashNotifText">Toca para reiniciar</string>
 
     <string name="InuLogs">Depuración</string>
@@ -1819,7 +1819,7 @@ Esta acción no se puede deshacer.</string>
     <string name="InuDeletedMarkStyleEyeCrossed">Ojo tachado</string>
     <string name="InuDeletedMarkPreviewText">¡Eh! Esto es un secreto 🤫</string>
     <string name="InuDeletedMarkPreviewSender">Alina</string>
-    <string name="InuHideDevBadges">Desactivar insignias de entinyGram</string>
+    <string name="InuHideDevBadges">Desactivar insignias de Prism</string>
     <string name="InuHideDevBadgesInfo">No significan nada ni dan ventaja alguna: solo es un agradecimiento del desarrollador</string>
     <string name="InuDevBadge">Equipo de entinyGram</string>
     <string name="InuDevBadgeInfo">El equipo de entinyGram reconoce esta cuenta.</string>
@@ -2035,7 +2035,7 @@ Mientras esté activado:</string>
     <string name="InuPluginsErrorNoManifest">No es un plugin válido (falta el encabezado de metadatos)</string>
     <string name="InuPluginsErrorRead">No se pudo leer el archivo seleccionado</string>
     <string name="InuPluginsErrorWrite">No se pudo guardar el archivo del plugin</string>
-    <string name="InuPluginsErrorApiVersion">Necesita una versión más reciente de entinyGram (API de plugins %1$d, esta app tiene %2$d)</string>
+    <string name="InuPluginsErrorApiVersion">Necesita una versión más reciente de Prism (API de plugins %1$d, esta app tiene %2$d)</string>
     <string name="InuPluginsErrorPlatform">No es para esta plataforma (necesita %1$s)</string>
     <string name="InuPluginsErrorBadGrant">Se solicitaron permisos no válidos (%1$s)</string>
     <string name="InuPluginsErrorUnconsentedGrants">Solicita permisos que no se revisaron al instalar (%1$s); actualiza el plugin para revisarlos</string>
@@ -2062,7 +2062,7 @@ Mientras esté activado:</string>
 
     <string name="InuAppIconCrimson">Carmesí</string>
     <string name="InuAppIconBy">por %1$s</string>
-    <string name="InuAppIconDescDefault">El clásico plato de entinyGram</string>
+    <string name="InuAppIconDescDefault">El clásico plato de Prism</string>
     <string name="InuAppIconDescOld">Donde todo empezó</string>
     <string name="InuAppIconDescInuTribute">Un guiño a los orígenes del proyecto</string>
     <string name="InuAppIconDescRadar">Barriendo el espectro</string>
@@ -2095,7 +2095,7 @@ Mientras esté activado:</string>
     <string name="InuRecentChatsSummary">Barra rápida para cambiar de chat</string>
     <string name="InuFeedSummary">Publicaciones agregadas de tus canales</string>
     <string name="InuEditedArchive">Archivo de editados</string>
-    <string name="InuGroupChatArchives">Agrupar archivos en carpeta de entinyGram</string>
+    <string name="InuGroupChatArchives">Agrupar archivos en carpeta de Prism</string>
     <string name="InuLogsRedact">Ocultar datos sensibles</string>
     <string name="InuLogsRedactInfo">Reemplaza números de teléfono, ID, tokens, IP y nombres de usuario en los registros por marcadores estables a medida que se escriben</string>
     <string name="InuProfileJoinDate">Fecha de ingreso</string>

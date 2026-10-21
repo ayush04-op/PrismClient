@@ -73,12 +73,6 @@ class AdditionalSettingsActivity : SettingsPageActivity(), NotificationCenter.No
     ).also { donateCard = it }
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
-        if (InuConfig.HIDE_DONATE_CARD.value) {
-            items.add(mkSubPageButton(BUTTON_DONATE, R.drawable.inu_tabler_heart, LocaleController.getString(R.string.InuDonateRow)))
-        } else {
-            items.add(UItem.asCustom(getOrCreateDonateCard()))
-        }
-        items.add(UItem.asShadow(null))
         items.add(
             mkTwoLineCheckItem(
                 TOGGLE_HIDE_DEV_BADGES,

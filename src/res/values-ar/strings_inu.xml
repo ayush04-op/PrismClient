@@ -20,7 +20,7 @@
     <string name="InuDrawerKeepOptionsMenuInfo">إظهار زر قائمة قائمة الدردشات بجانب القائمة الجانبية</string>
     <string name="InuShowDrawerAccounts">إظهار الحسابات في القائمة</string>
     <string name="InuShowDrawerAccountsInfo">إظهار مبدّل الحسابات القابل للتوسيع أسفل ملفك الشخصي.</string>
-    <string name="InuSettings">إعدادات entinyGram</string>
+    <string name="InuSettings">إعدادات Prism</string>
     <string name="InuSettingsInfo">عبر الأرض والرياح أتبعك</string>
     <string name="InuGeneral">عام</string>
     <string name="InuWideChannelPosts">منشورات عريضة</string>
@@ -29,7 +29,7 @@
     <string name="InuWideChannelPostsPreviewReply">منشور قناة معاد توجيهه</string>
     <string name="InuWideChannelPostsPreviewReplyLabel">منشورات القنوات</string>
     <string name="InuAutoUpdateCheck">التحقق من التحديثات</string>
-    <string name="InuAutoUpdateCheckInfo">التحقق دورياً من قناة entinyGram CI بحثاً عن إصدارات جديدة واقتراح تنزيلها.</string>
+    <string name="InuAutoUpdateCheckInfo">التحقق دورياً من قناة Prism CI بحثاً عن إصدارات جديدة واقتراح تنزيلها.</string>
     <string name="InuUpdatesIncludeBeta">التقاط التحديثات التجريبية</string>
     <string name="InuPushHeader">إشعارات الدفع</string>
     <string name="InuUnifiedPush">UnifiedPush</string>
@@ -393,7 +393,7 @@
     <string name="InuBubbleTails">ذيول الفقاعات</string>
     <string name="InuSendAsRoundVideo">إرسال كفيديو دائري</string>
     <string name="InuMiscPreviewForwardedFrom">inu</string>
-    <string name="InuMiscPreviewForwardedMessage">هاو! entinyGram أم inuGram؟ 🐶</string>
+    <string name="InuMiscPreviewForwardedMessage">هاو! Prism أم inuGram؟ 🐶</string>
     <string name="InuMiscPreviewEditedMessage">كلاهما الأفضل، قاعدة الكلب 🐶⚡</string>
     <string name="InuDeleteForBoth">\"الحذف للجميع\" افتراضياً</string>
     <string name="InuDeleteForBothMessages">الرسائل</string>
@@ -882,7 +882,7 @@
     <string name="InuCodeBlock">كتلة شيفرة</string>
     <string name="InuCut">قص</string>
     <string name="InuCodeLanguage">لغة الشيفرة</string>
-    <string name="InuVersion">entinyGram %1$s (%2$s)</string>
+    <string name="InuVersion">Prism %1$s (%2$s)</string>
     <string name="InuDataBackup">النسخ الاحتياطي &amp; المزامنة</string>
 
     <string name="InuSearchFilter">التصفية حسب الوسائط</string>
@@ -980,11 +980,11 @@
     <string name="InuBackupImportSheetCancel">لا، ترك كما هي</string>
     <string name="InuBackupSettings">النسخ الاحتياطي &amp; إعادة التعيين</string>
     <string name="InuBackupReset">إعادة تعيين الإعدادات</string>
-    <string name="InuBackupResetConfirm">ستُعاد جميع إعدادات entinyGram إلى قيمها الافتراضية. تبقى محادثاتك وحساباتك وإعدادات Telegram الخاصة كما هي.\n\nلا يمكن التراجع عن هذا.</string>
+    <string name="InuBackupResetConfirm">ستُعاد جميع إعدادات Prism إلى قيمها الافتراضية. تبقى محادثاتك وحساباتك وإعدادات Telegram الخاصة كما هي.\n\nلا يمكن التراجع عن هذا.</string>
     <string name="InuBackupResetSuccess">تمت إعادة تعيين %1$d إعداد</string>
     <string name="InuBackupResetNoChanges">الإعدادات على قيمها الافتراضية بالفعل</string>
     <string name="InuCloudSync">مزامنة الإعدادات</string>
-    <string name="InuCloudSyncDesc">ينسخ إعدادات entinyGram احتياطياً إلى سحابة Telegram عبر [CloudStorage API](https://core.telegram.org/bots/webapps#cloudstorage) — لا تمر بياناتك بخوادمنا أبداً.</string>
+    <string name="InuCloudSyncDesc">ينسخ إعدادات Prism احتياطياً إلى سحابة Telegram عبر [CloudStorage API](https://core.telegram.org/bots/webapps#cloudstorage) — لا تمر بياناتك بخوادمنا أبداً.</string>
     <string name="InuCloudSyncNow">مزامنة الآن</string>
     <string name="InuCloudSyncing">جارٍ المزامنة…</string>
     <string name="InuCloudRestore">استعادة من السحابة</string>
@@ -1061,7 +1061,7 @@
     <string name="InuMentionInsertTitle">إدراج إشارة</string>
     <string name="InuPasscode">رمز المرور</string>
     <string name="InuPasscodeNeeded">اضبط رمز مرور Telegram أولاً.</string>
-    <string name="InuPasscodeShowInSettings">إظهار في إعدادات entinyGram</string>
+    <string name="InuPasscodeShowInSettings">إظهار في إعدادات Prism</string>
     <string name="InuPasscodeShowInSettingsInfo">عند الإيقاف، تُفتح هذه الصفحة عبر الرابط أدناه فقط — احفظه الآن.</string>
     <string name="InuPasscodeAccountsInfo">رموز مرور لكل حساب: أدخل أحدها في شاشة القفل لفتح القفل والتبديل إلى ذلك الحساب.</string>
     <string name="InuPasscodeStateNone">غير مضبوط</string>
@@ -1120,13 +1120,13 @@
     <string name="InuGoToMessagePrompt">معرّف الرسالة</string>
     <string name="InuPrivacySecurity">الخصوصية &amp; الأمان</string>
     <string name="InuPerAccountPasscode">رمز مرور لكل حساب</string>
-    <string name="InuHideInugramSettings">إخفاء إعدادات entinyGram</string>
+    <string name="InuHideInugramSettings">إخفاء إعدادات Prism</string>
     <string name="InuParanoiaDisableNotifications">تعطيل الإشعارات</string>
     <string name="InuParanoiaHideOtherAccounts">إخفاء الحسابات الأخرى</string>
     <string name="InuParanoiaHideFolders">إخفاء المجلدات</string>
     <string name="InuParanoiaHideMyStories">إخفاء قصصي</string>
     <string name="InuParanoiaDisguise">التنكر كـ Telegram</string>
-    <string name="InuParanoiaDisguiseInfo">يتغير فقط رمز المشغّل والاسم؛ تبقى الإشعارات تذكر \"entinyGram\".</string>
+    <string name="InuParanoiaDisguiseInfo">يتغير فقط رمز المشغّل والاسم؛ تبقى الإشعارات تذكر \"Prism\".</string>
     <string name="InuParanoiaMode">وضع الارتياب</string>
     <string name="InuParanoiaModeInfo">يخفي المحادثات \"الخطرة\" ويُنكّر التطبيق اختيارياً — كن مستعداً لمتطفّل.</string>
     <string name="InuParanoiaLauncherShortcut">اختصار المشغّل</string>
@@ -1151,17 +1151,17 @@
     <string name="InuBotSettings">إعدادات البوت</string>
     <string name="InuBotHelp">مساعدة البوت</string>
 
-    <string name="InuCrashTitle">تعطّل entinyGram في المرة السابقة</string>
-    <string name="InuCrashTitleOom">نفدت ذاكرة entinyGram</string>
+    <string name="InuCrashTitle">تعطّل Prism في المرة السابقة</string>
+    <string name="InuCrashTitleOom">نفدت ذاكرة Prism</string>
     <string name="InuCrashDesc">نعتذر عن ذلك. يمكنك مشاركة سجل التعطل مع المطوّر للمساعدة في إصلاحه.</string>
     <string name="InuCrashDescOom">نعتذر عن ذلك. سجلات التعطل ليست مفيدة كثيراً في مشاكل نفاد الذاكرة — الذي يساعد هو تفريغ الذاكرة (heap dump).</string>
     <string name="InuCrashDescHeapDump">حُفظ أيضاً تفريغ للذاكرة. لا تشاركه! فهو يحتوي على بيانات خاصة! ألقِ نظرة عليه بنفسك إن أردت وشارك ما تجده — فهذا سيساعد كثيراً.</string>
-    <string name="InuCrashOomEnableLogs">فعّل وضع التصحيح في إعدادات entinyGram > حول لإنشاء تفريغ للذاكرة عند كل نفاد ذاكرة مستقبلاً.</string>
+    <string name="InuCrashOomEnableLogs">فعّل وضع التصحيح في إعدادات Prism > حول لإنشاء تفريغ للذاكرة عند كل نفاد ذاكرة مستقبلاً.</string>
     <string name="InuCrashShare">مشاركة سجل التعطل</string>
     <string name="InuCrashShareHeapDump">حفظ تفريغ الذاكرة</string>
     <string name="InuCrashDiscard">تجاهل</string>
     <string name="InuCrashChannel">استعادة بعد التعطل</string>
-    <string name="InuCrashNotifTitle">تعطّل entinyGram</string>
+    <string name="InuCrashNotifTitle">تعطّل Prism</string>
     <string name="InuCrashNotifText">انقر لإعادة التشغيل</string>
 
     <string name="InuLogs">التصحيح</string>
@@ -1609,7 +1609,7 @@
     <string name="InuDeletedMarkStyleEyeCrossed">عين مشطوبة</string>
     <string name="InuDeletedMarkPreviewText">مرحباً! هذا سرّ 🤫</string>
     <string name="InuDeletedMarkPreviewSender">ليلى</string>
-    <string name="InuHideDevBadges">تعطيل شارات entinyGram</string>
+    <string name="InuHideDevBadges">تعطيل شارات Prism</string>
     <string name="InuHideDevBadgesInfo">لا تعني شيئاً ولا تمنح أي ميزة — مجرد شكر من المطوّر</string>
     <string name="InuDevBadge">فريق entinyGram</string>
     <string name="InuDevBadgeInfo">هذا الحساب معروف لدى فريق entinyGram.</string>
@@ -1814,7 +1814,7 @@
     <string name="InuPluginsErrorNoManifest">ليست إضافة صالحة (ترويسة البيانات الوصفية مفقودة)</string>
     <string name="InuPluginsErrorRead">تعذّرت قراءة الملف المحدد</string>
     <string name="InuPluginsErrorWrite">تعذّر حفظ ملف الإضافة</string>
-    <string name="InuPluginsErrorApiVersion">يتطلب إصدارًا أحدث من entinyGram (واجهة الإضافات %1$d، وهذا التطبيق %2$d)</string>
+    <string name="InuPluginsErrorApiVersion">يتطلب إصدارًا أحدث من Prism (واجهة الإضافات %1$d، وهذا التطبيق %2$d)</string>
     <string name="InuPluginsErrorPlatform">غير مخصصة لهذه المنصة (تتطلب %1$s)</string>
     <string name="InuPluginsErrorBadGrant">أذونات غير صالحة مطلوبة (%1$s)</string>
     <string name="InuPluginsErrorUnconsentedGrants">تطلب أذونات لم تُراجَع عند التثبيت (%1$s)؛ حدّث الإضافة لمراجعتها</string>
@@ -1881,7 +1881,7 @@
     <string name="InuRecentChatsSummary">التبديل السريع بين المحادثات</string>
     <string name="InuFeedSummary">منشورات مجمعة من قنواتك</string>
     <string name="InuEditedArchive">أرشيف الرسائل المعدلة</string>
-    <string name="InuGroupChatArchives">تجميع الأرشيفات في مجلد entinyGram</string>
+    <string name="InuGroupChatArchives">تجميع الأرشيفات في مجلد Prism</string>
     <string name="InuAllowForwardRestrictedWarning">قد يظل Telegram يحظر بعض عمليات إعادة التوجيه حتى مع تفعيل هذا الخيار. إذا ظهرت لك رسالة «Plain forwarding is not allowed.»، فانسخ النص أو احفظ الوسائط بدلاً من ذلك.</string>
     <string name="InuAppIconAmongUs">Among Us</string>
     <string name="InuAppIconBlush">خجل</string>
@@ -1894,7 +1894,7 @@
     <string name="InuAppIconDescBlush">وردي ناعم يتدرج إلى الأصفر</string>
     <string name="InuAppIconDescConstellation">نجوم تربطها الإشارة</string>
     <string name="InuAppIconDescCrimson">قمر دموي فوق غسق أزهار الساكورا</string>
-    <string name="InuAppIconDescDefault">طبق entinyGram الكلاسيكي</string>
+    <string name="InuAppIconDescDefault">طبق Prism الكلاسيكي</string>
     <string name="InuAppIconDescDish">الطبق فقط، لا شيء آخر</string>
     <string name="InuAppIconDescGold">طلاء ذهبي خالص</string>
     <string name="InuAppIconDescGoogle26">أزرق لامع على أبيض ناعم</string>

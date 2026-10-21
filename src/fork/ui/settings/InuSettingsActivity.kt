@@ -129,9 +129,9 @@ class InuSettingsActivity : SettingsPageActivity() {
         items.add(
             UItem.asButton(
                 BUTTON_CHANNEL_LINK,
-                R.drawable.inu_tabler_brand_telegram,
-                LocaleController.getString(R.string.InuAboutChannel),
-                "@entinyGram"
+                R.drawable.inu_tabler_brand_github,
+                LocaleController.getString(R.string.PrismDeveloper),
+                "Ayush"
             )
         )
         items.add(
@@ -139,9 +139,18 @@ class InuSettingsActivity : SettingsPageActivity() {
                 BUTTON_GITHUB,
                 R.drawable.inu_tabler_brand_github,
                 LocaleController.getString(R.string.InuAboutGitHub),
-                "Entaytion/entinyGram"
+                "ayush04-op/PrismClient"
             )
         )
+        items.add(
+            UItem.asButton(
+                BUTTON_CREDITS,
+                R.drawable.inu_tabler_heart,
+                LocaleController.getString(R.string.PrismCredits),
+                null
+            )
+        )
+        items.add(UItem.asShadow(LocaleController.getString(R.string.PrismCreatedWith)))
     }
 
     override fun onClick(item: UItem, view: View, position: Int, x: Float, y: Float) {
@@ -169,8 +178,9 @@ class InuSettingsActivity : SettingsPageActivity() {
             // #endif
             CAT_SYSTEM -> presentFragment(AdditionalSettingsActivity())
             CAT_NICHE -> presentFragment(NicheSettingsActivity())
-            BUTTON_CHANNEL_LINK -> Browser.openUrl(ctx, "https://t.me/entinyGram")
-            BUTTON_GITHUB -> Browser.openUrl(ctx, "https://github.com/Entaytion/EntinyGram")
+            BUTTON_CHANNEL_LINK -> Browser.openUrl(ctx, "https://github.com/ayush04-op")
+            BUTTON_CREDITS -> presentFragment(PrismCreditsActivity())
+            BUTTON_GITHUB -> Browser.openUrl(ctx, "https://github.com/ayush04-op/PrismClient")
         }
     }
 
@@ -191,6 +201,7 @@ class InuSettingsActivity : SettingsPageActivity() {
         private const val HEADER_TAP_WINDOW_MS = 2000L
         private val BUTTON_CHANNEL_LINK = InuUtils.generateId()
         private val BUTTON_GITHUB = InuUtils.generateId()
+        private val BUTTON_CREDITS = InuUtils.generateId()
 
         @JvmField
         val PAGE = SearchRegistry.Page(
@@ -199,7 +210,8 @@ class InuSettingsActivity : SettingsPageActivity() {
             iconRes = R.drawable.icon_settings_inu,
             factory = ::InuSettingsActivity,
             entries = listOf(
-                SearchRegistry.Entry("channel", R.string.InuAboutChannel, BUTTON_CHANNEL_LINK),
+                SearchRegistry.Entry("channel", R.string.PrismDeveloper, BUTTON_CHANNEL_LINK),
+                SearchRegistry.Entry("credits", R.string.PrismCredits, BUTTON_CREDITS),
                 SearchRegistry.Entry("github", R.string.InuAboutGitHub, BUTTON_GITHUB),
                 SearchRegistry.Entry("open-translator", R.string.InuTranslator, CAT_TRANSLATOR),
             ),

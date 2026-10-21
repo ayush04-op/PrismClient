@@ -235,7 +235,7 @@ object InuConfig {
     }
 
     @JvmField
-    val HIDE_STORIES = BoolItem("hide_stories", false)
+    val HIDE_STORIES = BoolItem("hide_stories", true)
 
     @JvmField
     val SHOW_SECONDS = BoolItem("show_seconds", false)

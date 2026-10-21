@@ -57,6 +57,20 @@ jobs:
       - name: Set up patched Telegram source (pluginless)
         run: bun run setup -- --ci --pluginless
 
+      - name: Apply Prism overlay (patches, resources, fonts, name)
+        run: |
+          set -e
+          W=worktree-pluginless
+          for p in prism/patches/*.patch; do
+            echo "applying $p"
+            git -C "$W" apply --whitespace=nowarn "$GITHUB_WORKSPACE/$p"
+          done
+          cp -r prism/res/. "$W/TMessagesProj/src/main/res/"
+          if [ -d prism/assets ]; then cp -r prism/assets/. "$W/TMessagesProj/src/main/assets/"; fi
+          # app name shown under the launcher icon, in notifications and the intro
+          find "$W/TMessagesProj/src/main/res" -name strings.xml | xargs sed -i -E '/name="(AppName|AppNameBeta|AppUpdate|AppUpdateBeta|Page1Title)"/ s/entinyGram/Prism/g'
+          grep -n 'name="AppName"' "$W/TMessagesProj/src/main/res/values/strings.xml"
+
       - name: Rebrand and inject your Telegram keys
         env:
           API_ID: ${{ secrets.API_ID }}

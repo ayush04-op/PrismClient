@@ -20,7 +20,7 @@
     <string name="InuDrawerKeepOptionsMenuInfo">نمایش دکمهٔ منوی فهرست گفتگوها در کنار منوی کناری</string>
     <string name="InuShowDrawerAccounts">نمایش حساب‌ها در منو</string>
     <string name="InuShowDrawerAccountsInfo">نمایش تعویض‌گر حساب قابل‌گسترش زیر نمایه شما.</string>
-    <string name="InuSettings">تنظیمات entinyGram</string>
+    <string name="InuSettings">تنظیمات Prism</string>
     <string name="InuSettingsInfo">از میان خاک و باد، دنبال تو می‌آیم</string>
     <string name="InuGeneral">عمومی</string>
     <string name="InuWideChannelPosts">پست‌های عریض</string>
@@ -29,7 +29,7 @@
     <string name="InuWideChannelPostsPreviewReply">پست کانالِ بازارسال‌شده</string>
     <string name="InuWideChannelPostsPreviewReplyLabel">پست‌های کانال</string>
     <string name="InuAutoUpdateCheck">بررسی به‌روزرسانی</string>
-    <string name="InuAutoUpdateCheckInfo">کانال CI برنامه entinyGram را به‌طور دوره‌ای برای نسخه‌های جدید بررسی می‌کند و دانلود را پیشنهاد می‌دهد.</string>
+    <string name="InuAutoUpdateCheckInfo">کانال CI برنامه Prism را به‌طور دوره‌ای برای نسخه‌های جدید بررسی می‌کند و دانلود را پیشنهاد می‌دهد.</string>
     <string name="InuUpdatesIncludeBeta">دریافت به‌روزرسانی‌های آزمایشی</string>
     <string name="InuPushHeader">اعلان‌های فوری</string>
     <string name="InuUnifiedPush">UnifiedPush</string>
@@ -393,7 +393,7 @@
     <string name="InuBubbleTails">دنباله حباب‌ها</string>
     <string name="InuSendAsRoundVideo">ارسال به‌صورت ویدیوی گرد</string>
     <string name="InuMiscPreviewForwardedFrom">inu</string>
-    <string name="InuMiscPreviewForwardedMessage">هاپ! entinyGram یا inuGram؟ 🐶</string>
+    <string name="InuMiscPreviewForwardedMessage">هاپ! Prism یا inuGram؟ 🐶</string>
     <string name="InuMiscPreviewEditedMessage">هر دو عالی‌اند، پایه سگی 🐶⚡</string>
     <string name="InuDeleteForBoth">«حذف برای هر دو» به‌صورت پیش‌فرض</string>
     <string name="InuDeleteForBothMessages">پیام‌ها</string>
@@ -882,7 +882,7 @@
     <string name="InuCodeBlock">بلوک کد</string>
     <string name="InuCut">برش</string>
     <string name="InuCodeLanguage">زبان کد</string>
-    <string name="InuVersion">entinyGram %1$s (%2$s)</string>
+    <string name="InuVersion">Prism %1$s (%2$s)</string>
     <string name="InuDataBackup">پشتیبان‌گیری و همگام‌سازی</string>
 
     <string name="InuSearchFilter">فیلتر بر اساس رسانه</string>
@@ -972,11 +972,11 @@
     <string name="InuBackupImportSheetCancel">نه، همین‌طور بماند</string>
     <string name="InuBackupSettings">پشتیبان‌گیری و بازنشانی</string>
     <string name="InuBackupReset">بازنشانی تنظیمات</string>
-    <string name="InuBackupResetConfirm">همه تنظیمات entinyGram به مقادیر پیش‌فرض بازنشانی می‌شوند. گفتگوها، حساب‌ها و تنظیمات خود تلگرام دست‌نخورده می‌مانند.\n\nاین کار قابل بازگشت نیست.</string>
+    <string name="InuBackupResetConfirm">همه تنظیمات Prism به مقادیر پیش‌فرض بازنشانی می‌شوند. گفتگوها، حساب‌ها و تنظیمات خود تلگرام دست‌نخورده می‌مانند.\n\nاین کار قابل بازگشت نیست.</string>
     <string name="InuBackupResetSuccess">%1$d تنظیم بازنشانی شد</string>
     <string name="InuBackupResetNoChanges">تنظیمات از قبل روی پیش‌فرض هستند</string>
     <string name="InuCloudSync">همگام‌سازی تنظیمات</string>
-    <string name="InuCloudSyncDesc">تنظیمات entinyGram شما را از طریق [CloudStorage API](https://core.telegram.org/bots/webapps#cloudstorage) در ابر تلگرام پشتیبان‌گیری می‌کند — داده‌های شما هرگز از سرورهای ما عبور نمی‌کند.</string>
+    <string name="InuCloudSyncDesc">تنظیمات Prism شما را از طریق [CloudStorage API](https://core.telegram.org/bots/webapps#cloudstorage) در ابر تلگرام پشتیبان‌گیری می‌کند — داده‌های شما هرگز از سرورهای ما عبور نمی‌کند.</string>
     <string name="InuCloudSyncNow">همگام‌سازی همین حالا</string>
     <string name="InuCloudSyncing">در حال همگام‌سازی…</string>
     <string name="InuCloudRestore">بازیابی از ابر</string>
@@ -1053,7 +1053,7 @@
     <string name="InuMentionInsertTitle">درج منشن</string>
     <string name="InuPasscode">رمز قفل</string>
     <string name="InuPasscodeNeeded">ابتدا یک رمز قفل تلگرام تنظیم کنید.</string>
-    <string name="InuPasscodeShowInSettings">نمایش در تنظیمات entinyGram</string>
+    <string name="InuPasscodeShowInSettings">نمایش در تنظیمات Prism</string>
     <string name="InuPasscodeShowInSettingsInfo">وقتی خاموش است، این صفحه فقط از طریق پیوند زیر باز می‌شود — همین حالا آن را ذخیره کنید.</string>
     <string name="InuPasscodeAccountsInfo">رمز قفل برای هر حساب: یکی را در صفحه قفل وارد کنید تا قفل باز شود و به آن حساب بروید.</string>
     <string name="InuPasscodeStateNone">تنظیم نشده</string>
@@ -1112,13 +1112,13 @@
     <string name="InuGoToMessagePrompt">شناسه پیام</string>
     <string name="InuPrivacySecurity">حریم خصوصی و امنیت</string>
     <string name="InuPerAccountPasscode">رمز قفل برای هر حساب</string>
-    <string name="InuHideInugramSettings">پنهان کردن تنظیمات entinyGram</string>
+    <string name="InuHideInugramSettings">پنهان کردن تنظیمات Prism</string>
     <string name="InuParanoiaDisableNotifications">غیرفعال کردن اعلان‌ها</string>
     <string name="InuParanoiaHideOtherAccounts">پنهان کردن حساب‌های دیگر</string>
     <string name="InuParanoiaHideFolders">پنهان کردن پوشه‌ها</string>
     <string name="InuParanoiaHideMyStories">پنهان کردن استوری‌های من</string>
     <string name="InuParanoiaDisguise">پنهان شدن در هیأت Telegram</string>
-    <string name="InuParanoiaDisguiseInfo">فقط نماد و نام برنامه در لانچر تغییر می‌کند؛ اعلان‌ها همچنان «entinyGram» می‌گویند.</string>
+    <string name="InuParanoiaDisguiseInfo">فقط نماد و نام برنامه در لانچر تغییر می‌کند؛ اعلان‌ها همچنان «Prism» می‌گویند.</string>
     <string name="InuParanoiaMode">حالت پارانویا</string>
     <string name="InuParanoiaModeInfo">گفتگوهای «خطرناک» را پنهان می‌کند و در صورت تمایل برنامه را استتار می‌کند — برای یک فضول آماده باشید.</string>
     <string name="InuParanoiaLauncherShortcut">میان‌بر لانچر</string>
@@ -1143,17 +1143,17 @@
     <string name="InuBotSettings">تنظیمات ربات</string>
     <string name="InuBotHelp">راهنمای ربات</string>
 
-    <string name="InuCrashTitle">entinyGram دفعه قبل از کار افتاد</string>
-    <string name="InuCrashTitleOom">حافظه entinyGram تمام شد</string>
+    <string name="InuCrashTitle">Prism دفعه قبل از کار افتاد</string>
+    <string name="InuCrashTitleOom">حافظه Prism تمام شد</string>
     <string name="InuCrashDesc">متأسفیم. می‌توانید گزارش خرابی را با توسعه‌دهنده به اشتراک بگذارید تا در رفع آن کمک کنید.</string>
     <string name="InuCrashDescOom">متأسفیم. گزارش خرابی برای مشکلات تمام شدن حافظه چندان مفید نیست — آنچه کمک می‌کند تخلیه حافظه (heap dump) است.</string>
     <string name="InuCrashDescHeapDump">یک تخلیه حافظه هم ذخیره شد. آن را به اشتراک نگذارید! حاوی داده‌های خصوصی است! اگر خواستید خودتان نگاهی بیندازید و یافته‌هایتان را به اشتراک بگذارید — این خیلی کمک می‌کند.</string>
-    <string name="InuCrashOomEnableLogs">حالت اشکال‌زدایی را در تنظیمات entinyGram > درباره فعال کنید تا در هر تمام شدن حافظه در آینده تخلیه حافظه ساخته شود.</string>
+    <string name="InuCrashOomEnableLogs">حالت اشکال‌زدایی را در تنظیمات Prism > درباره فعال کنید تا در هر تمام شدن حافظه در آینده تخلیه حافظه ساخته شود.</string>
     <string name="InuCrashShare">اشتراک‌گذاری گزارش خرابی</string>
     <string name="InuCrashShareHeapDump">ذخیره تخلیه حافظه</string>
     <string name="InuCrashDiscard">رد کردن</string>
     <string name="InuCrashChannel">بازیابی پس از خرابی</string>
-    <string name="InuCrashNotifTitle">entinyGram از کار افتاد</string>
+    <string name="InuCrashNotifTitle">Prism از کار افتاد</string>
     <string name="InuCrashNotifText">برای راه‌اندازی مجدد ضربه بزنید</string>
 
     <string name="InuLogs">اشکال‌زدایی</string>
@@ -1597,7 +1597,7 @@
     <string name="InuDeletedMarkStyleEyeCrossed">چشم خط‌خورده</string>
     <string name="InuDeletedMarkPreviewText">هی! این یک راز است 🤫</string>
     <string name="InuDeletedMarkPreviewSender">سارا</string>
-    <string name="InuHideDevBadges">غیرفعال کردن نشان‌های entinyGram</string>
+    <string name="InuHideDevBadges">غیرفعال کردن نشان‌های Prism</string>
     <string name="InuHideDevBadgesInfo">معنایی ندارند و هیچ برتری‌ای نمی‌دهند — فقط یک تشکر از طرف توسعه‌دهنده</string>
     <string name="InuDevBadge">تیم entinyGram</string>
     <string name="InuDevBadgeInfo">این حساب برای تیم entinyGram شناخته‌شده است.</string>
@@ -1802,7 +1802,7 @@
     <string name="InuPluginsErrorNoManifest">افزونهٔ معتبر نیست (سرصفحهٔ فراداده وجود ندارد)</string>
     <string name="InuPluginsErrorRead">خواندن فایل انتخاب‌شده ممکن نشد</string>
     <string name="InuPluginsErrorWrite">ذخیرهٔ فایل افزونه ممکن نشد</string>
-    <string name="InuPluginsErrorApiVersion">به entinyGram جدیدتری نیاز دارد (API افزونه %1$d، این برنامه %2$d)</string>
+    <string name="InuPluginsErrorApiVersion">به Prism جدیدتری نیاز دارد (API افزونه %1$d، این برنامه %2$d)</string>
     <string name="InuPluginsErrorPlatform">برای این پلتفرم ساخته نشده (به %1$s نیاز دارد)</string>
     <string name="InuPluginsErrorBadGrant">مجوزهای نامعتبر درخواست شده (%1$s)</string>
     <string name="InuPluginsErrorUnconsentedGrants">مجوزهایی را درخواست می‌کند که هنگام نصب بررسی نشده‌اند (%1$s)؛ برای بررسی آن‌ها افزونه را به‌روزرسانی کنید</string>
@@ -1869,7 +1869,7 @@
     <string name="InuRecentChatsSummary">جابجایی سریع بین گفتگوها</string>
     <string name="InuFeedSummary">پست‌های تجمیع‌شده از کانال‌های شما</string>
     <string name="InuEditedArchive">بایگانی پیام‌های ویرایش‌شده</string>
-    <string name="InuGroupChatArchives">گروه‌بندی بایگانی‌ها در پوشه entinyGram</string>
+    <string name="InuGroupChatArchives">گروه‌بندی بایگانی‌ها در پوشه Prism</string>
     <string name="InuAllowForwardRestrictedWarning">ممکن است Telegram حتی با فعال بودن این گزینه برخی ارسال‌ها را مسدود کند. اگر پیام «Plain forwarding is not allowed.» را دیدید، به‌جای آن متن را کپی کنید یا رسانه را ذخیره کنید.</string>
     <string name="InuAppIconAmongUs">Among Us</string>
     <string name="InuAppIconBlush">گلگون</string>
@@ -1882,7 +1882,7 @@
     <string name="InuAppIconDescBlush">صورتی ملایم که به زرد می‌رسد</string>
     <string name="InuAppIconDescConstellation">ستاره‌هایی که با سیگنال به هم وصل شده‌اند</string>
     <string name="InuAppIconDescCrimson">ماه خونین بر فراز غروب شکوفه‌های ساکورا</string>
-    <string name="InuAppIconDescDefault">بشقاب کلاسیک entinyGram</string>
+    <string name="InuAppIconDescDefault">بشقاب کلاسیک Prism</string>
     <string name="InuAppIconDescDish">فقط بشقاب، بدون چیز دیگر</string>
     <string name="InuAppIconDescGold">روکش طلای خالص</string>
     <string name="InuAppIconDescGoogle26">آبی براق روی سفید ملایم</string>

@@ -112,6 +112,9 @@ object UpdateHelper {
     }
 
     fun checkForCustomUpdate(force: Boolean, whenDone: Runnable?) {
+        // Prism: no update channel yet; never contact entinyGram's update feed
+        whenDone?.run(); return
+        @Suppress("UNREACHABLE_CODE")
         if (!InuConfig.UPDATES_ENABLED.value) { whenDone?.run(); return }
         if (!force && System.currentTimeMillis() - InuConfig.UPDATE_LAST_CHECK_MS.value < CHECK_INTERVAL_MS) {
             whenDone?.run(); return

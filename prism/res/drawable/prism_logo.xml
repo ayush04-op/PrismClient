@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Prism mark: a glass prism splitting a beam of light. Placeholder until the final logo is supplied. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <!-- incoming white beam -->
+    <path
+        android:pathData="M3,36 L24,32"
+        android:strokeColor="#F2FFFFFF"
+        android:strokeWidth="2.6"
+        android:strokeLineCap="round" />
+    <!-- refracted spectrum -->
+    <path android:pathData="M42,30 L61,17" android:strokeColor="#FFFF6FB5" android:strokeWidth="2.4" android:strokeLineCap="round" />
+    <path android:pathData="M42,32 L62,27" android:strokeColor="#FFB28CFF" android:strokeWidth="2.4" android:strokeLineCap="round" />
+    <path android:pathData="M42,34 L62,37" android:strokeColor="#FF5EC8FF" android:strokeWidth="2.4" android:strokeLineCap="round" />
+    <path android:pathData="M42,36 L61,47" android:strokeColor="#FF5BF0C8" android:strokeWidth="2.4" android:strokeLineCap="round" />
+    <!-- the glass body -->
+    <path android:pathData="M32,8 L12,50 L52,50 Z" android:strokeLineJoin="round" android:strokeWidth="2.6">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="20" android:startY="8" android:endX="48" android:endY="52" android:type="linear">
+                <item android:offset="0" android:color="#66FFFFFF" />
+                <item android:offset="1" android:color="#1AFFFFFF" />
+            </gradient>
+        </aapt:attr>
+        <aapt:attr name="android:strokeColor">
+            <gradient android:startX="12" android:startY="8" android:endX="52" android:endY="50" android:type="linear">
+                <item android:offset="0" android:color="#FFFFFFFF" />
+                <item android:offset="0.55" android:color="#66FFFFFF" />
+                <item android:offset="1" android:color="#CCFFFFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

@@ -1,0 +1,50 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/LiteMode.java b/TMessagesProj/src/main/java/org/telegram/messenger/LiteMode.java
+index a340a8e7..f276141d 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/LiteMode.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/LiteMode.java
+@@ -264,6 +264,11 @@ public class LiteMode {
+             }
+         }
+ 
++        // Prism: liquid glass is on by default, once, on devices that can afford the shader
++        if (android.os.Build.VERSION.SDK_INT >= 33 && SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE && !preferences.getBoolean("prism_glass_v1", false)) {
++            preferences.edit().putInt("lite_mode6", preferences.getInt("lite_mode6", defaultValue) | FLAG_LIQUID_GLASS).putBoolean("prism_glass_v1", true).apply();
++        }
++
+         int prevValue = value;
+         value = preferences.getInt("lite_mode6", defaultValue);
+         if (loaded) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+index f9241e6a..1bc84527 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+@@ -1148,7 +1148,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+         if (LoginActivity.loadCurrentState(false, currentAccount).getInt("currentViewNum", 0) != 0) {
+             return new LoginActivity();
+         }
+-        return new IntroActivity();
++        return new desu.inugram.prism.PrismIntroActivity();
+     }
+ 
+     public FireworksOverlay getFireworksOverlay() {
+@@ -1318,7 +1318,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+                 layersActionBarLayout.rebuildLogout();
+                 rightActionBarLayout.rebuildLogout();
+             }
+-            presentFragment(new IntroActivity().setOnLogout());
++            presentFragment(new desu.inugram.prism.PrismIntroActivity().setOnLogout());
+             if (desu.inugram.helpers.security.PasscodeHelper.lockIfHiddenAccountsLeft()) {
+                 showPasscodeActivity(false, false, -1, -1, null, null);
+             }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java
+index b2066b3e..4d8095b8 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java
+@@ -653,6 +653,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
+             }
+         };
+         keyboardLinearLayout.addView(slideViewsContainer, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 0, 1f));
++        desu.inugram.prism.PrismLogin.decorate(context, sizeNotifierFrameLayout, slideViewsContainer);
+         keyboardView = new CustomPhoneKeyboardView(context);
+         keyboardView.setViewToFindFocus(slideViewsContainer);
+         keyboardLinearLayout.addView(keyboardView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, CustomPhoneKeyboardView.KEYBOARD_HEIGHT_DP));
