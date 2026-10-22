@@ -15,6 +15,10 @@ object PrismLogin {
      */
     @JvmStatic
     fun decorate(context: Context, page: View, card: ViewGroup) {
+        // Glass login is off by default: it is the one Prism piece never confirmed on a real device.
+        // Set pref `prism`/`login_glass` to true to try it.
+        if (PrismSafe.isSafe()) return
+        if (!context.getSharedPreferences("prism", Context.MODE_PRIVATE).getBoolean("login_glass", false)) return
         try {
             decorateUnsafe(context, page, card)
         } catch (t: Throwable) {
