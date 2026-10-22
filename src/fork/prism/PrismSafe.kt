@@ -1,35 +1,54 @@
 package desu.inugram.prism
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
+import android.os.SystemClock
 
 /**
- * Crash guard for Prism's extras (default font, auto liquid glass). A "boot pending" flag is set at
- * launch and cleared once the app has stayed alive for a while. If it is still set on the next
- * launch, the previous run died early: Prism switches to safe mode for good and turns the extras off.
+ * Crash guard for Prism's extras (default font, auto liquid glass). If the app dies with an
+ * uncaught exception within [EARLY_MS] of starting, Prism switches to safe mode: the extras are
+ * switched off. The user can turn them back on from Prism Settings.
  */
 object PrismSafe {
     private const val PREFS = "prism"
+    private const val EARLY_MS = 25_000L
     @Volatile private var safe = false
+    private var appCtx: Context? = null
+    private var startedAt = 0L
 
     @JvmStatic
     fun begin(context: Context) {
         try {
+            appCtx = context.applicationContext ?: context
+            startedAt = SystemClock.elapsedRealtime()
             val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            if (p.getBoolean("boot_pending", false)) p.edit().putBoolean("safe", true).apply()
             safe = p.getBoolean("safe", false)
             if (safe) {
                 val g = context.getSharedPreferences("mainconfig", Context.MODE_PRIVATE)
                 g.edit().putInt("lite_mode6", g.getInt("lite_mode6", 0) and (1 shl 18).inv())
-                    .putBoolean("prism_glass_v1", true).apply()
+                    .putBoolean("prism_glass_v2", true).apply()
             }
-            p.edit().putBoolean("boot_pending", true).commit()
-            Handler(Looper.getMainLooper()).postDelayed({
-                try { p.edit().putBoolean("boot_pending", false).apply() } catch (_: Throwable) {}
-            }, 12000)
+        } catch (_: Throwable) {}
+    }
+
+    /** Called from the uncaught-exception handler. */
+    @JvmStatic
+    fun onCrash() {
+        try {
+            if (SystemClock.elapsedRealtime() - startedAt < EARLY_MS) {
+                appCtx?.getSharedPreferences(PREFS, Context.MODE_PRIVATE)?.edit()?.putBoolean("safe", true)?.commit()
+            }
         } catch (_: Throwable) {}
     }
 
     @JvmStatic fun isSafe(): Boolean = safe
+
+    /** Leave safe mode: font is re-applied and glass re-enabled on the next launch. */
+    @JvmStatic
+    fun leaveSafeMode(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean("safe", false).putBoolean("font_seeded_v2", false).commit()
+        context.getSharedPreferences("mainconfig", Context.MODE_PRIVATE).edit()
+            .putBoolean("prism_glass_v2", false).commit()
+        safe = false
+    }
 }

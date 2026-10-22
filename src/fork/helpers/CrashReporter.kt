@@ -167,6 +167,7 @@ object CrashReporter {
         private val chain: Thread.UncaughtExceptionHandler?,
     ) : Thread.UncaughtExceptionHandler {
         override fun uncaughtException(t: Thread, e: Throwable) {
+            try { desu.inugram.prism.PrismSafe.onCrash() } catch (_: Throwable) {}
             try {
                 val sw = StringWriter()
                 PrintWriter(sw).use { e.printStackTrace(it) }

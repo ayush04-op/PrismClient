@@ -7,8 +7,8 @@ index a340a8e7..f276141d 100644
          }
  
 +        // Prism: liquid glass is on by default, once, on devices that can afford the shader
-+        if (android.os.Build.VERSION.SDK_INT >= 33 && SharedConfig.getDevicePerformanceClass() >= SharedConfig.PERFORMANCE_CLASS_AVERAGE && !desu.inugram.prism.PrismSafe.isSafe() && !preferences.getBoolean("prism_glass_v1", false)) {
-+            preferences.edit().putInt("lite_mode6", preferences.getInt("lite_mode6", defaultValue) | FLAG_LIQUID_GLASS).putBoolean("prism_glass_v1", true).apply();
++        if (android.os.Build.VERSION.SDK_INT >= 33 && !desu.inugram.prism.PrismSafe.isSafe() && !preferences.getBoolean("prism_glass_v2", false)) {
++            preferences.edit().putInt("lite_mode6", preferences.getInt("lite_mode6", defaultValue) | FLAG_LIQUID_GLASS).putBoolean("prism_glass_v2", true).apply();
 +        }
 +
          int prevValue = value;

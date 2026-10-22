@@ -716,6 +716,14 @@ object FontLibrary {
         return ImportResult(mergeStagedFiles(dir, staging, staged), rejected)
     }
 
+    // prism: lets a bundled font whose files carry different family names land in one family
+    @Volatile private var forcedFamily: String? = null
+
+    fun importFromFile(source: File, family: String?): ImportResult {
+        forcedFamily = family
+        try { return importFromFile(source) } finally { forcedFamily = null }
+    }
+
     fun importFromFile(source: File): ImportResult {
         val dir = rootDir ?: run {
             FileLog.d("$TAG: importFromFile: rootDir not initialized")
@@ -787,7 +795,7 @@ object FontLibrary {
             tmp.delete()
             return StageResult.UNSUPPORTED
         }
-        val family = raws.mapNotNull { it.family?.takeIf(String::isNotBlank) }
+        val family = forcedFamily ?: raws.mapNotNull { it.family?.takeIf(String::isNotBlank) }
             .groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
         out.add(StagedFile(tmp, raws, family))
         return StageResult.STAGED

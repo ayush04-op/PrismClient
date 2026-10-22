@@ -33,6 +33,7 @@ object FontHelper {
 
     fun init(context: Context) {
         FontLibrary.loadStorage(context)
+        if (desu.inugram.prism.PrismSafe.isSafe() && FontConfig.FONT.value is FontMode.Custom) resetAppFont()
         validateActiveAppFont()
         validateMonoFont()
 
@@ -249,6 +250,7 @@ object FontHelper {
             trySetStatic(typefaceDefaultField, regular)
             trySetStatic(typefaceDefaultBoldField, bold)
             trySetStatic(typefaceSansSerifField, regular)
+            prismSetDefault(regular)
             for (k in arrayOf(
                 "sans-serif", "sans-serif-light", "sans-serif-thin",
                 "sans-serif-condensed", "sans-serif-condensed-light"
@@ -258,6 +260,22 @@ object FontHelper {
         FontLibrary.getTypefaceFor(FontConfig.MONO_FONT.value)?.let { mono ->
             trySetStatic(typefaceMonospaceField, mono)
             map?.put("monospace", mono)
+        }
+    }
+
+    // prism: Paint/TextView with no typeface use the native default, which the static swaps above do
+    // not touch. Typeface.setDefault is hidden, so reach it through Class.getDeclaredMethod.
+    private fun prismSetDefault(tf: Typeface) {
+        try {
+            val getDeclared = Class::class.java.getDeclaredMethod(
+                "getDeclaredMethod", String::class.java, arrayOf<Class<*>>()::class.java,
+            )
+            val m = getDeclared.invoke(Typeface::class.java, "setDefault", arrayOf<Class<*>>(Typeface::class.java))
+                as java.lang.reflect.Method
+            m.isAccessible = true
+            m.invoke(null, tf)
+        } catch (t: Throwable) {
+            FileLog.e(t)
         }
     }
 

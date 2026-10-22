@@ -2109,6 +2109,18 @@
     <string name="PrismCreditEntiny">Patch stack and features Prism starts from (MIT)</string>
     <string name="PrismCreditInugram">The patchset entinyGram builds on</string>
     <string name="PrismCreditTelegram">The official Telegram Android app (GPL-2.0)</string>
+    <string name="PrismSectionLook">Look &amp; feel</string>
+    <string name="PrismSectionSmart">Smart tools</string>
+    <string name="PrismSectionControl">Control &amp; privacy</string>
+    <string name="PrismSectionSystem">System</string>
+    <string name="PrismSectionAbout">About Prism</string>
+    <string name="PrismLiquidGlass">Liquid glass</string>
+    <string name="PrismLiquidGlassInfo">Real-time glass refraction on bars and bubbles. Needs Android 13 or newer.</string>
+    <string name="PrismSafeMode">Safe mode is on</string>
+    <string name="PrismSafeModeValue">Tap to turn extras back on</string>
+    <string name="PrismSafeModeInfo">Prism hit a problem at startup, so the font and glass extras were switched off. Turn them back on, then restart the app.</string>
+    <string name="PrismSafeModeLeft">Extras will be back after you restart Prism.</string>
+    <string name="PrismOpenSource">Open source</string>
     <string name="PrismTagline">Fast. Fluid. Glass.</string>
     <string name="PrismCreditsNotOfficial">Prism is an unofficial client and is not affiliated with Telegram.</string>
 </resources>

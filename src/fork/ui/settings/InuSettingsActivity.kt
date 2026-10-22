@@ -6,6 +6,8 @@ import android.widget.EditText
 import desu.inugram.InuConfig
 import desu.inugram.SearchRegistry
 import desu.inugram.helpers.InuUtils
+import desu.inugram.prism.PrismSafe
+import org.telegram.messenger.LiteMode
 import org.telegram.messenger.ApplicationLoader
 import org.telegram.messenger.LocaleController
 import org.telegram.messenger.browser.Browser
@@ -101,22 +103,45 @@ class InuSettingsActivity : SettingsPageActivity() {
         items.add(UItem.asCustomShadow(createHeaderView()))
         items.add(UItem.asShadow(null))
 
-        items.add(UItem.asHeader(LocaleController.getString(R.string.InuRootInterface)))
+        if (PrismSafe.isSafe()) {
+            items.add(
+                UItem.asButton(
+                    BUTTON_SAFE_MODE,
+                    R.drawable.inu_tabler_shield_check,
+                    LocaleController.getString(R.string.PrismSafeMode),
+                    LocaleController.getString(R.string.PrismSafeModeValue),
+                )
+            )
+            items.add(UItem.asShadow(LocaleController.getString(R.string.PrismSafeModeInfo)))
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            items.add(
+                UItem.asCheck(TOGGLE_GLASS, LocaleController.getString(R.string.PrismLiquidGlass))
+                    .setChecked(LiteMode.isEnabledSetting(LiteMode.FLAG_LIQUID_GLASS))
+            )
+            items.add(UItem.asShadow(LocaleController.getString(R.string.PrismLiquidGlassInfo)))
+        }
+
+        items.add(UItem.asHeader(LocaleController.getString(R.string.PrismSectionLook)))
         items.add(mkSubPageButton(CAT_APPEARANCE, R.drawable.msg_palette, LocaleController.getString(R.string.InuCategoryAppearance)))
+        items.add(mkSubPageButton(CAT_MAIN_SCREEN, R.drawable.msg_home_solar, LocaleController.getString(R.string.InuMainScreen)))
         items.add(mkSubPageButton(CAT_CHATS, R.drawable.msg_viewchats, LocaleController.getString(R.string.InuCategoryChats)))
         items.add(mkSubPageButton(CAT_ANNOYANCES, R.drawable.inu_tabler_shield_cancel, LocaleController.getString(R.string.InuAnnoyances)))
-        items.add(mkSubPageButton(CAT_MAIN_SCREEN, R.drawable.msg_home_solar, LocaleController.getString(R.string.InuMainScreen)))
         items.add(UItem.asShadow(null))
 
-        items.add(UItem.asHeader(LocaleController.getString(R.string.InuRootPrivacy)))
+        items.add(UItem.asHeader(LocaleController.getString(R.string.PrismSectionSmart)))
         items.add(mkSubPageButton(CAT_AI, R.drawable.inu_tabler_sparkles, LocaleController.getString(R.string.InuAiCompose)))
         items.add(mkSubPageButton(CAT_TRANSLATOR, R.drawable.msg_translate, LocaleController.getString(R.string.InuTranslator)))
-        items.add(mkSubPageButton(CAT_BEHAVIOR, R.drawable.inu_tabler_adjustments_horizontal, LocaleController.getString(R.string.InuCategoryBehavior)))
+        items.add(UItem.asShadow(null))
+
+        items.add(UItem.asHeader(LocaleController.getString(R.string.PrismSectionControl)))
         items.add(mkSubPageButton(CAT_PRIVACY, R.drawable.inu_tabler_shield_check, LocaleController.getString(R.string.InuCategoryPrivacy)))
+        items.add(mkSubPageButton(CAT_BEHAVIOR, R.drawable.inu_tabler_adjustments_horizontal, LocaleController.getString(R.string.InuCategoryBehavior)))
         items.add(mkSubPageButton(BUTTON_TOS, R.drawable.inu_tabler_lock_open, LocaleController.getString(R.string.InuTOS)))
         items.add(UItem.asShadow(null))
 
-        items.add(UItem.asHeader(LocaleController.getString(R.string.InuRootSystem)))
+        items.add(UItem.asHeader(LocaleController.getString(R.string.PrismSectionSystem)))
         // #if PLUGINS
         items.add(mkSubPageButton(BUTTON_PLUGINS, R.drawable.inu_tabler_code, addExperimentalSpan(LocaleController.getString(R.string.InuPlugins))))
         // #endif
@@ -126,6 +151,7 @@ class InuSettingsActivity : SettingsPageActivity() {
         }
         items.add(UItem.asShadow(null))
 
+        items.add(UItem.asHeader(LocaleController.getString(R.string.PrismSectionAbout)))
         items.add(
             UItem.asButton(
                 BUTTON_CHANNEL_LINK,
@@ -164,6 +190,14 @@ class InuSettingsActivity : SettingsPageActivity() {
         }
         val ctx = context ?: return
         when (item.id) {
+            TOGGLE_GLASS -> {
+                LiteMode.toggleFlag(LiteMode.FLAG_LIQUID_GLASS, !LiteMode.isEnabledSetting(LiteMode.FLAG_LIQUID_GLASS))
+                softRebuild()
+            }
+            BUTTON_SAFE_MODE -> {
+                PrismSafe.leaveSafeMode(ctx)
+                BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.PrismSafeModeLeft)).show()
+            }
             CAT_APPEARANCE -> presentFragment(AppearanceSettingsActivity())
             CAT_CHATS -> presentFragment(CategoryChatsSettingsActivity())
             CAT_AI -> presentFragment(AiSettingsActivity())
@@ -185,6 +219,8 @@ class InuSettingsActivity : SettingsPageActivity() {
     }
 
     companion object {
+        private val TOGGLE_GLASS = InuUtils.generateId()
+        private val BUTTON_SAFE_MODE = InuUtils.generateId()
         private val CAT_APPEARANCE = InuUtils.generateId()
         private val CAT_CHATS = InuUtils.generateId()
         private val CAT_MAIN_SCREEN = InuUtils.generateId()

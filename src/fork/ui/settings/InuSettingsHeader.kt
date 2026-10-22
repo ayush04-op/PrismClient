@@ -1,144 +1,115 @@
 package desu.inugram.ui.settings
 
+import android.animation.ObjectAnimator
 import android.content.Context
+import android.graphics.Outline
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
-import desu.inugram.helpers.vibration.HapticFeedbackConstants
+import android.view.View
+import android.view.ViewOutlineProvider
+import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import desu.inugram.helpers.theme.MonetHelper
-import desu.inugram.helpers.update.UpdateHelper
+import desu.inugram.helpers.vibration.HapticFeedbackConstants
 import org.telegram.messenger.AndroidUtilities
-import org.telegram.messenger.BuildConfig
-import org.telegram.messenger.BuildVars
+import desu.inugram.helpers.update.UpdateHelper
 import org.telegram.messenger.LocaleController
 import org.telegram.messenger.R
-import org.telegram.ui.ActionBar.Theme
 import org.telegram.ui.Components.LayoutHelper
 
+/** Prism's settings hero: a gradient card with the logo, name, tagline and a few status pills. */
 class InuSettingsHeader(context: Context) : LinearLayout(context) {
+    private fun dp(v: Float) = AndroidUtilities.dp(v)
 
-    private val iconBg = GradientDrawable().apply {
-        shape = GradientDrawable.RECTANGLE
-        cornerRadius = AndroidUtilities.dp(28f).toFloat()
+    private val card = LinearLayout(context).apply {
+        orientation = VERTICAL
+        background = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(0xFF5B3FC4.toInt(), 0xFF2E1D77.toInt(), 0xFF0C6B68.toInt()),
+        ).apply { cornerRadius = dp(28f).toFloat() }
+        setPadding(dp(20f), dp(20f), dp(20f), dp(18f))
     }
 
-    private val icon = ImageView(context).apply {
-        setImageResource(R.drawable.icon_settings_inu)
-        background = iconBg
-        setPadding(
-            AndroidUtilities.dp(13f),
-            AndroidUtilities.dp(13f),
-            AndroidUtilities.dp(13f),
-            AndroidUtilities.dp(13f)
-        )
-    }
-
-    private val title = TextView(context).apply {
-        text = if (BuildVars.isBetaApp()) {
-            "Prism ${LocaleController.getString(R.string.InuVersionBetaSuffix)}"
-        } else {
-            "Prism"
+    private val logo = ImageView(context).apply {
+        setBackgroundResource(R.drawable.prism_icon_bg)
+        setImageResource(R.drawable.prism_icon_fg)
+        scaleType = ImageView.ScaleType.FIT_CENTER
+        clipToOutline = true
+        outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(0, 0, view.width, view.height, dp(20f).toFloat())
+            }
         }
-        setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 18f)
-        setTypeface(AndroidUtilities.bold())
-        setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText))
-        isSingleLine = true
-        ellipsize = android.text.TextUtils.TruncateAt.END
     }
 
-    private val subtitle = TextView(context).apply {
-        text = "${UpdateHelper.stockVersionName} (${BuildConfig.STOCK_VERSION_CODE})"
-        setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 13f)
-        setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2))
-        isSingleLine = true
-        ellipsize = android.text.TextUtils.TruncateAt.END
+    private fun pill(text: String) = TextView(context).apply {
+        this.text = text
+        setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 12f)
+        setTextColor(0xFFFFFFFF.toInt())
+        gravity = Gravity.CENTER
+        setPadding(dp(11f), dp(5f), dp(11f), dp(5f))
+        background = GradientDrawable().apply {
+            cornerRadius = dp(14f).toFloat()
+            setColor(0x2EFFFFFF)
+            setStroke(dp(1f), 0x40FFFFFF)
+        }
     }
 
     var onHeaderClick: (() -> Unit)? = null
         set(value) {
             field = value
-            if (value != null) {
-                isClickable = true
-                isFocusable = true
-                setOnClickListener {
+            card.setOnClickListener(
+                if (value == null) null
+                else View.OnClickListener {
                     performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    ObjectAnimator.ofFloat(logo, View.ROTATION, 0f, 360f).setDuration(700).apply {
+                        interpolator = DecelerateInterpolator()
+                    }.start()
                     value()
                 }
-                background = Theme.createRadSelectorDrawable(
-                    Theme.getColor(Theme.key_listSelector), 0, 0
-                )
-            } else {
-                isClickable = false
-                isFocusable = false
-                setOnClickListener(null)
-                background = null
-            }
+            )
         }
 
     init {
-        orientation = HORIZONTAL
-        gravity = Gravity.CENTER
-        setPaddingRelative(
-            AndroidUtilities.dp(16f),
-            AndroidUtilities.dp(4f),
-            AndroidUtilities.dp(42f),
-            AndroidUtilities.dp(10f)
-        )
-        addView(icon, LayoutHelper.createLinear(56, 56))
+        orientation = VERTICAL
+        setPadding(dp(14f), dp(8f), dp(14f), dp(10f))
 
-        val texts = LinearLayout(context).apply {
-            orientation = VERTICAL
+        val top = LinearLayout(context).apply {
+            orientation = HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        texts.addView(
-            title,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
+        top.addView(logo, LayoutHelper.createLinear(68, 68))
+
+        val texts = LinearLayout(context).apply { orientation = VERTICAL }
+        texts.addView(TextView(context).apply {
+            text = "Prism"
+            setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 30f)
+            setTextColor(0xFFFFFFFF.toInt())
+            setTypeface(AndroidUtilities.bold())
+        })
+        texts.addView(TextView(context).apply {
+            text = LocaleController.getString(R.string.PrismTagline)
+            setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 14f)
+            setTextColor(0xCCFFFFFF.toInt())
+        })
+        top.addView(texts, LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(16f) })
+        card.addView(top)
+
+        val pills = LinearLayout(context).apply { orientation = HORIZONTAL }
+        pills.addView(pill("v${UpdateHelper.stockVersionName}"))
+        pills.addView(
+            pill(LocaleController.getString(R.string.PrismOpenSource)),
+            LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply { marginStart = dp(8f) },
         )
-        texts.addView(
-            subtitle,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                topMargin = AndroidUtilities.dp(2f)
-            }
+        pills.addView(
+            pill("by Ayush"),
+            LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply { marginStart = dp(8f) },
         )
-        addView(
-            texts,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                marginStart = AndroidUtilities.dp(14f)
-                gravity = Gravity.CENTER_VERTICAL
-            }
-        )
-        updateColors()
+        card.addView(pills, LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply { topMargin = dp(16f) })
+
+        addView(card, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT))
     }
 
-    fun updateColors() {
-        val dark = Theme.isCurrentThemeDark()
-        val (container, onContainer) = iconColors(dark)
-        iconBg.setColor(container)
-        icon.setColorFilter(onContainer)
-        title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText))
-        subtitle.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2))
-    }
-
-    private fun iconColors(dark: Boolean): Pair<Int, Int> =
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            MonetHelper.getColor(
-                if (dark) "monet_primary_container_dark" else "monet_primary_container_light"
-            ) to MonetHelper.getColor(
-                if (dark) "monet_on_primary_container_dark" else "monet_on_primary_container_light"
-            )
-        } else {
-            val accent = Theme.getColor(Theme.key_windowBackgroundWhiteBlueIcon)
-            Theme.multAlpha(accent, 0.18f) to accent
-        }
+    fun updateColors() {}
 }

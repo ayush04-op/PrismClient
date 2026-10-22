@@ -14,7 +14,8 @@ import java.io.File
 object PrismFont {
     private const val DIR = "prism_font"
     private const val PREFS = "prism"
-    private const val SEEDED = "font_seeded_v1"
+    private const val FAMILY = "Prism Serif"
+    private const val SEEDED = "font_seeded_v2"
 
     @JvmStatic
     fun seedDefault(context: Context) {
@@ -30,10 +31,12 @@ object PrismFont {
             for (name in names) {
                 val out = File(cache, name)
                 context.assets.open("$DIR/$name").use { input -> out.outputStream().use { input.copyTo(it) } }
-                FontLibrary.importFromFile(out)
+                FontLibrary.importFromFile(out, FAMILY)
                 out.delete()
             }
-            val id = FontLibrary.getCachedRoster().filterIsInstance<FontId.Family>().lastOrNull()
+            val id = FontLibrary.getCachedRoster().filterIsInstance<FontId.Family>()
+                .lastOrNull { FontLibrary.getFontFamily(it)?.name == FAMILY }
+                ?: FontLibrary.getCachedRoster().filterIsInstance<FontId.Family>().lastOrNull()
                 ?: FontLibrary.firstFamilyId()?.let { FontId.Family(it) }
                 ?: return
             FontConfig.FONT.value = FontConfig.FontMode.Custom(id, emptyList())
