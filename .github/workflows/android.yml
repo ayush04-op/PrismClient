@@ -133,6 +133,8 @@ jobs:
             echo "::warning::KEYSTORE_PASSPHRASE secret is not set - APK is NOT signed with the Prism key, so it cannot update a Prism-signed install."
             echo "signed=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
+          KS_PASS=$(printf %s "$KS_PASS" | tr -d '[:space:]')
+          export KS_PASS
           echo "::add-mask::$KS_PASS"
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:KS_PASS -in prism/signing/prism-release.jks.enc -out "$RUNNER_TEMP/prism-release.jks"
           {
