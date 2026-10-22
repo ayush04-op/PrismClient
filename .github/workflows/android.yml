@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
@@ -121,6 +124,25 @@ jobs:
           echo 'org.gradle.parallel=true' >> ~/.gradle/gradle.properties
           echo 'org.gradle.jvmargs=-Xmx8192m -Dfile.encoding=UTF-8 -XX:+UseParallelGC' >> ~/.gradle/gradle.properties
 
+      - name: Prepare signing key
+        id: sign
+        env:
+          KS_PASS: ${{ secrets.KEYSTORE_PASSPHRASE }}
+        run: |
+          if [ -z "$KS_PASS" ]; then
+            echo "::warning::KEYSTORE_PASSPHRASE secret is not set - APK is NOT signed with the Prism key, so it cannot update a Prism-signed install."
+            echo "signed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "::add-mask::$KS_PASS"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:KS_PASS -in prism/signing/prism-release.jks.enc -out "$RUNNER_TEMP/prism-release.jks"
+          {
+            echo "RELEASE_KEYSTORE_PATH=$RUNNER_TEMP/prism-release.jks"
+            echo "ORG_GRADLE_PROJECT_RELEASE_STORE_PASSWORD=$KS_PASS"
+            echo "ORG_GRADLE_PROJECT_RELEASE_KEY_PASSWORD=$KS_PASS"
+            echo "ORG_GRADLE_PROJECT_RELEASE_KEY_ALIAS=prism"
+          } >> "$GITHUB_ENV"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+
       - name: Build arm64 release APK
         working-directory: worktree-pluginless
         env:
@@ -148,3 +170,13 @@ jobs:
           path: out/prism-arm64.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish GitHub Release
+        if: steps.sign.outputs.signed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "build-${{ github.run_number }}" out/prism-arm64.apk \
+            --repo "${{ github.repository }}" \
+            --title "Prism build ${{ github.run_number }}" \
+            --notes "Signed Prism APK (arm64). Install over the previous Prism build to update. Commit ${GITHUB_SHA::7}."

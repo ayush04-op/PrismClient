@@ -66,7 +66,6 @@ class InuSettingsHeader(context: Context) : LinearLayout(context) {
                     ObjectAnimator.ofFloat(logo, View.ROTATION, 0f, 360f).setDuration(700).apply {
                         interpolator = DecelerateInterpolator()
                     }.start()
-                    value()
                 }
             )
         }

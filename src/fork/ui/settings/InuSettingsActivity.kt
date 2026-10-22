@@ -67,31 +67,7 @@ class InuSettingsActivity : SettingsPageActivity() {
 
     private fun createHeaderView(): View {
         val context = context ?: return View(org.telegram.messenger.ApplicationLoader.applicationContext)
-        return InuSettingsHeader(context).apply {
-            onHeaderClick = { onHeaderTap() }
-        }
-    }
-
-    private fun onHeaderTap() {
-        val now = android.os.SystemClock.uptimeMillis()
-        if (now - lastHeaderTapAt > HEADER_TAP_WINDOW_MS) headerTapCount = 0
-        lastHeaderTapAt = now
-        headerTapCount++
-        if (headerTapCount == HEADER_TAP_COUNT) {
-            headerTapCount = 0
-            val alreadyUnlocked = InuConfig.NICHE_SETTINGS_UNLOCKED.value
-            if (!alreadyUnlocked) {
-                InuConfig.NICHE_SETTINGS_UNLOCKED.value = true
-                listView.adapter.update(true)
-            }
-            BulletinFactory.of(this).createSimpleBulletin(
-                R.raw.chats_infotip,
-                LocaleController.getString(
-                    if (alreadyUnlocked) R.string.InuNicheAlreadyUnlockedToast
-                    else R.string.InuNicheUnlockedToast
-                )
-            ).show()
-        }
+        return InuSettingsHeader(context)
     }
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
@@ -146,9 +122,6 @@ class InuSettingsActivity : SettingsPageActivity() {
         items.add(mkSubPageButton(BUTTON_PLUGINS, R.drawable.inu_tabler_code, addExperimentalSpan(LocaleController.getString(R.string.InuPlugins))))
         // #endif
         items.add(mkSubPageButton(CAT_SYSTEM, R.drawable.inu_tabler_device_floppy, LocaleController.getString(R.string.InuCategoryBackup)))
-        if (InuConfig.NICHE_SETTINGS_UNLOCKED.value) {
-            items.add(mkSubPageButton(CAT_NICHE, R.drawable.inu_tabler_skull, LocaleController.getString(R.string.InuNicheSettings)))
-        }
         items.add(UItem.asShadow(null))
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.PrismSectionAbout)))

@@ -1820,12 +1820,12 @@
     <string name="InuRestartApp">Перезапустити застосунок</string>
     <string name="InuRestartAppAlert">Застосунок закриється й відкриється знову. Незбережені чернетки та завантаження, що ще тривають, можуть загубитися.</string>
     <string name="InuDonateTitle">Хочете стабільних оновлень?</string>
-    <string name="InuDonateText">entinyGram безкоштовний і з відкритим кодом, без реклами. Оновлення на кожну нову версію Telegram потребують мого часу. Якщо спільнота цього хоче, можна підтримати.</string>
+    <string name="InuDonateText">Prism безкоштовний і з відкритим кодом, без реклами. Оновлення на кожну нову версію Telegram потребують мого часу. Якщо спільнота цього хоче, можна підтримати.</string>
     <string name="InuDonateButton">Підтримати</string>
     <string name="InuDonateHide">Сховати</string>
     <string name="InuDonateHidden">Картку підтримки сховано</string>
     <string name="InuDonateRow">Підтримати проєкт</string>
-    <string name="InuDonateSheetTitle">Підтримати entinyGram</string>
+    <string name="InuDonateSheetTitle">Підтримати Prism</string>
     <string name="InuDonateSheetInfo">Натисни, щоб скопіювати або відкрити. Суто за бажанням.</string>
     <string name="InuDonateThanks">Дякую, що ти тут ❤️</string>
     <string name="InuDonateMonobankJar">Банка Monobank</string>

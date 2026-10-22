@@ -676,7 +676,7 @@ object ChatExportHelper {
         sb.append("<div class=\"sub\">")
             .append(session.collected.size).append(" messages · ")
             .append(esc(LocaleController.getString(R.string.InuChatExportExported)) ?: "exported")
-            .append(" ").append(esc(exported)).append(" · entinyGram</div>")
+            .append(" ").append(esc(exported)).append(" · Prism</div>")
         val timeFmt = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault())
         for (m in session.collected.sortedBy { it.date }) {
             if (m.action != null || m is TLRPC.TL_messageService) {

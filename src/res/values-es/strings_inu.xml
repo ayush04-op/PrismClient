@@ -1877,12 +1877,12 @@ Esta acción no se puede deshacer.</string>
     <string name="InuRestartApp">Reiniciar app</string>
     <string name="InuRestartAppAlert">La app se cerrará y volverá a abrirse. Los borradores sin enviar y las subidas en curso pueden perderse.</string>
     <string name="InuDonateTitle">¿Quieres actualizaciones estables?</string>
-    <string name="InuDonateText">entinyGram es gratuito y de código abierto, sin anuncios. Mantenerlo al día con cada nueva versión de Telegram me lleva tiempo. Si la comunidad lo quiere, puedes apoyarlo.</string>
+    <string name="InuDonateText">Prism es gratuito y de código abierto, sin anuncios. Mantenerlo al día con cada nueva versión de Telegram me lleva tiempo. Si la comunidad lo quiere, puedes apoyarlo.</string>
     <string name="InuDonateButton">Apoyar</string>
     <string name="InuDonateHide">Ocultar</string>
     <string name="InuDonateHidden">Tarjeta de apoyo oculta</string>
     <string name="InuDonateRow">Apoyar el proyecto</string>
-    <string name="InuDonateSheetTitle">Apoyar entinyGram</string>
+    <string name="InuDonateSheetTitle">Apoyar Prism</string>
     <string name="InuDonateSheetInfo">Toca para copiar o abrir. Totalmente opcional.</string>
     <string name="InuDonateThanks">Gracias por estar aquí ❤️</string>
     <string name="InuDonateMonobankJar">Frasco de Monobank</string>

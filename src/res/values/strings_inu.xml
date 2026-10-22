@@ -609,10 +609,10 @@
     <string name="InuConfirmReactionText">Send %1$s reaction in **%2$s**?</string>
     <string name="InuNotificationIcon">Notification icon</string>
     <string name="InuNotificationIconTelegram">Telegram</string>
-    <string name="InuNotificationIconInugram">entinyGram</string>
-    <string name="InuNotificationIconOldEntinygram">Old entinyGram</string>
+    <string name="InuNotificationIconInugram">Classic</string>
+    <string name="InuNotificationIconOldEntinygram">Legacy</string>
     <string name="InuNotificationIconInfo">On Xiaomi (MIUI/HyperOS) the system may replace this icon with the app icon, so the choice might not be visible there</string>
-    <string name="InuAppIconOldEntinygram">Old entinyGram</string>
+    <string name="InuAppIconOldEntinygram">Legacy</string>
     <string name="InuDisableChatBubbles">Disable Android notification bubbles</string>
     <string name="InuKeepChatsInStack">Keep previous chats open</string>
     <string name="InuKeepChatsInStackInfo">Opening another chat won\'t close the chats behind it</string>
@@ -900,7 +900,7 @@
     <string name="InuLiquidGlassTint">Liquid Glass tint</string>
     <string name="InuNicheSettings">Niche settings</string>
     <string name="InuNicheSettingsInfo">Requested features that may not be useful to everyone. If they do not work, they will be removed.</string>
-    <string name="InuNicheUnlockedToast">bro dont enable entiny tv pls💀💀</string>
+    <string name="InuNicheUnlockedToast">Unlocked</string>
     <string name="InuNicheAlreadyUnlockedToast">bro, you already enabled it 💀</string>
 
     <string name="InuReduceMenuMotion">Reduce menu motion</string>
@@ -1807,8 +1807,8 @@
     <string name="InuDeletedMarkPreviewSender">Alina</string>
     <string name="InuHideDevBadges">Disable Prism badges</string>
     <string name="InuHideDevBadgesInfo">They don\'t mean anything, don\'t give any advantage — just a thank-you from the developer</string>
-    <string name="InuDevBadge">entinyGram team</string>
-    <string name="InuDevBadgeInfo">This account is recognized by the entinyGram team.</string>
+    <string name="InuDevBadge">Prism team</string>
+    <string name="InuDevBadgeInfo">This account is recognized by the Prism team.</string>
     <string name="InuStopBot">Stop bot</string>
     <string name="InuStopBotAlert">Are you sure you want to stop **%1$s**? It won\'t be able to send you messages anymore.</string>
     <string name="InuStopBotAction">Stop</string>
@@ -1863,12 +1863,12 @@
     <string name="InuRestartApp">Restart app</string>
     <string name="InuRestartAppAlert">The app will close and reopen. Unsent drafts and in-progress uploads may be lost.</string>
     <string name="InuDonateTitle">Want stable updates?</string>
-    <string name="InuDonateText">entinyGram is free and open source, with no ads. Keeping it up to date with every new Telegram version takes my time. If the community wants that, you can support it.</string>
+    <string name="InuDonateText">Prism is free and open source, with no ads. Keeping it up to date with every new Telegram version takes my time. If the community wants that, you can support it.</string>
     <string name="InuDonateButton">Support</string>
     <string name="InuDonateHide">Hide</string>
     <string name="InuDonateHidden">Support card hidden</string>
     <string name="InuDonateRow">Support the project</string>
-    <string name="InuDonateSheetTitle">Support entinyGram</string>
+    <string name="InuDonateSheetTitle">Support Prism</string>
     <string name="InuDonateSheetInfo">Tap to copy or open. Completely optional.</string>
     <string name="InuDonateThanks">Thank you for being here ❤️</string>
     <string name="InuDonateMonobankJar">Monobank jar</string>

@@ -1878,12 +1878,12 @@ Questa azione non può essere annullata.</string>
     <string name="InuRestartApp">Riavvia l\'app</string>
     <string name="InuRestartAppAlert">L\'app si chiuderà e si riaprirà. Le bozze non inviate e i caricamenti in corso potrebbero andare persi.</string>
     <string name="InuDonateTitle">Vuoi aggiornamenti stabili?</string>
-    <string name="InuDonateText">entinyGram è gratuito e open source, senza pubblicità. Tenerlo aggiornato a ogni nuova versione di Telegram richiede il mio tempo. Se la community lo desidera, puoi sostenerlo.</string>
+    <string name="InuDonateText">Prism è gratuito e open source, senza pubblicità. Tenerlo aggiornato a ogni nuova versione di Telegram richiede il mio tempo. Se la community lo desidera, puoi sostenerlo.</string>
     <string name="InuDonateButton">Sostieni</string>
     <string name="InuDonateHide">Nascondi</string>
     <string name="InuDonateHidden">Scheda di supporto nascosta</string>
     <string name="InuDonateRow">Sostieni il progetto</string>
-    <string name="InuDonateSheetTitle">Sostieni entinyGram</string>
+    <string name="InuDonateSheetTitle">Sostieni Prism</string>
     <string name="InuDonateSheetInfo">Tocca per copiare o aprire. Completamente facoltativo.</string>
     <string name="InuDonateThanks">Grazie per essere qui ❤️</string>
     <string name="InuDonateMonobankJar">Barattolo Monobank</string>
