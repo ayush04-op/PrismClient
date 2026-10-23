@@ -1,38 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Prism static splash icon (replaces the inherited animated one) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="288dp" android:height="288dp"
-    android:viewportWidth="108" android:viewportHeight="108">
-
-    <path android:pathData="M0,0h108v108h-108z">
-        <aapt:attr name="android:fillColor">
-            <gradient android:startX="0" android:startY="0" android:endX="108" android:endY="108" android:type="linear">
-                <item android:offset="0" android:color="#FF4F378B" />
-                <item android:offset="1" android:color="#FF211047" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-<group android:pivotX="54" android:pivotY="54" android:scaleX="0.9" android:scaleY="0.9">
-
-    <!-- spectrum bars -->
-    <path android:pathData="M60,50 L84,41" android:strokeColor="#FFEFB8C8" android:strokeWidth="5" android:strokeLineCap="round" />
-    <path android:pathData="M63,57 L87,57" android:strokeColor="#FFD0BCFF" android:strokeWidth="5" android:strokeLineCap="round" />
-    <path android:pathData="M60,64 L84,73" android:strokeColor="#FF81D4CE" android:strokeWidth="5" android:strokeLineCap="round" />
-    <!-- rounded triangle (round-join stroke in the same colour rounds the corners) -->
-    <path
-        android:pathData="M45,35 L28,71 L62,71 Z"
-        android:strokeColor="#FFD0BCFF"
-        android:strokeWidth="7"
-        android:strokeLineJoin="round">
-        <aapt:attr name="android:fillColor">
-            <gradient android:startX="30" android:startY="34" android:endX="62" android:endY="72" android:type="linear">
-                <item android:offset="0" android:color="#FFEADDFF" />
-                <item android:offset="1" android:color="#FFD0BCFF" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-</group>
+    android:width="288dp" android:height="288dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M0,0h108v108h-108z" android:fillColor="#FFF6EFE0" />
+    <group android:pivotX="54" android:pivotY="54" android:scaleX="0.95" android:scaleY="0.95">
+    <path android:pathData="M36,26 H60 L76,42 V82 H36 Z" android:fillColor="#FFB5532F" android:strokeColor="#FFB5532F" android:strokeWidth="3" android:strokeLineJoin="round" />
+    <path android:pathData="M60,26 V42 H76 Z" android:fillColor="#FF8E3E22" android:strokeColor="#FF8E3E22" android:strokeWidth="3" android:strokeLineJoin="round" />
+    <path android:pathData="M44,56 H68 M44,66 H62" android:strokeColor="#FFF6EFE0" android:strokeWidth="4" android:strokeLineCap="round" />
+    </group>
 </vector>

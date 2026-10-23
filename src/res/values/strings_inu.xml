@@ -2109,7 +2109,9 @@
     <string name="PrismCreditEntiny">Patch stack and features Prism starts from (MIT)</string>
     <string name="PrismCreditInugram">The patchset entinyGram builds on</string>
     <string name="PrismCreditTelegram">The official Telegram Android app (GPL-2.0)</string>
-    <string name="PrismSectionLook">Look &amp; feel</string>
+    <string name="PrismSectionLook">Appearance</string>
+    <string name="PrismSectionChats">Chats</string>
+    <string name="PrismSectionPrivacy">Privacy &amp; security</string>
     <string name="PrismSectionSmart">Smart tools</string>
     <string name="PrismSectionControl">Control &amp; privacy</string>
     <string name="PrismSectionSystem">System</string>

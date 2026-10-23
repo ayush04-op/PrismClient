@@ -22,4 +22,22 @@ object PrismTheme {
             FileLog.e(t)
         }
     }
+
+    /** First launch: make Paper the app theme (day theme, no automatic night switching). */
+    @JvmStatic
+    fun applyDefaultOnce() {
+        try {
+            val ctx = ApplicationLoader.applicationContext
+            val prefs = ctx.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
+            if (prefs.getBoolean("paper_v1", false) || PrismSafe.isSafe()) return
+            val file = File(ctx.cacheDir, "Prism Paper.attheme")
+            ctx.assets.open("prism_theme/paper.attheme").use { i -> file.outputStream().use { i.copyTo(it) } }
+            prefs.edit().putBoolean("paper_v1", true).commit() // set first: a failure must not retry in a loop
+            Theme.selectedAutoNightType = Theme.AUTO_NIGHT_TYPE_NONE
+            Theme.saveAutoNightThemeConfig()
+            Theme.applyThemeFile(file, "Prism Paper", null, false)
+        } catch (t: Throwable) {
+            FileLog.e(t)
+        }
+    }
 }

@@ -25,9 +25,9 @@ class InuSettingsHeader(context: Context) : LinearLayout(context) {
     private val card = LinearLayout(context).apply {
         orientation = VERTICAL
         background = GradientDrawable(
-            GradientDrawable.Orientation.TL_BR,
-            intArrayOf(0xFF5B3FC4.toInt(), 0xFF2E1D77.toInt(), 0xFF0C6B68.toInt()),
-        ).apply { cornerRadius = dp(28f).toFloat() }
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(0xFFF1E7D0.toInt(), 0xFFEADDBF.toInt()),
+        ).apply { cornerRadius = dp(28f).toFloat(); setStroke(dp(1f), 0xFFD9CCB1.toInt()) }
         setPadding(dp(20f), dp(20f), dp(20f), dp(18f))
     }
 
@@ -46,13 +46,13 @@ class InuSettingsHeader(context: Context) : LinearLayout(context) {
     private fun pill(text: String) = TextView(context).apply {
         this.text = text
         setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 12f)
-        setTextColor(0xFFFFFFFF.toInt())
+        setTextColor(0xFF2B2420.toInt())
         gravity = Gravity.CENTER
         setPadding(dp(11f), dp(5f), dp(11f), dp(5f))
         background = GradientDrawable().apply {
             cornerRadius = dp(14f).toFloat()
-            setColor(0x2EFFFFFF)
-            setStroke(dp(1f), 0x40FFFFFF)
+            setColor(0x00000000)
+            setStroke(dp(1f), 0x662B2420)
         }
     }
 
@@ -84,13 +84,13 @@ class InuSettingsHeader(context: Context) : LinearLayout(context) {
         texts.addView(TextView(context).apply {
             text = "Prism"
             setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 30f)
-            setTextColor(0xFFFFFFFF.toInt())
+            setTextColor(0xFF2B2420.toInt())
             setTypeface(AndroidUtilities.bold())
         })
         texts.addView(TextView(context).apply {
             text = LocaleController.getString(R.string.PrismTagline)
             setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 14f)
-            setTextColor(0xCCFFFFFF.toInt())
+            setTextColor(0xFF7A6E60.toInt())
         })
         top.addView(texts, LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(16f) })
         card.addView(top)

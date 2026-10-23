@@ -267,13 +267,7 @@ object FontHelper {
     // not touch. Typeface.setDefault is hidden, so reach it through Class.getDeclaredMethod.
     private fun prismSetDefault(tf: Typeface) {
         try {
-            val getDeclared = Class::class.java.getDeclaredMethod(
-                "getDeclaredMethod", String::class.java, arrayOf<Class<*>>()::class.java,
-            )
-            val m = getDeclared.invoke(Typeface::class.java, "setDefault", arrayOf<Class<*>>(Typeface::class.java))
-                as java.lang.reflect.Method
-            m.isAccessible = true
-            m.invoke(null, tf)
+            org.lsposed.hiddenapibypass.HiddenApiBypass.invoke(Typeface::class.java, null, "setDefault", tf)
         } catch (t: Throwable) {
             FileLog.e(t)
         }

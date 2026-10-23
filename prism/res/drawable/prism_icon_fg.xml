@@ -1,26 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Prism mark, Material You style: tonal rounded triangle + three spectrum bars. Minimal and flat. -->
+<!-- Prism mark, paper style: a terracotta sheet with a folded corner and two ink lines -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <!-- spectrum bars -->
-    <path android:pathData="M60,50 L84,41" android:strokeColor="#FFEFB8C8" android:strokeWidth="5" android:strokeLineCap="round" />
-    <path android:pathData="M63,57 L87,57" android:strokeColor="#FFD0BCFF" android:strokeWidth="5" android:strokeLineCap="round" />
-    <path android:pathData="M60,64 L84,73" android:strokeColor="#FF81D4CE" android:strokeWidth="5" android:strokeLineCap="round" />
-    <!-- rounded triangle (round-join stroke in the same colour rounds the corners) -->
-    <path
-        android:pathData="M45,35 L28,71 L62,71 Z"
-        android:strokeColor="#FFD0BCFF"
-        android:strokeWidth="7"
-        android:strokeLineJoin="round">
-        <aapt:attr name="android:fillColor">
-            <gradient android:startX="30" android:startY="34" android:endX="62" android:endY="72" android:type="linear">
-                <item android:offset="0" android:color="#FFEADDFF" />
-                <item android:offset="1" android:color="#FFD0BCFF" />
-            </gradient>
-        </aapt:attr>
-    </path>
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M36,26 H60 L76,42 V82 H36 Z" android:fillColor="#FFB5532F" android:strokeColor="#FFB5532F" android:strokeWidth="3" android:strokeLineJoin="round" />
+    <path android:pathData="M60,26 V42 H76 Z" android:fillColor="#FF8E3E22" android:strokeColor="#FF8E3E22" android:strokeWidth="3" android:strokeLineJoin="round" />
+    <path android:pathData="M44,56 H68 M44,66 H62" android:strokeColor="#FFF6EFE0" android:strokeWidth="4" android:strokeLineCap="round" />
 </vector>

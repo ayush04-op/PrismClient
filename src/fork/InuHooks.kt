@@ -60,6 +60,7 @@ object InuHooks {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             FontHelper.installGlobal()
         }
+        org.telegram.messenger.AndroidUtilities.runOnUIThread({ desu.inugram.prism.PrismTheme.applyDefaultOnce() }, 1500)
         syncDoubleTapDelay()
         syncAnimationSpeed()
         syncChatInputRowHeight()
