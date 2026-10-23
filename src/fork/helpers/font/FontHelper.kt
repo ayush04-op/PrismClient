@@ -209,6 +209,9 @@ object FontHelper {
         AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM_ITALIC -> 500 to true
         "fonts/ritalic.ttf" -> 400 to true
         "fonts/rcondensedbold.ttf" -> 700 to false
+        "fonts/rmono.ttf", "fonts/rmono_var.ttf" -> 400 to false
+        "fonts/mw_bold.ttf" -> 700 to false
+        "fonts/mw_bolditalic.ttf" -> 700 to true
         else -> null
     }
 

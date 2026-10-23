@@ -253,10 +253,10 @@ object InuConfig {
     val DISABLE_ROUNDING = BoolItem("disable_rounding", false)
 
     @JvmField
-    val MATERIAL3_SWITCHES = BoolItem("material3_switches", false)
+    val MATERIAL3_SWITCHES = BoolItem("material3_switches", true)
 
     @JvmField
-    val MATERIAL3_SLIDERS = BoolItem("material3_sliders", false)
+    val MATERIAL3_SLIDERS = BoolItem("material3_sliders", true)
 
     @JvmField
     val MATERIAL3_FABS = BoolItem("material3_fabs", true)
@@ -278,7 +278,7 @@ object InuConfig {
     val MATERIAL_PROFILE_ACTIONS = BoolItem("material_profile_actions", false)
 
     @JvmField
-    val M3_NAVIGATION_ANIMATION = BoolItem("m3_navigation_animation", false)
+    val M3_NAVIGATION_ANIMATION = BoolItem("m3_navigation_animation", true)
 
     @JvmField
     val MD3_PLAYER = BoolItem("md3_player", false)

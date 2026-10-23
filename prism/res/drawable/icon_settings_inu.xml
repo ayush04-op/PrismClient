@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Prism mark as a single-colour glyph (tinted by the host UI) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-    <path android:pathData="M6,3 H14 L19,8 V21 H6 Z M8.5,12 H16.5 V13.6 H8.5 Z M8.5,15.5 H14.5 V17.1 H8.5 Z"
+    <path android:pathData="M3,7 Q3,5 5,5 H19 Q21,5 21,7 V17 Q21,19 19,19 H5 Q3,19 3,17 Z M5,7.4 V16.6 H19 V7.4 Z"
         android:fillType="evenOdd" android:fillColor="#FFFFFFFF" />
+    <path android:pathData="M4.5,7.5 L12,13 L19.5,7.5" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.6" android:strokeLineCap="round" android:strokeLineJoin="round" />
 </vector>

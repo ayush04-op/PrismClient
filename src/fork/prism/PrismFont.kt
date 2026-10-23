@@ -16,7 +16,7 @@ object PrismFont {
     private const val PREFS = "prism"
     private const val FAMILY = "Prism Serif"
     private const val MONO_SEEDED = "mono_seeded_v1"
-    private const val SEEDED = "font_seeded_v2"
+    private const val SEEDED = "font_seeded_v3"
 
     @JvmStatic
     fun seedDefault(context: Context) {
@@ -28,6 +28,11 @@ object PrismFont {
                 .orEmpty()
             if (names.isEmpty()) return
 
+            // reinstall cleanly: drop earlier Prism / split Anthropic families so no stale faces linger
+            for (fid in FontLibrary.getCachedRoster().filterIsInstance<FontId.Family>()) {
+                val n = FontLibrary.getFontFamily(fid)?.name ?: continue
+                if (n == FAMILY || n.startsWith("Anthropic Serif", ignoreCase = true)) FontLibrary.removeFamily(fid.id)
+            }
             val cache = File(context.cacheDir, DIR).apply { mkdirs() }
             for (name in names) {
                 val out = File(cache, name)

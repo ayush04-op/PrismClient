@@ -28,7 +28,7 @@ class InuSettingsHeader(context: Context) : LinearLayout(context) {
             GradientDrawable.Orientation.TOP_BOTTOM,
             intArrayOf(0xFFF1E7D0.toInt(), 0xFFEADDBF.toInt()),
         ).apply { cornerRadius = dp(28f).toFloat(); setStroke(dp(1f), 0xFFD9CCB1.toInt()) }
-        setPadding(dp(20f), dp(20f), dp(20f), dp(18f))
+        setPadding(dp(20f), dp(22f), dp(20f), dp(20f))
     }
 
     private val logo = ImageView(context).apply {
@@ -72,7 +72,7 @@ class InuSettingsHeader(context: Context) : LinearLayout(context) {
 
     init {
         orientation = VERTICAL
-        setPadding(dp(14f), dp(8f), dp(14f), dp(10f))
+        setPadding(dp(16f), dp(10f), dp(16f), dp(12f))
 
         val top = LinearLayout(context).apply {
             orientation = HORIZONTAL
