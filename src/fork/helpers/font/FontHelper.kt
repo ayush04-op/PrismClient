@@ -268,11 +268,37 @@ object FontHelper {
 
     // prism: Paint/TextView with no typeface use the native default, which the static swaps above do
     // not touch. Typeface.setDefault is hidden, so reach it through Class.getDeclaredMethod.
+    @Volatile var bypassStatus = "not run"
+
     private fun prismSetDefault(tf: Typeface) {
         try {
             org.lsposed.hiddenapibypass.HiddenApiBypass.invoke(Typeface::class.java, null, "setDefault", tf)
+            bypassStatus = "ok"
         } catch (t: Throwable) {
+            bypassStatus = "failed: ${t.javaClass.simpleName} ${t.message}"
             FileLog.e(t)
+        }
+    }
+
+    /** Plain-text report for the "Font check" row in Prism Settings. */
+    fun diagnose(): String = buildString {
+        val mode = FontConfig.FONT.value
+        append("Android API ").append(Build.VERSION.SDK_INT).append('\n')
+        append("Font mode: ").append(if (mode is FontMode.Custom) "custom" else mode.javaClass.simpleName).append('\n')
+        val fam = (mode as? FontMode.Custom)?.fontId as? FontId.Family
+        val f = fam?.let { FontLibrary.getFontFamily(it) }
+        append("Family: ").append(f?.name ?: "none").append(" (").append(f?.faces?.size ?: 0).append(" faces)\n")
+        append("Mono font set: ").append(FontConfig.MONO_FONT.value.isNotEmpty()).append('\n')
+        append("Safe mode: ").append(desu.inugram.prism.PrismSafe.isSafe()).append('\n')
+        append("setDefault: ").append(bypassStatus).append('\n')
+        val reg = try { resolve(400, false) } catch (_: Throwable) { null }
+        append("Regular resolves: ").append(reg != null).append('\n')
+        val p = TextPaint()
+        append("New paint typeface: ").append(p.typeface?.let { if (it in FontLibrary.handedOut) "Prism" else "other" } ?: "null").append('\n')
+        if (reg != null) {
+            val a = TextPaint().apply { textSize = 100f }.measureText("Design Hide clutter")
+            val b = TextPaint().apply { textSize = 100f; typeface = reg }.measureText("Design Hide clutter")
+            append("Default paint renders as Prism: ").append(Math.abs(a - b) < 0.5f)
         }
     }
 
@@ -298,9 +324,18 @@ object FontHelper {
     // prism: newer Android reports the stock default typeface instead of null for untouched paints
     private fun isUnset(tf: Typeface?): Boolean = tf == null || tf === stockDefault || tf === Typeface.DEFAULT
 
+    // prism: a theme paint still on a non-Prism, non-bold typeface is a regular-weight one we missed
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun needsFont(tf: Typeface?): Boolean {
+        if (isUnset(tf)) return true
+        tf ?: return true
+        if (tf in FontLibrary.handedOut) return false
+        return !tf.isBold && tf.weight < 600
+    }
+
     @JvmStatic
     fun applyDefaultFont(paint: TextPaint?) {
-        if (paint == null || !isUnset(paint.typeface)) return
+        if (paint == null || (paint.typeface != null && paint.typeface in FontLibrary.handedOut)) return
         if (FontConfig.FONT.value !is FontMode.Custom) return
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
         resolve(400, false)?.let { paint.typeface = it }
@@ -327,9 +362,9 @@ object FontHelper {
                 if (!(name.startsWith("chat_") || name.startsWith("dialogs_") || name.startsWith("profile_"))) continue
                 val value = try { field.get(null) } catch (_: Throwable) { null } ?: continue
                 when (value) {
-                    is TextPaint -> if (isUnset(value.typeface)) value.typeface = tf
+                    is TextPaint -> if (needsFont(value.typeface)) value.typeface = tf
                     is Array<*> -> for (item in value) {
-                        if (item is TextPaint && isUnset(item.typeface)) item.typeface = tf
+                        if (item is TextPaint && needsFont(item.typeface)) item.typeface = tf
                     }
                 }
             }

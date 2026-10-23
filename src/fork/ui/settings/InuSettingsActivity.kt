@@ -153,6 +153,7 @@ class InuSettingsActivity : SettingsPageActivity() {
                 null
             )
         )
+        items.add(UItem.asButton(BUTTON_FONT_CHECK, R.drawable.msg_info, LocaleController.getString(R.string.PrismFontCheck), null))
         items.add(UItem.asShadow(LocaleController.getString(R.string.PrismCreatedWith)))
     }
 
@@ -175,6 +176,13 @@ class InuSettingsActivity : SettingsPageActivity() {
                 PrismSafe.leaveSafeMode(ctx)
                 BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.PrismSafeModeLeft)).show()
             }
+            BUTTON_FONT_CHECK -> showDialog(
+                org.telegram.ui.ActionBar.AlertDialog.Builder(ctx)
+                    .setTitle(LocaleController.getString(R.string.PrismFontCheck))
+                    .setMessage(desu.inugram.helpers.font.FontHelper.diagnose())
+                    .setPositiveButton("OK", null)
+                    .create()
+            )
             BUTTON_PAPER -> desu.inugram.prism.PrismTheme.previewPaper(this)
             CAT_APPEARANCE -> presentFragment(AppearanceSettingsActivity())
             CAT_CHATS -> presentFragment(CategoryChatsSettingsActivity())
@@ -197,6 +205,7 @@ class InuSettingsActivity : SettingsPageActivity() {
     }
 
     companion object {
+        private val BUTTON_FONT_CHECK = InuUtils.generateId()
         private val BUTTON_PAPER = InuUtils.generateId()
         private val TOGGLE_GLASS = InuUtils.generateId()
         private val BUTTON_SAFE_MODE = InuUtils.generateId()

@@ -44,6 +44,11 @@ object FontLibrary {
         val wghtMax: Int,
     )
 
+    // prism: every typeface this library hands out, so hooks can tell Prism fonts from system ones
+    val handedOut: MutableSet<Typeface> = java.util.Collections.synchronizedSet(
+        java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Typeface, Boolean>())
+    )
+
     class Family(
         val id: String,
         val dir: File,
@@ -97,6 +102,7 @@ object FontLibrary {
             } else base
 
             cache[cacheKey] = finalTf
+            handedOut.add(finalTf)
             return finalTf
         }
 

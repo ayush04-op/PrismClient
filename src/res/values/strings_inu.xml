@@ -2124,6 +2124,7 @@
     <string name="PrismSafeModeLeft">Extras will be back after you restart Prism.</string>
     <string name="PrismOpenSource">Open source</string>
     <string name="PrismPaperTheme">Paper theme (cream)</string>
+    <string name="PrismFontCheck">Font check</string>
     <string name="PrismTagline">Fast. Fluid. Glass.</string>
     <string name="PrismCreditsNotOfficial">Prism is an unofficial client and is not affiliated with Telegram.</string>
 </resources>
