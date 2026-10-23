@@ -2121,6 +2121,7 @@
     <string name="PrismSafeModeInfo">Prism hit a problem at startup, so the font and glass extras were switched off. Turn them back on, then restart the app.</string>
     <string name="PrismSafeModeLeft">Extras will be back after you restart Prism.</string>
     <string name="PrismOpenSource">Open source</string>
+    <string name="PrismPaperTheme">Paper theme (cream)</string>
     <string name="PrismTagline">Fast. Fluid. Glass.</string>
     <string name="PrismCreditsNotOfficial">Prism is an unofficial client and is not affiliated with Telegram.</string>
 </resources>

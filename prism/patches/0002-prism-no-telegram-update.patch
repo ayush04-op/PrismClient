@@ -1,0 +1,30 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+@@ -6008,6 +6008,14 @@
+ 
+     private boolean firstAppUpdateCheck = true;
+     public void checkAppUpdate(boolean force, Browser.Progress progress) {
++        // Prism: updates come from Prism's own releases, never from Telegram's update service
++        SharedConfig.pendingAppUpdate = null;
++        if (true) {
++            if (progress != null) {
++                progress.end();
++            }
++            return;
++        }
+         if (!ApplicationLoader.isStandaloneBuild() && !ApplicationLoader.isBetaBuild()) {
+             return;
+         }
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/SharedConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/SharedConfig.java
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/SharedConfig.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/SharedConfig.java
+@@ -808,7 +808,7 @@
+         if (updateVersionString == null) {
+             updateVersionString = BuildVars.BUILD_VERSION_STRING;
+         }
+-        if (update.version == null || versionBiggerOrEqual(updateVersionString, update.version)) {
++        if (true || update.version == null || versionBiggerOrEqual(updateVersionString, update.version)) {
+             return false;
+         }
+         pendingAppUpdate = update;

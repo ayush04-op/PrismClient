@@ -298,9 +298,12 @@ object FontHelper {
             .coerceIn(-height * 0.1f, height * 0.1f)
     }
 
+    // prism: newer Android reports the stock default typeface instead of null for untouched paints
+    private fun isUnset(tf: Typeface?): Boolean = tf == null || tf === stockDefault || tf === Typeface.DEFAULT
+
     @JvmStatic
     fun applyDefaultFont(paint: TextPaint?) {
-        if (paint == null || paint.typeface != null) return
+        if (paint == null || !isUnset(paint.typeface)) return
         if (FontConfig.FONT.value !is FontMode.Custom) return
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
         resolve(400, false)?.let { paint.typeface = it }
@@ -325,11 +328,11 @@ object FontHelper {
                 val name = field.name
                 if (!name.endsWith("Paint")) continue
                 if (!(name.startsWith("chat_") || name.startsWith("dialogs_") || name.startsWith("profile_"))) continue
-                val value = field.get(null) ?: continue
+                val value = try { field.get(null) } catch (_: Throwable) { null } ?: continue
                 when (value) {
-                    is TextPaint -> if (value.typeface == null) value.typeface = tf
+                    is TextPaint -> if (isUnset(value.typeface)) value.typeface = tf
                     is Array<*> -> for (item in value) {
-                        if (item is TextPaint && item.typeface == null) item.typeface = tf
+                        if (item is TextPaint && isUnset(item.typeface)) item.typeface = tf
                     }
                 }
             }

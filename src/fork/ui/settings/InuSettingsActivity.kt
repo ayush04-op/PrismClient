@@ -101,6 +101,7 @@ class InuSettingsActivity : SettingsPageActivity() {
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.PrismSectionLook)))
         items.add(mkSubPageButton(CAT_APPEARANCE, R.drawable.msg_palette, LocaleController.getString(R.string.InuCategoryAppearance)))
+        items.add(mkSubPageButton(BUTTON_PAPER, R.drawable.msg_palette, LocaleController.getString(R.string.PrismPaperTheme)))
         items.add(mkSubPageButton(CAT_MAIN_SCREEN, R.drawable.msg_home_solar, LocaleController.getString(R.string.InuMainScreen)))
         items.add(mkSubPageButton(CAT_CHATS, R.drawable.msg_viewchats, LocaleController.getString(R.string.InuCategoryChats)))
         items.add(mkSubPageButton(CAT_ANNOYANCES, R.drawable.inu_tabler_shield_cancel, LocaleController.getString(R.string.InuAnnoyances)))
@@ -171,6 +172,7 @@ class InuSettingsActivity : SettingsPageActivity() {
                 PrismSafe.leaveSafeMode(ctx)
                 BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.PrismSafeModeLeft)).show()
             }
+            BUTTON_PAPER -> desu.inugram.prism.PrismTheme.previewPaper(this)
             CAT_APPEARANCE -> presentFragment(AppearanceSettingsActivity())
             CAT_CHATS -> presentFragment(CategoryChatsSettingsActivity())
             CAT_AI -> presentFragment(AiSettingsActivity())
@@ -192,6 +194,7 @@ class InuSettingsActivity : SettingsPageActivity() {
     }
 
     companion object {
+        private val BUTTON_PAPER = InuUtils.generateId()
         private val TOGGLE_GLASS = InuUtils.generateId()
         private val BUTTON_SAFE_MODE = InuUtils.generateId()
         private val CAT_APPEARANCE = InuUtils.generateId()
