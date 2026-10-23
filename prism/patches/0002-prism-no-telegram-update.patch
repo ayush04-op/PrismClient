@@ -19,6 +19,24 @@ diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/T
 diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/SharedConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/SharedConfig.java
 --- a/TMessagesProj/src/main/java/org/telegram/messenger/SharedConfig.java
 +++ b/TMessagesProj/src/main/java/org/telegram/messenger/SharedConfig.java
+@@ -563,7 +563,7 @@
+                     byte[] arr = Base64.decode(update, Base64.DEFAULT);
+                     if (arr != null) {
+                         SerializedData data = new SerializedData(arr);
+-                        pendingAppUpdate = (TLRPC.TL_help_appUpdate) TLRPC.help_AppUpdate.TLdeserialize(data, data.readInt32(false), false);
++                        pendingAppUpdate = null; // Prism: never restore a saved Telegram update
+                         data.cleanup();
+                     }
+                 }
+@@ -778,7 +778,7 @@
+     }
+ 
+     public static boolean isAppUpdateAvailable() {
+-        if (pendingAppUpdate == null || pendingAppUpdate.document == null || !ApplicationLoader.isStandaloneBuild()) {
++        if (true || pendingAppUpdate == null || pendingAppUpdate.document == null || !ApplicationLoader.isStandaloneBuild()) {
+             return false;
+         }
+         int currentVersion;
 @@ -808,7 +808,7 @@
          if (updateVersionString == null) {
              updateVersionString = BuildVars.BUILD_VERSION_STRING;
