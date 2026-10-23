@@ -19,11 +19,13 @@ class ExpandableBoolGroup(
         val labelRes: Int,
         val config: InuConfig.BoolItem,
         val id: Int = InuUtils.generateId(),
+        val locked: Boolean = false,
     )
 
     var expanded = false
 
     fun addTo(items: ArrayList<UItem>, onChange: (options: List<Option>) -> Unit) {
+        for (o in options) if (o.locked && !o.config.value) o.config.value = true
         val checkedCount = options.count { it.config.value }
         val total = options.size
         val isChecked = checkedCount > 0
@@ -35,7 +37,7 @@ class ExpandableBoolGroup(
                     val enable = !isChecked
                     val changed = arrayListOf<Option>()
                     for (opt in options) {
-                        if (opt.config.value != enable) {
+                        if (!opt.locked && opt.config.value != enable) {
                             changed.add(opt)
                             opt.config.value = enable
                         }
@@ -73,6 +75,7 @@ class ExpandableBoolGroup(
             return true
         }
         val opt = options.firstOrNull { it.id == item.id } ?: return false
+        if (opt.locked) return true // always on
         val new = opt.config.toggle()
         (view as? CheckBoxCell)?.setChecked(new, true)
         onChange(opt)

@@ -23,15 +23,15 @@ class Material3SettingsActivity : SettingsPageActivity() {
         ExpandableBoolGroup(
             LocaleController.getString(R.string.InuMaterial3),
             listOf(
-                ExpandableBoolGroup.Option(R.string.InuMaterial3Switches, InuConfig.MATERIAL3_SWITCHES, TOGGLE_MATERIAL3_SWITCHES),
-                ExpandableBoolGroup.Option(R.string.InuMaterial3Sliders, InuConfig.MATERIAL3_SLIDERS, TOGGLE_MATERIAL3_SLIDERS),
-                ExpandableBoolGroup.Option(R.string.InuMaterial3Fabs, InuConfig.MATERIAL3_FABS, TOGGLE_MATERIAL3_FABS),
+                ExpandableBoolGroup.Option(R.string.InuMaterial3Switches, InuConfig.MATERIAL3_SWITCHES, TOGGLE_MATERIAL3_SWITCHES, locked = true),
+                ExpandableBoolGroup.Option(R.string.InuMaterial3Sliders, InuConfig.MATERIAL3_SLIDERS, TOGGLE_MATERIAL3_SLIDERS, locked = true),
+                ExpandableBoolGroup.Option(R.string.InuMaterial3Fabs, InuConfig.MATERIAL3_FABS, TOGGLE_MATERIAL3_FABS, locked = true),
                 ExpandableBoolGroup.Option(R.string.InuMaterial3Sections, InuConfig.M3_SECTIONS_STYLE, TOGGLE_M3_SECTIONS_STYLE),
                 ExpandableBoolGroup.Option(R.string.InuMaterial3AccentIcons, InuConfig.M3_ACCENT_ICONS, TOGGLE_M3_ACCENT_ICONS),
                 ExpandableBoolGroup.Option(R.string.InuMaterial3Avatars, InuConfig.MATERIAL3_AVATARS, TOGGLE_MATERIAL3_AVATARS),
                 ExpandableBoolGroup.Option(R.string.InuMaterial3BottomTabs, InuConfig.M3_BOTTOM_TABS, TOGGLE_M3_BOTTOM_TABS),
                 ExpandableBoolGroup.Option(R.string.InuMaterialProfileActions, InuConfig.MATERIAL_PROFILE_ACTIONS, TOGGLE_MATERIAL_PROFILE_ACTIONS),
-                ExpandableBoolGroup.Option(R.string.InuMaterial3NavigationAnimation, InuConfig.M3_NAVIGATION_ANIMATION, TOGGLE_M3_NAVIGATION_ANIMATION),
+                ExpandableBoolGroup.Option(R.string.InuMaterial3NavigationAnimation, InuConfig.M3_NAVIGATION_ANIMATION, TOGGLE_M3_NAVIGATION_ANIMATION, locked = true),
                 ExpandableBoolGroup.Option(R.string.InuMaterial3Player, InuConfig.MD3_PLAYER, TOGGLE_MD3_PLAYER),
             ),
             sectionId = SECTION_MATERIAL3,
@@ -39,17 +39,6 @@ class Material3SettingsActivity : SettingsPageActivity() {
     }
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            items.add(
-                UItem.asButton(
-                    BUTTON_MONET_THEME,
-                    LocaleController.getString(R.string.InuMonetTheme),
-                    monetThemeModeLabel(MonetHelper.getThemeMode()),
-                )
-            )
-            items.add(UItem.asShadow(null))
-        }
-
         m3Group.addTo(items) { changed ->
             if (changed.any { it.id == TOGGLE_M3_BOTTOM_TABS } && InuConfig.M3_BOTTOM_TABS.value && InuConfig.IOS_BOTTOM_NAVIGATION_BAR.value) {
                 InuConfig.IOS_BOTTOM_NAVIGATION_BAR.value = false

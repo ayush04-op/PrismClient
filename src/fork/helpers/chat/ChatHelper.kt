@@ -2290,7 +2290,7 @@ object ChatHelper {
     fun maybeHandleFileClick(fragment: BaseFragment, message: MessageObject): Boolean {
         val name = message.documentName ?: return false
         val kind = when {
-            name.endsWith(SettingsBackupHelper.FILENAME_SUFFIX) -> FileKind.SETTINGS
+            name.endsWith(SettingsBackupHelper.FILENAME_SUFFIX) || name.endsWith(".entiny-settings.json") -> FileKind.SETTINGS
             name.endsWith(".inu.js", ignoreCase = true) -> FileKind.PLUGIN
             FontImportHelper.isFontFileName(name) -> FileKind.FONT
             else -> return false

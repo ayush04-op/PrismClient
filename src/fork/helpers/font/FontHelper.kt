@@ -289,6 +289,7 @@ object FontHelper {
         val f = fam?.let { FontLibrary.getFontFamily(it) }
         append("Family: ").append(f?.name ?: "none").append(" (").append(f?.faces?.size ?: 0).append(" faces)\n")
         append("Mono font set: ").append(FontConfig.MONO_FONT.value.isNotEmpty()).append('\n')
+        append("Theme: ").append(Theme.getCurrentTheme()?.name).append(" dark=").append(Theme.isCurrentThemeDark()).append(" autoNight=").append(Theme.selectedAutoNightType).append('\n')
         append("Safe mode: ").append(desu.inugram.prism.PrismSafe.isSafe()).append('\n')
         append("setDefault: ").append(bypassStatus).append('\n')
         val reg = try { resolve(400, false) } catch (_: Throwable) { null }

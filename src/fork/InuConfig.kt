@@ -1306,7 +1306,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val WIDE_CHANNEL_POSTS_INSET = FloatItem("wide_channel_posts_inset", 8.0f)
 
     @JvmField
-    val REDUCE_MENU_MOTION = BoolItem("reduce_menu_motion", true)
+    val REDUCE_MENU_MOTION = BoolItem("reduce_menu_motion", false)
 
     @JvmField
     val PROFILE_PHOTO_GRADIENT_FADE = BoolItem("profile_photo_gradient_fade", false)
@@ -1342,10 +1342,10 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val CHAT_INPUT_TEXT_SIZE = IntItem("chat_input_text_size", 18)
 
     @JvmField
-    val IOS_INPUT_BUTTON_PLACEMENT = BoolItem("ios_button_placement", false)
+    val IOS_INPUT_BUTTON_PLACEMENT = BoolItem("ios_button_placement", true)
 
     @JvmField
-    val IOS_INPUT_APPEARANCE = BoolItem("ios_input_appearance", false)
+    val IOS_INPUT_APPEARANCE = BoolItem("ios_input_appearance", true)
 
     @JvmField
     val COMPACT_INPUT_SIZE = BoolItem("compact_input_size", false)
@@ -1508,7 +1508,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val REPEAT_MODE = RepeatModeItem()
 
     @JvmField
-    val ANIMATION_SPEED = FloatItem("animation_speed", 1.0f)
+    val ANIMATION_SPEED = FloatItem("animation_speed", 1.25f)
 
     class IconReplacementItem : IntItem("icon_replacement", OFF) {
         companion object {
@@ -1532,7 +1532,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val CENTER_TITLE_RIGHT_AVATAR = BoolItem("center_title_right_avatar", false)
 
     @JvmField
-    val IOS_BOTTOM_NAVIGATION_BAR = BoolItem("ios_bottom_navigation_bar", false)
+    val IOS_BOTTOM_NAVIGATION_BAR = BoolItem("ios_bottom_navigation_bar", true)
 
     @JvmField
     val IOS_CHATS_TAB_RETURNS_TO_FIRST_FOLDER = BoolItem("ios_chats_tab_returns_to_first_folder", false)
@@ -1855,7 +1855,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val CLOUD_SYNC_ACCOUNT_ID = LongItem("cloud_sync_account_id", 0L, exportable = false)
 
     @JvmField
-    val CLOUD_SYNC_AUTO = BoolItem("cloud_sync_auto", false)
+    val CLOUD_SYNC_AUTO = BoolItem("cloud_sync_auto", true)
 
     @JvmField
     val CLOUD_SYNC_AUTO_USER_SET = BoolItem("cloud_sync_auto_user_set", false, exportable = false)

@@ -7,6 +7,7 @@ import desu.inugram.InuConfig
 import desu.inugram.SearchRegistry
 import desu.inugram.helpers.InuUtils
 import desu.inugram.prism.PrismSafe
+import desu.inugram.prism.PrismUpdater
 import org.telegram.messenger.LiteMode
 import org.telegram.messenger.ApplicationLoader
 import org.telegram.messenger.LocaleController
@@ -31,6 +32,8 @@ class InuSettingsActivity : SettingsPageActivity() {
         return super.createView(context).also {
             listView.overScrollMode = View.OVER_SCROLL_NEVER
             listView.isVerticalScrollBarEnabled = false
+
+            if (updateValue == null) PrismUpdater.check(context) { _ -> updateValue = PrismUpdater.status; if (!isSearchOpen) listView.adapter.update(true) }
 
             val sAdapter = object : ProfileActivity.SearchAdapter(this, context) {
                 override fun notifyDataSetChanged() {
@@ -68,6 +71,40 @@ class InuSettingsActivity : SettingsPageActivity() {
     private fun createHeaderView(): View {
         val context = context ?: return View(org.telegram.messenger.ApplicationLoader.applicationContext)
         return InuSettingsHeader(context)
+    }
+
+    private var updateValue: String? = null
+
+    private fun checkForUpdate(ctx: Context) {
+        updateValue = "Checking…"; listView.adapter.update(true)
+        PrismUpdater.check(ctx) { info ->
+            updateValue = PrismUpdater.status; listView.adapter.update(true)
+            if (info != null) {
+                val mb = if (info.size > 0) " (" + (info.size / 1048576) + " MB)" else ""
+                showDialog(
+                    org.telegram.ui.ActionBar.AlertDialog.Builder(ctx)
+                        .setTitle("Prism build ${info.build} is available")
+                        .setMessage("Download and install the update$mb? Your chats and settings stay as they are.")
+                        .setPositiveButton("Update") { _, _ -> downloadUpdate(ctx, info) }
+                        .setNegativeButton("Later", null)
+                        .create()
+                )
+            }
+        }
+    }
+
+    private fun downloadUpdate(ctx: Context, info: PrismUpdater.Info) {
+        PrismUpdater.download(ctx, info, { p ->
+            updateValue = "Downloading $p%"; listView.adapter.update(true)
+        }) { file ->
+            if (file == null) {
+                updateValue = "Download failed"; listView.adapter.update(true)
+            } else {
+                updateValue = "Installing…"; listView.adapter.update(true)
+                val act = parentActivity
+                if (act != null) desu.inugram.helpers.update.ApkInstaller.installFromFile(act, file)
+            }
+        }
     }
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
@@ -128,6 +165,19 @@ class InuSettingsActivity : SettingsPageActivity() {
         items.add(mkSubPageButton(CAT_SYSTEM, R.drawable.inu_tabler_device_floppy, LocaleController.getString(R.string.InuCategoryBackup)))
         items.add(UItem.asShadow(null))
 
+        items.add(UItem.asHeader(LocaleController.getString(R.string.PrismUpdates)))
+        val ctxU = context
+        val cur = if (ctxU != null) PrismUpdater.currentBuild(ctxU) else 0
+        items.add(
+            UItem.asButton(
+                BUTTON_UPDATE,
+                R.drawable.msg_download,
+                LocaleController.getString(R.string.PrismCheckUpdates),
+                updateValue ?: (if (cur > 0) "Build $cur" else ""),
+            )
+        )
+        items.add(UItem.asShadow(null))
+
         items.add(UItem.asHeader(LocaleController.getString(R.string.PrismSectionAbout)))
         items.add(
             UItem.asButton(
@@ -176,6 +226,7 @@ class InuSettingsActivity : SettingsPageActivity() {
                 PrismSafe.leaveSafeMode(ctx)
                 BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.PrismSafeModeLeft)).show()
             }
+            BUTTON_UPDATE -> checkForUpdate(ctx)
             BUTTON_FONT_CHECK -> showDialog(
                 org.telegram.ui.ActionBar.AlertDialog.Builder(ctx)
                     .setTitle(LocaleController.getString(R.string.PrismFontCheck))
@@ -205,6 +256,7 @@ class InuSettingsActivity : SettingsPageActivity() {
     }
 
     companion object {
+        private val BUTTON_UPDATE = InuUtils.generateId()
         private val BUTTON_FONT_CHECK = InuUtils.generateId()
         private val BUTTON_PAPER = InuUtils.generateId()
         private val TOGGLE_GLASS = InuUtils.generateId()

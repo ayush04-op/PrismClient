@@ -230,7 +230,7 @@ object SettingsBackupHelper {
         }.show()
     }
 
-    const val FILENAME_SUFFIX = ".entiny-settings.json"
+    const val FILENAME_SUFFIX = ".prism-settings.json"
 
     fun startImportFromFile(fragment: BaseFragment, file: File) {
         Utilities.globalQueue.postRunnable {

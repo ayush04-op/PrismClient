@@ -49,7 +49,7 @@ import java.util.TimeZone
 
 object ChatExportHelper {
 
-    const val FILENAME_SUFFIX = ".entiny-chat.json"
+    const val FILENAME_SUFFIX = ".prism-chat.json"
     private const val PAGE_SIZE = 100
     private const val MAX_CONCURRENT_DOWNLOADS = 6
     private const val PREVIEW_MAX_SIDE = 640
@@ -812,7 +812,7 @@ object ChatExportHelper {
 
     private fun buildJson(session: Session, controller: MessagesController, title: String): String {
         val root = JSONObject()
-        root.put("entiny_export", 1)
+        root.put("prism_export", 1)
         root.put("type", "chat_export")
         root.put("dialog_id", session.dialogId)
         root.put("title", title)

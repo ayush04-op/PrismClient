@@ -15,6 +15,7 @@ object PrismLogin {
      */
     @JvmStatic
     fun decorate(context: Context, page: View, card: ViewGroup) {
+        PrismTheme.ensurePaper()
         // Glass login is off by default: it is the one Prism piece never confirmed on a real device.
         // Set pref `prism`/`login_glass` to true to try it.
         if (PrismSafe.isSafe()) return
