@@ -117,7 +117,6 @@ class InuSettingsActivity : SettingsPageActivity() {
         items.add(UItem.asShadow(null))
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.PrismSectionSmart)))
-        items.add(mkSubPageButton(CAT_AI, R.drawable.inu_tabler_sparkles, LocaleController.getString(R.string.InuAiCompose)))
         items.add(mkSubPageButton(CAT_TRANSLATOR, R.drawable.msg_translate, LocaleController.getString(R.string.InuTranslator)))
         items.add(UItem.asShadow(null))
 

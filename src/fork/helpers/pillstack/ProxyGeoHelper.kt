@@ -40,6 +40,7 @@ object ProxyGeoHelper {
         val address = InetAddress.getByName(host)
         if (address.isLoopbackAddress || address.isSiteLocalAddress || address.isLinkLocalAddress || address.isAnyLocalAddress) return null
         val ip = address.hostAddress ?: return null
+        if (true) return null // Prism: never send proxy addresses to third-party geo services
         countryIs(ip) ?: ipWho(ip)
     }.getOrNull()
 

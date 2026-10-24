@@ -61,7 +61,8 @@ object ProfileSettingsHelper {
         val rows = ArrayList<UItem>(items.size - from)
         for (i in from until items.size) {
             val it = items[i]
-            if (it.viewType != UniversalAdapter.VIEW_TYPE_SHADOW && it.viewType != UniversalAdapter.VIEW_TYPE_HEADER)
+            if (it.viewType != UniversalAdapter.VIEW_TYPE_SHADOW && it.viewType != UniversalAdapter.VIEW_TYPE_HEADER &&
+                it.id != 18 && it.id != 23) // Prism: Telegram FAQ and Features rows removed
                 rows.add(it)
         }
         val customized = InuConfig.PROFILE_SETTINGS_ROWS.isCustomized()

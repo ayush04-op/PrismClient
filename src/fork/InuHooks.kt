@@ -92,6 +92,14 @@ object InuHooks {
                 InuConfig.DISABLE_SCRIM_BLUR.value = false
             }
         } catch (_: Throwable) {}
+        try {
+            val pc = context.getSharedPreferences("prism", Context.MODE_PRIVATE)
+            if (!pc.getBoolean("clean_v1", false)) {
+                pc.edit().putBoolean("clean_v1", true).apply()
+                InuConfig.HIDE_SPONSORED_MESSAGES.value = true
+                InuConfig.HIDE_PROXY_SPONSOR_CHAT.value = true
+            }
+        } catch (_: Throwable) {}
         syncDoubleTapDelay()
         syncAnimationSpeed()
         syncChatInputRowHeight()

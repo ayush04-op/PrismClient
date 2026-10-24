@@ -41,6 +41,8 @@ object GoldPrice {
     }
 
     fun fetch(callback: Utilities.Callback<BigDecimal?>) {
+        // Prism: no live price lookups
+        if (true) { AndroidUtilities.runOnUIThread { callback.run(getCached()) }; return }
         val cached = getCached()
         if (cached != null && !isStale()) {
             AndroidUtilities.runOnUIThread { callback.run(cached) }

@@ -66,6 +66,8 @@ object ExchangeRates {
     }
 
     fun fetch(callback: Utilities.Callback<State?>) {
+        // Prism: no live price lookups
+        if (true) { AndroidUtilities.runOnUIThread { callback.run(getCached()) }; return }
         val cached = getCached()
         if (cached != null && !isStale()) {
             AndroidUtilities.runOnUIThread { callback.run(cached) }

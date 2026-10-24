@@ -1946,7 +1946,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
 
     // entiny: where the marketplace looks; kept so a test catalog can stand in for the real one
     @JvmField
-    val MARKET_INDEX_URL = StringItem("market_index_url", "https://raw.githubusercontent.com/entinyGram/plugins/main/index.json", exportable = false)
+    val MARKET_INDEX_URL = StringItem("market_index_url", "", exportable = false)
 
     @JvmField
     val ACCOUNT_ORDER = StringItem("account_order", "", exportable = false)
