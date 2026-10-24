@@ -34,7 +34,6 @@ class PrismUpdateActivity : SettingsPageActivity() {
 
     override fun createView(context: Context): View {
         return super.createView(context).also {
-            listView.overScrollMode = View.OVER_SCROLL_NEVER
             val pending = PrismUpdater.downloaded
             state = when {
                 pending != null && pending.exists() && PrismUpdater.latest != null -> State.READY

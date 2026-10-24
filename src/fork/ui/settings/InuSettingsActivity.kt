@@ -30,7 +30,6 @@ class InuSettingsActivity : SettingsPageActivity() {
 
     override fun createView(context: Context): View {
         return super.createView(context).also {
-            listView.overScrollMode = View.OVER_SCROLL_NEVER
             listView.isVerticalScrollBarEnabled = false
 
             if (updateValue == null) PrismUpdater.check(context) { _ -> updateValue = PrismUpdater.status; if (!isSearchOpen) listView.adapter.update(false) }
