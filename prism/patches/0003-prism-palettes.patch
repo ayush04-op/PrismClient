@@ -1,0 +1,18 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DefaultThemesPreviewCell.java b/TMessagesProj/src/main/java/org/telegram/ui/DefaultThemesPreviewCell.java
+index 1d516dfe..883bf77e 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DefaultThemesPreviewCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DefaultThemesPreviewCell.java
+@@ -70,6 +70,13 @@ public class DefaultThemesPreviewCell extends LinearLayout {
+         setOrientation(LinearLayout.VERTICAL);
+         FrameLayout frameLayout = new FrameLayout(context);
+         addView(frameLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++        // prism: server chat themes are replaced by Prism's own Paper palettes
++        if (type == ThemeActivity.THEME_TYPE_BASIC || type == ThemeActivity.THEME_TYPE_THEMES_BROWSER) {
++            frameLayout.setVisibility(View.GONE);
++        }
++        if (type == ThemeActivity.THEME_TYPE_BASIC) {
++            addView(desu.inugram.prism.PrismPalettes.createRow(context), LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++        }
+ 
+ 
+         adapter = new ChatThemeBottomSheet.Adapter(parentFragment.getCurrentAccount(), null, currentType == ThemeActivity.THEME_TYPE_BASIC || currentType == TYPE_CUSTOM_LIST ? ThemeSmallPreviewView.TYPE_DEFAULT : ThemeSmallPreviewView.TYPE_GRID);
