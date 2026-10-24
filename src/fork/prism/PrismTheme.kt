@@ -60,13 +60,13 @@ object PrismTheme {
         pruneThemes()
     }
 
-    /** Keeps only Paper / Paper Dark in the theme lists (stock and other themes are hidden). */
+    /** Hides the built-in themes; Paper, Paper Dark and anything the user imports or creates stay. */
     @JvmStatic
     fun pruneThemes() {
         try {
             val l = Theme.themes ?: return
             if (l.none { it.name != null && it.name.startsWith("Prism Paper") }) return
-            l.removeAll { it.name == null || !it.name.startsWith("Prism Paper") }
+            l.removeAll { it.pathToFile == null && (it.name == null || !it.name.startsWith("Prism Paper")) } // stock themes only; imported/created ones stay
         } catch (t: Throwable) { FileLog.e(t) }
     }
 
