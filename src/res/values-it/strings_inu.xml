@@ -15,8 +15,6 @@
     <string name="InuSendToDiscussWithoutJoinInfo">Salta il controllo di appartenenza solo lato client per i gruppi di discussione</string>
     <string name="InuChatSnowflakes">Fiocchi di neve nelle chat</string>
     <string name="InuActionBarSnowflakes">Fiocchi di neve nell\'intestazione</string>
-    <string name="InuIosStyle">Stile iOS</string>
-    <string name="InuIosSettings">Impostazioni stile iOS</string>
     <string name="InuIosSettingsInfo">Titolo centrato, barra inferiore, campo di input, intestazione della chat e liquid glass.</string>
     <string name="InuMessageDesign">Aspetto dei messaggi</string>
     <string name="InuMessageDesignInfo">Fumetti, sticker, reazioni, post dei canali e dimensione del testo di input.</string>

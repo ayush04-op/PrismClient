@@ -68,69 +68,34 @@ class FontsSettingsActivity : SettingsPageActivity(), NotificationCenter.Notific
                 FontLibrary.invalidateEditorRoster()
             }
         }
-        listView.allowReorder(true)
         return view
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
         val ctx = context ?: return
-        items.add(
-            UItem.asButton(
-                BUTTON_APP_FONT, LocaleController.getString(R.string.InuAppFont), when (val mode = FontConfig.FONT.value) {
-                    FontMode.System -> LocaleController.getString(R.string.InuFontSystem)
-                    FontMode.Bundled -> LocaleController.getString(R.string.InuFontDefault)
-                    is FontMode.Custom -> FontLibrary.getFontName(mode.fontId)
-                }
-            )
-        )
-        items.add(UItem.asShadow(LocaleController.getString(R.string.InuAppFontInfo)))
-
-        items.add(UItem.asHeader(LocaleController.getString(R.string.InuAvailableFonts)))
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            items.add(
-                mkTwoLineCheckItem(
-                    BUTTON_INCLUDE_SYSTEM,
-                    R.string.InuFontIncludeSystem,
-                    R.string.InuFontIncludeSystemInfo,
-                    FontConfig.FONT_INCLUDE_SYSTEM.value,
-                )
-            )
-        }
-
-        reorderSectionId = adapter.reorderSectionStart()
+        items.add(UItem.asHeader(LocaleController.getString(R.string.InuAppFont)))
+        val active = (FontConfig.FONT.value as? FontMode.Custom)?.fontId?.token()
         for (font in FontLibrary.getCachedRoster()) {
-            val token = font.token()
-            val row = rows.getOrPut(token) {
-                FontRow(ctx).also { r ->
-                    r.setOnReorderTouchListener { _, event ->
-                        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                            val holder = listView.findContainingViewHolder(r)
-                                ?: return@setOnReorderTouchListener false
-                            listView.itemTouchHelper.startDrag(holder)
-                        }
-                        false
-                    }
-                }
-            }
-            row.bind(font, FontLibrary.isHidden(font))
-            items.add(UItem.asCustom(row, row.heightDp).apply {
-                id = token.hashCode()
-                `object` = token
-            })
+            if (font !is FontId.Family) continue
+            val name = FontLibrary.getFontName(font)
+            if (name == desu.inugram.prism.PrismFont.MONO_FAMILY) continue
+            items.add(
+                UItem.asButton(
+                    font.token().hashCode(), name,
+                    if (font.token() == active) LocaleController.getString(R.string.PrismFontActive) else ""
+                ).apply { `object` = font.token() }
+            )
         }
-        adapter.reorderSectionEnd()
         if (importing) {
             val row = skeletonRow ?: FontImportSkeletonRow(ctx).also { skeletonRow = it }
             items.add(UItem.asCustom(row, 58).apply { id = BUTTON_IMPORT_PROGRESS })
         }
-        items.add(UItem.asShadow(LocaleController.getString(R.string.InuFontsInfo)))
-
+        items.add(UItem.asShadow(LocaleController.getString(R.string.PrismFontsInfo)))
         items.add(
             UItem.asButton(BUTTON_ADD, R.drawable.msg_add, LocaleController.getString(R.string.InuFontAdd))
                 .setEnabled(!importing)
         )
-        items.add(UItem.asButton(BUTTON_RESET, R.drawable.msg_reset, LocaleController.getString(R.string.InuFontResetOrder)))
         items.add(UItem.asShadow(null))
     }
 
@@ -154,7 +119,11 @@ class FontsSettingsActivity : SettingsPageActivity(), NotificationCenter.Notific
                 val token = item.`object` as? String ?: return
                 val font = FontId.parse(token)
                 when {
-                    rows[token]?.isInEye(x) == true -> setHidden(font, !FontLibrary.isHidden(font))
+                    font is FontId.Family -> {
+                        FontConfig.FONT.value = FontMode.Custom(font, FontHelper.getActiveFallbackIds())
+                        listView.adapter.update(true)
+                        showRestartBulletin()
+                    }
                     else -> showFontMenu(font, view)
                 }
             }

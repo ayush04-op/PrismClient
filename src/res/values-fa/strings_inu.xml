@@ -5,7 +5,6 @@
     <string name="InuSendToDiscussWithoutJoin">نوشتن در گروه‌های گفتگو بدون عضویت</string>
     <string name="InuChatSnowflakes">دانه‌های برف در گفتگوها</string>
     <string name="InuSendToDiscussWithoutJoinInfo">رد کردن بررسی عضویت سمت برنامه برای گروه‌های گفتگو</string>
-    <string name="InuIosStyle">سبک iOS</string>
     <string name="InuConfirmBeforeSending">تأیید پیش از ارسال</string>
     <string name="InuConfirmSendVoice">تأیید پیش از ارسال پیام صوتی</string>
     <string name="InuConfirmSendSticker">تأیید پیش از ارسال استیکر</string>
@@ -1832,7 +1831,6 @@
     <string name="InuDrawerMenuReset">بازنشانی منو</string>
     <string name="InuHideTitle">پنهان کردن عنوان</string>
     <string name="InuInterfaceElements">عناصر رابط</string>
-    <string name="InuIosSettings">تنظیمات iOS</string>
     <string name="InuIosSettingsInfo">وسط‌چین کردن عنوان‌ها، نوار پایین، فیلد ورودی، سربرگ گفتگو و liquid glass.</string>
     <string name="InuLinkedChannel">کانال پیوندشده</string>
     <string name="InuLinkedChat">گروه / کانال پیوندشده</string>

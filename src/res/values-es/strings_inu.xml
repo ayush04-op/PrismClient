@@ -15,8 +15,6 @@
     <string name="InuSendToDiscussWithoutJoinInfo">Omite la comprobación de membresía solo del cliente en los grupos de discusión</string>
     <string name="InuChatSnowflakes">Copos de nieve en chats</string>
     <string name="InuActionBarSnowflakes">Copos de nieve en el encabezado</string>
-    <string name="InuIosStyle">Estilo iOS</string>
-    <string name="InuIosSettings">Ajustes estilo iOS</string>
     <string name="InuIosSettingsInfo">Centrado del título, barra inferior, campo de entrada, encabezado del chat y liquid glass.</string>
     <string name="InuMessageDesign">Apariencia de los mensajes</string>
     <string name="InuMessageDesignInfo">Burbujas, stickers, reacciones, publicaciones de canal y tamaño del texto de entrada.</string>

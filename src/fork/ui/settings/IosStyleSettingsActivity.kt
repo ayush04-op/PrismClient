@@ -33,41 +33,12 @@ class IosStyleSettingsActivity : SettingsPageActivity() {
                 LocaleController.getString(R.string.InuChatHeaderSettings),
             )
         )
-        items.add(
-            mkTwoLineCheckItem(
-                TOGGLE_IOS_CHATS_TAB_FIRST_FOLDER,
-                R.string.InuIosChatsTabFirstFolder,
-                R.string.InuIosChatsTabFirstFolderInfo,
-                InuConfig.IOS_CHATS_TAB_RETURNS_TO_FIRST_FOLDER.value,
-            )
-        )
         items.add(UItem.asShadow(null))
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuMessageInput)))
         if (inputBarPreviewCell == null) inputBarPreviewCell = InputBarPreviewCell(context, getResourceProvider())
         items.add(UItem.asCustom(inputBarPreviewCell))
-        items.add(
-            UItem.asButton(
-                BUTTON_ACTION_BUTTON_STYLE,
-                LocaleController.getString(R.string.InuActionButtonStyle),
-                when (InuConfig.ACTION_BUTTON_STYLE.value) {
-                    ActionButtonStyle.NEUTRAL -> LocaleController.getString(R.string.InuActionButtonStyleNeutral)
-                    ActionButtonStyle.WHITE -> LocaleController.getString(R.string.InuActionButtonStyleWhite)
-                    else -> LocaleController.getString(R.string.InuActionButtonStyleAccent)
-                }
-            )
-        )
-        if (InuConfig.IOS_INPUT_APPEARANCE.value) {
-            items.add(
-                mkTwoLineCheckItem(
-                    TOGGLE_COMPACT_INPUT_SIZE,
-                    R.string.InuCompactInputSize,
-                    R.string.InuCompactInputSizeInfo,
-                    InuConfig.COMPACT_INPUT_SIZE.value,
-                )
-            )
-        }
-        items.add(UItem.asShadow(LocaleController.getString(R.string.InuActionButtonStyleInfo)))
+        items.add(UItem.asShadow(null))
 
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuLiquidGlass)))

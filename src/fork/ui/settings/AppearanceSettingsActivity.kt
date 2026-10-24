@@ -35,14 +35,10 @@ class AppearanceSettingsActivity : SettingsPageActivity() {
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuDesignStyle)))
         items.add(mkTwoLineEntry(BUTTON_IOS_STYLE, R.drawable.msg_newphone, LocaleController.getString(R.string.InuIosSettings), LocaleController.getString(R.string.InuIosSettingsInfo)))
-        items.add(mkTwoLineEntry(BUTTON_MATERIAL3, R.drawable.inu_tabler_layout_cards, LocaleController.getString(R.string.InuMaterial3), LocaleController.getString(R.string.InuMaterial3SettingsInfo)))
-        items.add(mkTwoLineEntry(BUTTON_RETRO, R.drawable.inu_tabler_list, LocaleController.getString(R.string.InuRetroTitle), LocaleController.getString(R.string.InuRetroSubtitle)))
         items.add(UItem.asShadow(null))
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuInterfaceElements)))
         items.add(mkTwoLineEntry(BUTTON_MESSAGE_DESIGN, R.drawable.msg_discussion, LocaleController.getString(R.string.InuMessageDesign), LocaleController.getString(R.string.InuMessageDesignInfo)))
-        items.add(mkTwoLineEntry(BUTTON_SIDE_MENU, R.drawable.inu_tabler_menu_2, LocaleController.getString(R.string.InuSideMenu), LocaleController.getString(R.string.InuSideMenuInfo)))
-        items.add(mkTwoLineEntry(BUTTON_MENUS, R.drawable.inu_tabler_list, LocaleController.getString(R.string.InuMenus), LocaleController.getString(R.string.InuMenusInfo)))
         items.add(UItem.asShadow(null))
 
         if (avatarCornerPreview == null) {
@@ -60,47 +56,6 @@ class AppearanceSettingsActivity : SettingsPageActivity() {
             )
         )
         items.add(UItem.asShadow(null))
-
-        items.add(
-            UItem.asHeader(addExperimentalSpan(LocaleController.getString(R.string.InuNonIslandUI)))
-        )
-        items.add(
-            UItem.asCheck(
-                TOGGLE_NON_ISLAND_FOLDERS_BAR,
-                LocaleController.getString(R.string.InuNonIslandFoldersBar),
-            ).setChecked(InuConfig.NON_ISLAND_FOLDERS_BAR.value)
-        )
-        items.add(
-            UItem.asCheck(
-                TOGGLE_NON_ISLAND_SHARED_MEDIA_TABS,
-                LocaleController.getString(R.string.InuNonIslandSharedMediaTabs),
-            ).setChecked(InuConfig.NON_ISLAND_SHARED_MEDIA_TABS.value)
-        )
-        items.add(
-            UItem.asCheck(
-                TOGGLE_NON_ISLAND_GLOBAL_SEARCH,
-                LocaleController.getString(R.string.InuNonIslandGlobalSearch),
-            ).setChecked(InuConfig.NON_ISLAND_GLOBAL_SEARCH.value)
-        )
-        items.add(
-            UItem.asCheck(
-                TOGGLE_NON_ISLAND_CHAT_ELEMENTS,
-                LocaleController.getString(R.string.InuNonIslandChatElements),
-            ).setChecked(InuConfig.NON_ISLAND_CHAT_ELEMENTS.value)
-        )
-        items.add(
-            UItem.asCheck(
-                TOGGLE_HIDE_FADE_VIEW,
-                LocaleController.getString(R.string.InuHideFadeView),
-            ).setChecked(InuConfig.HIDE_FADE_VIEW.value)
-        )
-        items.add(
-            UItem.asCheck(
-                TOGGLE_DISABLE_PROFILE_AVATAR_BLUR,
-                LocaleController.getString(R.string.InuDisableProfileAvatarBlur),
-            ).setChecked(InuConfig.DISABLE_PROFILE_AVATAR_BLUR.value)
-        )
-        items.add(UItem.asShadow(LocaleController.getString(R.string.InuNonIslandHint)))
 
         if (animationSpeedSlider == null) {
             animationSpeedSlider = SliderCell(

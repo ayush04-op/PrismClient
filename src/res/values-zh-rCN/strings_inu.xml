@@ -1614,7 +1614,6 @@
     <string name="InuIosChatHeaderAvatarStaticInfo">头像保持在返回按钮旁，仅标题胶囊居中。</string>
     <string name="InuHideChatAvatar">隐藏头像</string>
     <string name="InuHideChatAvatarInfo">从聊天标题栏移除头像，保留三点菜单。点击标题即可打开资料。</string>
-    <string name="InuIosStyle">iOS 风格</string>
     <string name="InuPingAllProxies">Ping 所有代理</string>
     <string name="InuRoundRecorderExposureLevels">曝光等级按钮</string>
     <string name="InuRoundRecorderExposureLevelsInfo">录制时显示 EV 按钮，用于调亮或调暗画面。</string>
@@ -1809,7 +1808,6 @@
     <string name="InuDrawerMenuReset">重置菜单</string>
     <string name="InuHideTitle">隐藏标题</string>
     <string name="InuInterfaceElements">界面元素</string>
-    <string name="InuIosSettings">iOS 设置</string>
     <string name="InuIosSettingsInfo">标题居中、底部栏、输入框、聊天标题栏和 liquid glass。</string>
     <string name="InuLinkedChannel">关联频道</string>
     <string name="InuLinkedChat">关联群组 / 频道</string>

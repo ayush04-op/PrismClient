@@ -378,6 +378,10 @@ object FontHelper {
     @JvmStatic
     fun onGetTypeface(cache: Hashtable<String, Typeface>, assetPath: String): Typeface? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return null
+        if (assetPath == "fonts/rmono.ttf" || assetPath == "fonts/rmono_var.ttf") {
+            val m = FontConfig.MONO_FONT.value
+            if (m.isNotEmpty()) FontLibrary.getTypefaceFor(m)?.let { return it }
+        }
         val (weight, italic) = styleForAsset(assetPath) ?: return null
         val mode = FontConfig.FONT.value
         val keyPart = when (mode) {

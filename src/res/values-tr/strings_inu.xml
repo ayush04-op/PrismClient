@@ -1614,7 +1614,6 @@
     <string name="InuIosChatHeaderAvatarStaticInfo">Avatar geri düğmesinin yanında kalır, yalnızca başlık hapı ortalanır.</string>
     <string name="InuHideChatAvatar">Avatarı gizle</string>
     <string name="InuHideChatAvatarInfo">Sohbet başlığından avatarı kaldırır, üç nokta menüsü kalır. Profili açmak için başlığa dokunun.</string>
-    <string name="InuIosStyle">iOS stili</string>
     <string name="InuPingAllProxies">Tüm proxy\'lere ping at</string>
     <string name="InuRoundRecorderExposureLevels">Pozlama seviyesi düğmeleri</string>
     <string name="InuRoundRecorderExposureLevelsInfo">Kayıt sırasında görüntüyü aydınlatmak veya karartmak için EV düğmelerini göster.</string>
@@ -1810,7 +1809,6 @@
     <string name="InuDrawerMenuReset">Menüyü sıfırla</string>
     <string name="InuHideTitle">Başlığı gizle</string>
     <string name="InuInterfaceElements">Arayüz öğeleri</string>
-    <string name="InuIosSettings">iOS ayarları</string>
     <string name="InuIosSettingsInfo">Başlıkları ortalama, alt çubuk, giriş alanı, sohbet başlığı ve liquid glass.</string>
     <string name="InuLinkedChannel">Bağlı kanal</string>
     <string name="InuLinkedChat">Bağlı grup / kanal</string>

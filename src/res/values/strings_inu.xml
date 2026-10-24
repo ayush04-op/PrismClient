@@ -15,8 +15,8 @@
     <string name="InuSendToDiscussWithoutJoinInfo">Skip the client-only membership check for discussion groups</string>
     <string name="InuChatSnowflakes">Snowflakes in chats</string>
     <string name="InuActionBarSnowflakes">Snowflakes in header</string>
-    <string name="InuIosStyle">iOS style</string>
-    <string name="InuIosSettings">iOS settings</string>
+    <string name="InuIosStyle">Style</string>
+    <string name="InuIosSettings">Interface style</string>
     <string name="InuIosSettingsInfo">Title centering, bottom bar, input field, chat header and liquid glass.</string>
     <string name="InuMessageDesign">Message appearance</string>
     <string name="InuMessageDesignInfo">Bubbles, stickers, reactions, channel posts and input text size.</string>
@@ -1379,7 +1379,7 @@
     <string name="InuCenterTitleChatsInfo">Centers the chat title and subtitle; the avatar stays left. Works on its own.</string>
     <string name="InuCenterTitleRightAvatar">Show avatar on the right</string>
     <string name="InuIosChatHeader">Compact pill</string>
-    <string name="InuIosChatHeaderInfo">iOS-style compact chat header pill floating in the middle.</string>
+    <string name="InuIosChatHeaderInfo">Compact chat header pill floating in the middle.</string>
     <string name="InuChatHeaderNoPill">Hide pill background</string>
     <string name="InuChatHeaderNoPillInfo">Show the title and subtitle over the wallpaper without the pill.</string>
     <string name="InuIosChatHeaderAvatarSlot">Move avatar to the menu button</string>
@@ -2068,7 +2068,7 @@
     <string name="InuAppIconDescCrimson">A blood moon over a sakura dusk</string>
     <string name="InuUnreadBadgeOnBackButton">Show unread chats counter</string>
     <string name="InuUnreadBadgeOnBackButtonInfo">Show the number of unread chats on the back button in a chat.</string>
-    <string name="InuUnreadBadgeOnBackButtonIos">iOS-styled counter</string>
+    <string name="InuUnreadBadgeOnBackButtonIos">Styled counter</string>
     <string name="InuMainScreen">Main screen</string>
     <string name="InuMessagesSummary">Double-tap actions, reactions and confirmations</string>
     <string name="InuPillStackSummary">Interactive widgets in search bar</string>
@@ -2118,6 +2118,8 @@
     <string name="PrismSectionAbout">About Prism</string>
     <string name="PrismLiquidGlass">Liquid glass</string>
     <string name="PrismLiquidGlassInfo">Real-time glass refraction on bars and bubbles. Needs Android 13 or newer.</string>
+    <string name="PrismFontActive">In use</string>
+    <string name="PrismFontsInfo">Tap a font to use it everywhere. Hold an imported font to remove it. Add your own .ttf or .otf files with Add font.</string>
     <string name="PrismPremium">Premium</string>
     <string name="PrismSafeMode">Safe mode is on</string>
     <string name="PrismSafeModeValue">Tap to turn extras back on</string>

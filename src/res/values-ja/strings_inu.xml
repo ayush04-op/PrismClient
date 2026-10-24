@@ -1610,7 +1610,6 @@
     <string name="InuHideChatAvatarInfo">チャットヘッダーからアバターを外し、3点メニューは残ります。タイトルをタップするとプロフィールが開きます。</string>
     <string name="InuIosInputAppearance">外観（iOS）</string>
     <string name="InuIosInputAppearanceInfo">ガラス風のカプセル型入力欄と丸いアクションボタン。</string>
-    <string name="InuIosStyle">iOS スタイル</string>
     <string name="InuPingAllProxies">すべてのプロキシに Ping</string>
     <string name="InuReplaceText">テキストを置換</string>
     <string name="InuReplaceTextApply">置換</string>
@@ -1809,7 +1808,6 @@
     <string name="InuDrawerMenuReset">メニューをリセット</string>
     <string name="InuHideTitle">タイトルを非表示</string>
     <string name="InuInterfaceElements">インターフェース要素</string>
-    <string name="InuIosSettings">iOS 設定</string>
     <string name="InuIosSettingsInfo">タイトルの中央揃え、下部バー、入力欄、チャットヘッダー、liquid glass。</string>
     <string name="InuLinkedChannel">リンクされたチャンネル</string>
     <string name="InuLinkedChat">リンクされたグループ / チャンネル</string>
