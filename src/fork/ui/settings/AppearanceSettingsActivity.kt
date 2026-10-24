@@ -114,7 +114,6 @@ class AppearanceSettingsActivity : SettingsPageActivity() {
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuChatBackgroundSection)))
         items.add(UItem.asCheck(TOGGLE_DISABLE_CHAT_BACKGROUNDS, LocaleController.getString(R.string.InuDisableChatBackgrounds)).setChecked(InuConfig.DISABLE_CHAT_BACKGROUNDS.value))
-        items.add(UItem.asCheck(TOGGLE_DISABLE_CHAT_THEMES, LocaleController.getString(R.string.InuDisableChatThemes)).setChecked(InuConfig.DISABLE_CHAT_THEMES.value))
         items.add(UItem.asShadow(null))
     }
 

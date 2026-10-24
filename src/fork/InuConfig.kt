@@ -579,7 +579,7 @@ object InuConfig {
     val DISABLE_CHAT_BACKGROUNDS = BoolItem("disable_chat_backgrounds", false)
 
     @JvmField
-    val DISABLE_CHAT_THEMES = BoolItem("disable_chat_themes", false)
+    val DISABLE_CHAT_THEMES = BoolItem("disable_chat_themes", true)
 
     @JvmField
     val DISABLE_BG_PARALLAX = BoolItem("disable_bg_parallax", true)

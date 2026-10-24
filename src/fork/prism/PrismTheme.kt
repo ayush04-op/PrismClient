@@ -57,9 +57,21 @@ object PrismTheme {
     @JvmStatic
     fun ensurePaper() {
         try { if (needsInstall()) installPair() } catch (t: Throwable) { FileLog.e(t) }
+        pruneThemes()
     }
 
-    /** Startup: install Paper + Paper Dark once. */
+    /** Keeps only Paper / Paper Dark in the theme lists (stock and other themes are hidden). */
     @JvmStatic
-    fun applyDefaultOnce() = ensurePaper()
+    fun pruneThemes() {
+        try {
+            Theme.themes?.removeAll { it.name == null || !it.name.startsWith("Prism Paper") }
+        } catch (t: Throwable) { FileLog.e(t) }
+    }
+
+    /** Startup: install Paper + Paper Dark once, then hide every other theme. */
+    @JvmStatic
+    fun applyDefaultOnce() {
+        ensurePaper()
+        pruneThemes()
+    }
 }
