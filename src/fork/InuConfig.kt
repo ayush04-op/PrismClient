@@ -1510,7 +1510,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     @JvmField
     val ANIMATION_SPEED = FloatItem("animation_speed", 1.25f)
 
-    class IconReplacementItem : IntItem("icon_replacement", OFF) {
+    class IconReplacementItem : IntItem("icon_replacement", VKUI) {
         companion object {
             const val OFF = 0
             const val SOLAR = 1
