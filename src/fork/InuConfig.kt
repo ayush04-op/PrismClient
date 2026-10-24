@@ -456,7 +456,7 @@ object InuConfig {
     val ATTACH_CAMERA_SQUARE = BoolItem("attach_camera_square", true)
 
     @JvmField
-    val DOWNLOAD_DIRECTORY = StringItem("download_directory", "entinyGram")
+    val DOWNLOAD_DIRECTORY = StringItem("download_directory", "Prism")
 
     @JvmField
     val SAVE_FILENAME_DATE = BoolItem("save_filename_date", false)

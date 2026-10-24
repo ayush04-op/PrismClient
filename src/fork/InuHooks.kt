@@ -63,8 +63,8 @@ object InuHooks {
         org.telegram.messenger.AndroidUtilities.runOnUIThread({ desu.inugram.prism.PrismTheme.applyDefaultOnce() }, 1500)
         try {
             val pp = context.getSharedPreferences("prism", Context.MODE_PRIVATE)
-            if (!pp.getBoolean("defaults_v5", false)) {
-                pp.edit().putBoolean("defaults_v5", true).apply()
+            if (!pp.getBoolean("defaults_v6", false)) {
+                pp.edit().putBoolean("defaults_v6", true).apply()
                 InuConfig.IOS_BOTTOM_NAVIGATION_BAR.value = true
                 InuConfig.IOS_INPUT_BUTTON_PLACEMENT.value = true
                 InuConfig.IOS_INPUT_APPEARANCE.value = true
@@ -72,6 +72,7 @@ object InuHooks {
                 InuConfig.DISABLE_BG_PARALLAX.value = true
                 InuConfig.M3_ACCENT_ICONS.value = true
                 InuConfig.DISABLE_CHAT_THEMES.value = true
+                if (InuConfig.DOWNLOAD_DIRECTORY.value == "entinyGram") InuConfig.DOWNLOAD_DIRECTORY.value = "Prism"
             }
         } catch (_: Throwable) {}
         syncDoubleTapDelay()

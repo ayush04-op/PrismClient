@@ -34,7 +34,7 @@ object PrismTheme {
     private fun installPair() {
         val ctx = ApplicationLoader.applicationContext
         val prefs = ctx.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
-        prefs.edit().putBoolean("paper_v4", true).commit() // first: a failure must not loop
+        prefs.edit().putBoolean("paper_v5", true).commit() // first: a failure must not loop
         val dark = Theme.applyThemeFile(asset("prism_theme/paper_dark.attheme", "Prism Paper Dark.attheme"), "Prism Paper Dark", null, false)
         val light = Theme.applyThemeFile(asset("prism_theme/paper.attheme", "Prism Paper.attheme"), "Prism Paper", null, false)
         if (dark != null) Theme.setCurrentNightTheme(dark)
@@ -50,7 +50,7 @@ object PrismTheme {
 
     private fun needsInstall(): Boolean {
         val prefs = ApplicationLoader.applicationContext.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
-        return !prefs.getBoolean("paper_v4", false) && !prefs.getBoolean("paper_user_choice", false)
+        return !prefs.getBoolean("paper_v5", false) && !prefs.getBoolean("paper_user_choice", false)
     }
 
     /** Called from the login screen: make sure Paper (and its dark twin) is installed. */
