@@ -35,14 +35,6 @@ class IosStyleSettingsActivity : SettingsPageActivity() {
         )
         items.add(
             mkTwoLineCheckItem(
-                TOGGLE_IOS_BOTTOM_BAR,
-                R.string.InuIosBottomBar,
-                R.string.InuIosBottomBarInfo,
-                InuConfig.IOS_BOTTOM_NAVIGATION_BAR.value,
-            )
-        )
-        items.add(
-            mkTwoLineCheckItem(
                 TOGGLE_IOS_CHATS_TAB_FIRST_FOLDER,
                 R.string.InuIosChatsTabFirstFolder,
                 R.string.InuIosChatsTabFirstFolderInfo,
@@ -63,22 +55,6 @@ class IosStyleSettingsActivity : SettingsPageActivity() {
                     ActionButtonStyle.WHITE -> LocaleController.getString(R.string.InuActionButtonStyleWhite)
                     else -> LocaleController.getString(R.string.InuActionButtonStyleAccent)
                 }
-            )
-        )
-        items.add(
-            mkTwoLineCheckItem(
-                TOGGLE_IOS_BUTTON_PLACEMENT,
-                R.string.InuIosButtonPlacement,
-                R.string.InuIosButtonPlacementInfo,
-                InuConfig.IOS_INPUT_BUTTON_PLACEMENT.value,
-            )
-        )
-        items.add(
-            mkTwoLineCheckItem(
-                TOGGLE_IOS_INPUT_APPEARANCE,
-                R.string.InuIosInputAppearance,
-                R.string.InuIosInputAppearanceInfo,
-                InuConfig.IOS_INPUT_APPEARANCE.value,
             )
         )
         if (InuConfig.IOS_INPUT_APPEARANCE.value) {

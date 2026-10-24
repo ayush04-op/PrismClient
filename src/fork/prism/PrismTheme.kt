@@ -23,42 +23,38 @@ object PrismTheme {
         }
     }
 
-    /** Called from the login screen: if Paper is not the active theme yet, apply it (max 3 tries). */
-    @JvmStatic
-    fun ensurePaper() {
-        try {
-            val ctx = ApplicationLoader.applicationContext
-            val prefs = ctx.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
-            val cur = Theme.getCurrentTheme()
-            if (cur != null && cur.name != null && cur.name.startsWith("Prism Paper")) return
-            val tries = prefs.getInt("paper_login_tries", 0)
-            if (tries >= 3 || prefs.getBoolean("paper_user_choice", false)) return
-            prefs.edit().putInt("paper_login_tries", tries + 1).commit()
-            val file = File(ctx.cacheDir, "Prism Paper.attheme")
-            ctx.assets.open("prism_theme/paper.attheme").use { i -> file.outputStream().use { i.copyTo(it) } }
-            Theme.selectedAutoNightType = Theme.AUTO_NIGHT_TYPE_NONE
-            Theme.saveAutoNightThemeConfig()
-            Theme.applyThemeFile(file, "Prism Paper", null, false)
-        } catch (t: Throwable) {
-            FileLog.e(t)
-        }
+    private fun asset(name: String, out: String): File {
+        val ctx = ApplicationLoader.applicationContext
+        val file = File(ctx.cacheDir, out)
+        ctx.assets.open(name).use { i -> file.outputStream().use { i.copyTo(it) } }
+        return file
     }
 
-    /** First launch: make Paper the app theme (day theme, no automatic night switching). */
-    @JvmStatic
-    fun applyDefaultOnce() {
-        try {
-            val ctx = ApplicationLoader.applicationContext
-            val prefs = ctx.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
-            if (prefs.getBoolean("paper_v2", false)) return
-            val file = File(ctx.cacheDir, "Prism Paper.attheme")
-            ctx.assets.open("prism_theme/paper.attheme").use { i -> file.outputStream().use { i.copyTo(it) } }
-            prefs.edit().putBoolean("paper_v2", true).commit() // set first: a failure must not retry in a loop
-            Theme.selectedAutoNightType = Theme.AUTO_NIGHT_TYPE_NONE
-            Theme.saveAutoNightThemeConfig()
-            Theme.applyThemeFile(file, "Prism Paper", null, false)
-        } catch (t: Throwable) {
-            FileLog.e(t)
-        }
+    /** Installs Paper (day) + Paper Dark (night) and makes the system dark setting choose between them. */
+    private fun installPair() {
+        val ctx = ApplicationLoader.applicationContext
+        val prefs = ctx.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("paper_v3", true).commit() // first: a failure must not loop
+        val dark = Theme.applyThemeFile(asset("prism_theme/paper_dark.attheme", "Prism Paper Dark.attheme"), "Prism Paper Dark", null, false)
+        val light = Theme.applyThemeFile(asset("prism_theme/paper.attheme", "Prism Paper.attheme"), "Prism Paper", null, false)
+        if (dark != null) Theme.setCurrentNightTheme(dark)
+        Theme.selectedAutoNightType = Theme.AUTO_NIGHT_TYPE_SYSTEM
+        Theme.saveAutoNightThemeConfig()
+        Theme.checkAutoNightThemeConditions(true)
     }
+
+    private fun needsInstall(): Boolean {
+        val prefs = ApplicationLoader.applicationContext.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
+        return !prefs.getBoolean("paper_v3", false) && !prefs.getBoolean("paper_user_choice", false)
+    }
+
+    /** Called from the login screen: make sure Paper (and its dark twin) is installed. */
+    @JvmStatic
+    fun ensurePaper() {
+        try { if (needsInstall()) installPair() } catch (t: Throwable) { FileLog.e(t) }
+    }
+
+    /** Startup: install Paper + Paper Dark once. */
+    @JvmStatic
+    fun applyDefaultOnce() = ensurePaper()
 }

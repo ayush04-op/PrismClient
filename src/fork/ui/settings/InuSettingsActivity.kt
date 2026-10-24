@@ -144,6 +144,7 @@ class InuSettingsActivity : SettingsPageActivity() {
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.PrismSectionChats)))
         items.add(mkSubPageButton(CAT_CHATS, R.drawable.msg_viewchats, LocaleController.getString(R.string.InuCategoryChats)))
+        items.add(mkSubPageButton(CAT_PREMIUM, R.drawable.inu_tabler_shield_cancel, LocaleController.getString(R.string.PrismPremium)))
         items.add(mkSubPageButton(CAT_ANNOYANCES, R.drawable.inu_tabler_shield_cancel, LocaleController.getString(R.string.InuAnnoyances)))
         items.add(mkSubPageButton(CAT_BEHAVIOR, R.drawable.inu_tabler_adjustments_horizontal, LocaleController.getString(R.string.InuCategoryBehavior)))
         items.add(UItem.asShadow(null))
@@ -242,6 +243,7 @@ class InuSettingsActivity : SettingsPageActivity() {
             CAT_BEHAVIOR -> presentFragment(BehaviorSettingsActivity())
             CAT_PRIVACY -> presentFragment(PrivacySecurityActivity())
             CAT_ANNOYANCES -> presentFragment(AnnoyancesSettingsActivity())
+            CAT_PREMIUM -> presentFragment(AnnoyancesSettingsActivity(true))
             CAT_MAIN_SCREEN -> presentFragment(MainScreenSettingsActivity())
             BUTTON_TOS -> presentFragment(TosSettingsActivity())
             // #if PLUGINS
@@ -269,6 +271,7 @@ class InuSettingsActivity : SettingsPageActivity() {
         private val CAT_BEHAVIOR = InuUtils.generateId()
         private val CAT_PRIVACY = InuUtils.generateId()
         private val CAT_ANNOYANCES = InuUtils.generateId()
+        private val CAT_PREMIUM = InuUtils.generateId()
         private val BUTTON_TOS = InuUtils.generateId()
         private val BUTTON_PLUGINS = InuUtils.generateId()
         private val CAT_SYSTEM = InuUtils.generateId()

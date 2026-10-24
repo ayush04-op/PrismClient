@@ -26,8 +26,9 @@ class ExpandableBoolGroup(
 
     fun addTo(items: ArrayList<UItem>, onChange: (options: List<Option>) -> Unit) {
         for (o in options) if (o.locked && !o.config.value) o.config.value = true
-        val checkedCount = options.count { it.config.value }
-        val total = options.size
+        val shown = options.filter { !it.locked }
+        val checkedCount = shown.count { it.config.value }
+        val total = shown.size
         val isChecked = checkedCount > 0
         items.add(
             UItem.asExpandableSwitch(sectionId, title, "$checkedCount/$total")
@@ -58,7 +59,7 @@ class ExpandableBoolGroup(
                 })
         )
         if (expanded) {
-            for (opt in options) {
+            for (opt in shown) {
                 items.add(
                     UItem.asRoundCheckbox(opt.id, LocaleController.getString(opt.labelRes))
                         .setChecked(opt.config.value)

@@ -17,7 +17,7 @@ import org.telegram.ui.Components.HintsController
 import org.telegram.ui.Components.UItem
 import org.telegram.ui.Components.UniversalAdapter
 
-class AnnoyancesSettingsActivity : SettingsPageActivity() {
+class AnnoyancesSettingsActivity(private val premiumOnly: Boolean = false) : SettingsPageActivity() {
 
     private val aiFeaturesGroup = ExpandableBoolGroup(
         LocaleController.getString(R.string.InuHideAiFeatures),
@@ -67,7 +67,7 @@ class AnnoyancesSettingsActivity : SettingsPageActivity() {
         sectionId = SECTION_HIDE_BOTTOM_BAR,
     )
 
-    override fun getTitle(): CharSequence = LocaleController.getString(R.string.InuAnnoyances)
+    override fun getTitle(): CharSequence = LocaleController.getString(if (premiumOnly) R.string.PrismPremium else R.string.InuAnnoyances)
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuAnnoyancesChats)))
@@ -238,6 +238,7 @@ class AnnoyancesSettingsActivity : SettingsPageActivity() {
         )
         items.add(UItem.asShadow(null))
 
+        val prismGStart = items.size
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuAnnoyancesGifts)))
         items.add(
             mkTwoLineCheckItem(
@@ -332,6 +333,7 @@ class AnnoyancesSettingsActivity : SettingsPageActivity() {
         )
         items.add(UItem.asShadow(null))
 
+        val prismGEnd = items.size
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuAnnoyancesInterface)))
         items.add(
             UItem.asCheck(
@@ -431,6 +433,12 @@ class AnnoyancesSettingsActivity : SettingsPageActivity() {
             )
         )
         items.add(UItem.asShadow(null))
+        if (premiumOnly) {
+            val keep = ArrayList(items.subList(prismGStart, prismGEnd))
+            items.clear(); items.addAll(keep)
+        } else {
+            items.subList(prismGStart, prismGEnd).clear()
+        }
     }
 
     override fun onClick(item: UItem, view: View, position: Int, x: Float, y: Float) {

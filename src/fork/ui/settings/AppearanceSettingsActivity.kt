@@ -145,14 +145,6 @@ class AppearanceSettingsActivity : SettingsPageActivity() {
                 LocaleController.getString(R.string.InuSimpleAttachPopupAnimation),
             ).setChecked(InuConfig.SIMPLE_ATTACH_POPUP_ANIMATION.value)
         )
-        items.add(
-            mkTwoLineCheckItem(
-                TOGGLE_OPTIMIZED_ATTACHMENT_MENU,
-                R.string.InuOptimizedAttachmentMenu,
-                R.string.InuOptimizedAttachmentMenuInfo,
-                InuConfig.OPTIMIZED_ATTACHMENT_MENU.value,
-            )
-        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             items.add(
                 UItem.asButton(
@@ -168,7 +160,6 @@ class AppearanceSettingsActivity : SettingsPageActivity() {
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuChatBackgroundSection)))
         items.add(UItem.asCheck(TOGGLE_DISABLE_CHAT_BACKGROUNDS, LocaleController.getString(R.string.InuDisableChatBackgrounds)).setChecked(InuConfig.DISABLE_CHAT_BACKGROUNDS.value))
         items.add(UItem.asCheck(TOGGLE_DISABLE_CHAT_THEMES, LocaleController.getString(R.string.InuDisableChatThemes)).setChecked(InuConfig.DISABLE_CHAT_THEMES.value))
-        items.add(UItem.asCheck(TOGGLE_DISABLE_BG_PARALLAX, LocaleController.getString(R.string.InuDisableBgParallax)).setChecked(InuConfig.DISABLE_BG_PARALLAX.value))
         items.add(UItem.asShadow(null))
     }
 

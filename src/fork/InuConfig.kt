@@ -263,7 +263,7 @@ object InuConfig {
 
     @JvmField
     val M3_SECTIONS_STYLE = BoolItem("m3_sections_style", false)
-    val M3_ACCENT_ICONS = BoolItem("m3_accent_icons", false)
+    val M3_ACCENT_ICONS = BoolItem("m3_accent_icons", true)
 
     @JvmField
     val MATERIAL3_AVATARS = BoolItem("material3_avatars", false)

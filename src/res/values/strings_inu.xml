@@ -2118,6 +2118,7 @@
     <string name="PrismSectionAbout">About Prism</string>
     <string name="PrismLiquidGlass">Liquid glass</string>
     <string name="PrismLiquidGlassInfo">Real-time glass refraction on bars and bubbles. Needs Android 13 or newer.</string>
+    <string name="PrismPremium">Premium</string>
     <string name="PrismSafeMode">Safe mode is on</string>
     <string name="PrismSafeModeValue">Tap to turn extras back on</string>
     <string name="PrismSafeModeInfo">Prism hit a problem at startup, so the font and glass extras were switched off. Turn them back on, then restart the app.</string>

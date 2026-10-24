@@ -204,9 +204,9 @@ object FontHelper {
     }
 
     private fun styleForAsset(assetPath: String): Pair<Int, Boolean>? = when (assetPath) {
-        AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM -> 500 to false
+        AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM -> 600 to false
         AndroidUtilities.TYPEFACE_ROBOTO_EXTRA_BOLD -> 800 to false
-        AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM_ITALIC -> 500 to true
+        AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM_ITALIC -> 600 to true
         "fonts/ritalic.ttf" -> 400 to true
         "fonts/rcondensedbold.ttf" -> 700 to false
         "fonts/rmono.ttf", "fonts/rmono_var.ttf" -> 400 to false
@@ -254,11 +254,13 @@ object FontHelper {
             trySetStatic(typefaceDefaultBoldField, bold)
             trySetStatic(typefaceSansSerifField, regular)
             prismSetDefault(regular)
-            for (k in arrayOf(
-                "sans-serif", "sans-serif-light", "sans-serif-thin",
-                "sans-serif-condensed", "sans-serif-condensed-light"
-            )) map?.put(k, regular)
-            for (k in arrayOf("sans-serif-medium", "sans-serif-black")) map?.put(k, bold)
+            val light = resolve(300, false) ?: regular
+            val semi = resolve(600, false) ?: bold
+            val heavy = resolve(800, false) ?: bold
+            for (k in arrayOf("sans-serif", "sans-serif-condensed")) map?.put(k, regular)
+            for (k in arrayOf("sans-serif-light", "sans-serif-thin", "sans-serif-condensed-light")) map?.put(k, light)
+            map?.put("sans-serif-medium", semi)
+            map?.put("sans-serif-black", heavy)
         }
         FontLibrary.getTypefaceFor(FontConfig.MONO_FONT.value)?.let { mono ->
             trySetStatic(typefaceMonospaceField, mono)

@@ -61,6 +61,18 @@ object InuHooks {
             FontHelper.installGlobal()
         }
         org.telegram.messenger.AndroidUtilities.runOnUIThread({ desu.inugram.prism.PrismTheme.applyDefaultOnce() }, 1500)
+        try {
+            val pp = context.getSharedPreferences("prism", Context.MODE_PRIVATE)
+            if (!pp.getBoolean("defaults_v4", false)) {
+                pp.edit().putBoolean("defaults_v4", true).apply()
+                InuConfig.IOS_BOTTOM_NAVIGATION_BAR.value = true
+                InuConfig.IOS_INPUT_BUTTON_PLACEMENT.value = true
+                InuConfig.IOS_INPUT_APPEARANCE.value = true
+                InuConfig.OPTIMIZED_ATTACHMENT_MENU.value = true
+                InuConfig.DISABLE_BG_PARALLAX.value = true
+                InuConfig.M3_ACCENT_ICONS.value = true
+            }
+        } catch (_: Throwable) {}
         syncDoubleTapDelay()
         syncAnimationSpeed()
         syncChatInputRowHeight()
