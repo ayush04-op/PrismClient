@@ -64,7 +64,9 @@ object PrismTheme {
     @JvmStatic
     fun pruneThemes() {
         try {
-            Theme.themes?.removeAll { it.name == null || !it.name.startsWith("Prism Paper") }
+            val l = Theme.themes ?: return
+            if (l.none { it.name != null && it.name.startsWith("Prism Paper") }) return
+            l.removeAll { it.name == null || !it.name.startsWith("Prism Paper") }
         } catch (t: Throwable) { FileLog.e(t) }
     }
 
