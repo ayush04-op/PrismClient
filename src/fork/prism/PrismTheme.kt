@@ -81,13 +81,13 @@ object PrismTheme {
     private fun installPair() {
         val ctx = ApplicationLoader.applicationContext
         val prefs = ctx.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
-        prefs.edit().putBoolean("paper_v5", true).commit() // first: a failure must not loop
+        prefs.edit().putBoolean("paper_v6", true).commit() // first: a failure must not loop
         installPalette(palettes[0], false, followSystem = true)
     }
 
     private fun needsInstall(): Boolean {
         val prefs = ApplicationLoader.applicationContext.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
-        return !prefs.getBoolean("paper_v5", false) && !prefs.getBoolean("paper_user_choice", false)
+        return !prefs.getBoolean("paper_v6", false) && !prefs.getBoolean("paper_user_choice", false)
     }
 
     /** Called from the login screen: make sure Paper (and its dark twin) is installed. */
