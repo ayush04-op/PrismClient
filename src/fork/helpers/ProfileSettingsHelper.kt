@@ -67,7 +67,12 @@ object ProfileSettingsHelper {
         val customized = InuConfig.PROFILE_SETTINGS_ROWS.isCustomized()
         val inherited = inheritedGroups(rows)
         fun groupOf(item: UItem): Int = stockGroupOf(item).takeIf { it >= 0 } ?: inherited[item.id] ?: -1
-        val ordered = reorderByMenu(rows, InuConfig.PROFILE_SETTINGS_ROWS.value) { classify(it, customized) }
+        val menuOrdered = reorderByMenu(rows, InuConfig.PROFILE_SETTINGS_ROWS.value) { classify(it, customized) }
+        // prism: gather rows by section so each heading appears once; order inside a section is kept
+        val rank = mapOf(0 to 0, 10 to 1, 11 to 2, 12 to 3, 2 to 4, 3 to 5)
+        val topMoney = menuOrdered.firstOrNull()?.takeIf { it.id == MONEY_ROW_ID }
+        val rest = menuOrdered.filter { it !== topMoney }
+        val ordered = (listOfNotNull(topMoney) + rest.sortedBy { rank[groupOf(it)] ?: 99 })
         val rebuilt = ArrayList<UItem>(ordered.size + 4)
         var lastGroup = -2
         for (row in ordered) {
