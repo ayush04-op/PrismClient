@@ -177,15 +177,17 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Archive older releases
+      - name: Remove pre-launch releases (one-time clean-up)
         if: steps.sign.outputs.signed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for t in $(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName --jq '.[].tagName'); do
-            gh release edit "$t" --repo "${{ github.repository }}" --prerelease --latest=false \
-              --title "[Archived] Prism ${t}" \
-              --notes "Archived: replaced by a newer build. Please use the latest release." || true
+          # Deletes only releases up to build 31 (and any non build-N tags). Later builds are never touched.
+          for t in $(gh release list --repo "${{ github.repository }}" --limit 200 --json tagName --jq '.[].tagName'); do
+            n="${t#build-}"
+            if [[ "$t" != build-* ]] || { [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -le 31 ]; }; then
+              gh release delete "$t" --repo "${{ github.repository }}" --cleanup-tag --yes || true
+            fi
           done
 
       - name: Publish GitHub Release
