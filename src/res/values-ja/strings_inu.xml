@@ -3,7 +3,6 @@
     <string name="InuOpenInDiscussion">ディスカッションで開く</string>
     <string name="InuBanUserConfirm">%1$s をこのグループから BAN しますか？</string>
     <string name="InuSettings">Prism 設定</string>
-    <string name="InuSettingsInfo">犬は何してるの？</string>
     <string name="InuGeneral">一般</string>
     <string name="InuWideChannelPosts">ワイド投稿</string>
     <string name="InuWideChannelPostsFooter">チャンネルの投稿と転送メッセージが画面幅いっぱいに表示されます。</string>

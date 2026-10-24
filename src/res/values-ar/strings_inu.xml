@@ -20,7 +20,6 @@
     <string name="InuShowDrawerAccounts">إظهار الحسابات في القائمة</string>
     <string name="InuShowDrawerAccountsInfo">إظهار مبدّل الحسابات القابل للتوسيع أسفل ملفك الشخصي.</string>
     <string name="InuSettings">إعدادات Prism</string>
-    <string name="InuSettingsInfo">عبر الأرض والرياح أتبعك</string>
     <string name="InuGeneral">عام</string>
     <string name="InuWideChannelPosts">منشورات عريضة</string>
     <string name="InuWideChannelPostsFooter">منشورات القنوات والرسائل المعاد توجيهها تستخدم العرض المتاح كاملاً.</string>

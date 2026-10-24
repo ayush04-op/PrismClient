@@ -67,7 +67,6 @@
     <string name="InuShowDrawerAccounts">Mostrar cuentas en el menú</string>
     <string name="InuShowDrawerAccountsInfo">Muestra el selector de cuentas desplegable bajo tu perfil.</string>
     <string name="InuSettings">Ajustes de Prism</string>
-    <string name="InuSettingsInfo">A través de la tierra y el viento te sigo</string>
     <string name="InuGeneral">General</string>
     <string name="InuWideChannelPosts">Publicaciones anchas</string>
     <string name="InuWideChannelPostsFooter">Las publicaciones de canales usan todo el ancho disponible.</string>

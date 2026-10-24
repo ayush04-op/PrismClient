@@ -3,7 +3,6 @@
     <string name="InuOpenInDiscussion">在讨论中打开</string>
     <string name="InuBanUserConfirm">将 %1$s 从本群封禁？</string>
     <string name="InuSettings">Prism 设置</string>
-    <string name="InuSettingsInfo">汪汪在干啥？</string>
     <string name="InuGeneral">通用</string>
     <string name="InuWideChannelPosts">宽屏帖子</string>
     <string name="InuWideChannelPostsFooter">频道帖子和转发将使用全部可用宽度。</string>

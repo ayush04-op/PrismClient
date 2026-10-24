@@ -29,10 +29,12 @@ object ProfileSettingsHelper {
         return if (customized) row else null
     }
 
-    // entiny: stock section of a row: 0 inugram, 1 main, 2 premium, 3 help; -1 unknown
+    // prism: section of a row: 0 prism, 10 account, 11 chats and data, 12 device, 2 premium, 3 help; -1 unknown
     private fun stockGroupOf(item: UItem): Int = when (item.id) {
         99 -> 0
-        in 1..3, in 5..10 -> 1
+        1, 3 -> 10
+        2, 5, 6, 7 -> 11
+        8, 9, 10 -> 12
         in 11..13, 15, 16, MONEY_ROW_ID -> 2
         17, 18, 19, 23, 24 -> 3
         else -> -1
@@ -72,7 +74,15 @@ object ProfileSettingsHelper {
             val group = groupOf(row)
             if (lastGroup != -1 && group != lastGroup) {
                 if (rebuilt.isNotEmpty() && group != -1) rebuilt.add(UItem.asShadow(null))
-                if (group == 3) rebuilt.add(UItem.asHeader(LocaleController.getString(R.string.SettingsHelp)))
+                val label = when (group) {
+                    3 -> R.string.SettingsHelp
+                    10 -> R.string.PrismSecAccount
+                    11 -> R.string.PrismSecChats
+                    12 -> R.string.PrismSecDevice
+                    2 -> if (row.id == MONEY_ROW_ID) 0 else R.string.PrismSecPremium
+                    else -> 0
+                }
+                if (label != 0) rebuilt.add(UItem.asHeader(LocaleController.getString(label)))
             }
             rebuilt.add(row)
             lastGroup = group

@@ -16,7 +16,6 @@
     <string name="InuHideMessage">Скрыть</string>
     <string name="InuBanUserConfirm">Заблокировать %1$s в этой группе?</string>
     <string name="InuSettings">Настройки Prism</string>
-    <string name="InuSettingsInfo">сквозь землю и ветер я следую за тобой</string>
     <string name="InuGeneral">Основные</string>
     <string name="InuWideChannelPosts">Широкие посты</string>
     <string name="InuWideChannelPostsFooter">Посты каналов и пересланные сообщения используют всю доступную ширину.</string>

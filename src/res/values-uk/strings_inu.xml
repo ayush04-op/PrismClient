@@ -28,7 +28,6 @@
     <string name="InuDrawerKeepOptionsMenu">Залишити меню з трьома крапками</string>
     <string name="InuDrawerKeepOptionsMenuInfo">Показувати кнопку меню списку чатів разом із бічним меню</string>
     <string name="InuSettings">Налаштування Prism</string>
-    <string name="InuSettingsInfo">крізь землю та вітер я йду за тобою</string>
     <string name="InuGeneral">Загальні</string>
     <string name="InuWideChannelPosts">Широкі пости</string>
     <string name="InuWideChannelPostsFooter">Пости каналів та переслані повідомлення займають усю доступну ширину.</string>

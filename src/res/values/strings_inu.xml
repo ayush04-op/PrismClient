@@ -69,7 +69,7 @@
     <string name="InuShowDrawerAccounts">Show accounts in drawer</string>
     <string name="InuShowDrawerAccountsInfo">Show the expandable account switcher below your profile.</string>
     <string name="InuSettings">Prism Settings</string>
-    <string name="InuSettingsInfo">through the land and wind I follow you</string>
+    <string name="InuSettingsInfo">Fast. Fluid. Glass.</string>
     <string name="InuGeneral">General</string>
     <string name="InuWideChannelPosts">Wide posts</string>
     <string name="InuWideChannelPostsFooter">Channel posts and forwards use the available width.</string>
@@ -2120,6 +2120,10 @@
     <string name="PrismLiquidGlassInfo">Real-time glass refraction on bars and bubbles. Needs Android 13 or newer.</string>
     <string name="PrismFontActive">In use</string>
     <string name="PrismFontsInfo">Tap a font to use it everywhere. Hold an imported font to remove it. Add your own .ttf or .otf files with Add font.</string>
+    <string name="PrismSecAccount">Account</string>
+    <string name="PrismSecChats">Chats and data</string>
+    <string name="PrismSecDevice">Device</string>
+    <string name="PrismSecPremium">Premium</string>
     <string name="PrismPremium">Premium</string>
     <string name="PrismSafeMode">Safe mode is on</string>
     <string name="PrismSafeModeValue">Tap to turn extras back on</string>

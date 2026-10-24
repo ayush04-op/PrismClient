@@ -14,7 +14,6 @@
     <string name="InuDrawerKeepOptionsMenu">Üç nokta menüsünü koru</string>
     <string name="InuDrawerKeepOptionsMenuInfo">Yan menüyle birlikte sohbet listesi menü düğmesini göster</string>
     <string name="InuSettings">Prism Ayarları</string>
-    <string name="InuSettingsInfo">ne yapıyor bu köpek?</string>
     <string name="InuGeneral">Genel</string>
     <string name="InuWideChannelPosts">Geniş gönderiler</string>
     <string name="InuWideChannelPostsFooter">Kanal gönderileri ve iletilen mesajlar kullanılabilir tüm genişliği kaplar.</string>

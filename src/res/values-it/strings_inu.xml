@@ -67,7 +67,6 @@
     <string name="InuShowDrawerAccounts">Mostra gli account nel menu</string>
     <string name="InuShowDrawerAccountsInfo">Mostra il selettore di account espandibile sotto il tuo profilo.</string>
     <string name="InuSettings">Impostazioni di Prism</string>
-    <string name="InuSettingsInfo">Attraverso la terra e il vento ti seguo</string>
     <string name="InuGeneral">Generale</string>
     <string name="InuWideChannelPosts">Post larghi</string>
     <string name="InuWideChannelPostsFooter">I post dei canali e gli inoltri usano tutta la larghezza disponibile.</string>
