@@ -94,13 +94,18 @@ class InuSettingsActivity : SettingsPageActivity() {
     }
 
     private fun downloadUpdate(ctx: Context, info: PrismUpdater.Info) {
+        var lastShown = -10
         PrismUpdater.download(ctx, info, { p ->
-            updateValue = "Downloading $p%"; listView.adapter.update(true)
+            // refresh in 10% steps without the list animation: a rebuild per percent made the section flicker
+            if (p >= lastShown + 10 || p == 100) {
+                lastShown = p
+                updateValue = "Downloading $p%"; listView.adapter.update(false)
+            }
         }) { file ->
             if (file == null) {
-                updateValue = "Download failed"; listView.adapter.update(true)
+                updateValue = "Download failed"; listView.adapter.update(false)
             } else {
-                updateValue = "Installing…"; listView.adapter.update(true)
+                updateValue = "Installing…"; listView.adapter.update(false)
                 val act = parentActivity
                 if (act != null) desu.inugram.helpers.update.ApkInstaller.installFromFile(act, file)
             }

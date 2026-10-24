@@ -18,13 +18,16 @@ object PrismFont {
     private const val MONO_SEEDED = "mono_seeded_v2"
     private const val MONO_DIR = "prism_font_mono"
     const val MONO_FAMILY = "Prism Mono"
+    const val SANS_FAMILY = "Prism Sans"
+    private const val SANS_DIR = "prism_font_sans"
+    private const val SANS_SEEDED = "sans_seeded_v1"
     private const val SEEDED = "font_seeded_v3"
 
     @JvmStatic
     fun seedDefault(context: Context) {
         try {
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            if (prefs.getBoolean(SEEDED, false)) { ensureMono(context, prefs); return }
+            if (prefs.getBoolean(SEEDED, false)) { ensureMono(context, prefs); ensureSans(context, prefs); return }
             val names = context.assets.list(DIR)
                 ?.filter { it.endsWith(".ttf", true) || it.endsWith(".otf", true) }
                 .orEmpty()
@@ -50,6 +53,7 @@ object PrismFont {
             FontConfig.FONT.value = FontConfig.FontMode.Custom(id, emptyList())
             prefs.edit().putBoolean(SEEDED, true).apply()
             ensureMono(context, prefs)
+            ensureSans(context, prefs)
         } catch (t: Throwable) {
             FileLog.e(t)
         }
@@ -75,6 +79,28 @@ object PrismFont {
                 .lastOrNull { FontLibrary.getFontFamily(it)?.name == MONO_FAMILY } ?: return
             FontConfig.MONO_FONT.value = id.token()
             prefs.edit().putBoolean(MONO_SEEDED, true).apply()
+        } catch (t: Throwable) {
+            FileLog.e(t)
+        }
+    }
+
+    /** Imports the bundled sans pack once as its own family so the user can pick Serif or Sans. */
+    private fun ensureSans(context: Context, prefs: android.content.SharedPreferences) {
+        if (prefs.getBoolean(SANS_SEEDED, false)) return
+        try {
+            val names = context.assets.list(SANS_DIR)?.filter { it.endsWith(".otf", true) || it.endsWith(".ttf", true) }.orEmpty()
+            if (names.isEmpty()) return
+            for (fid in FontLibrary.getCachedRoster().filterIsInstance<FontId.Family>()) {
+                if (FontLibrary.getFontFamily(fid)?.name == SANS_FAMILY) FontLibrary.removeFamily(fid.id)
+            }
+            val cache = File(context.cacheDir, SANS_DIR).apply { mkdirs() }
+            for (name in names) {
+                val out = File(cache, name)
+                context.assets.open("$SANS_DIR/$name").use { input -> out.outputStream().use { input.copyTo(it) } }
+                FontLibrary.importFromFile(out, SANS_FAMILY)
+                out.delete()
+            }
+            prefs.edit().putBoolean(SANS_SEEDED, true).apply()
         } catch (t: Throwable) {
             FileLog.e(t)
         }

@@ -75,6 +75,23 @@ object InuHooks {
                 if (InuConfig.DOWNLOAD_DIRECTORY.value == "entinyGram") InuConfig.DOWNLOAD_DIRECTORY.value = "Prism"
             }
         } catch (_: Throwable) {}
+        try {
+            val pa = context.getSharedPreferences("prism", Context.MODE_PRIVATE)
+            if (!pa.getBoolean("anim_v1", false)) {
+                pa.edit().putBoolean("anim_v1", true).apply()
+                // smoothness first pass: switch on Telegram's own motion effects once (all stay adjustable in Lite mode)
+                for (f in intArrayOf(
+                    org.telegram.messenger.LiteMode.FLAG_CHAT_BLUR,
+                    org.telegram.messenger.LiteMode.FLAG_CHAT_SCALE,
+                    org.telegram.messenger.LiteMode.FLAG_CALLS_ANIMATIONS,
+                    org.telegram.messenger.LiteMode.FLAG_PARTICLES,
+                    org.telegram.messenger.LiteMode.FLAG_ANIMATED_STICKERS_CHAT,
+                    org.telegram.messenger.LiteMode.FLAG_ANIMATED_STICKERS_KEYBOARD,
+                )) org.telegram.messenger.LiteMode.toggleFlag(f, true)
+                InuConfig.SIMPLE_ATTACH_POPUP_ANIMATION.value = false
+                InuConfig.DISABLE_SCRIM_BLUR.value = false
+            }
+        } catch (_: Throwable) {}
         syncDoubleTapDelay()
         syncAnimationSpeed()
         syncChatInputRowHeight()
