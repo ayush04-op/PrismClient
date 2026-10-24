@@ -16,6 +16,11 @@ object PrismUpdater {
 
     @Volatile var latest: Info? = null
     @Volatile var status: String = ""
+    @Volatile var lastChecked: Long = 0L
+    @Volatile var downloaded: File? = null
+    @Volatile private var cancelFlag = false
+
+    fun cancelDownload() { cancelFlag = true }
 
     /** The CI run number stamped into the APK at build time (0 for local builds). */
     @JvmStatic
@@ -51,12 +56,14 @@ object PrismUpdater {
                 status = "Could not check"
             }
             latest = result
+            lastChecked = System.currentTimeMillis()
             AndroidUtilities.runOnUIThread { done(result) }
         }.start()
     }
 
     /** Downloads the APK to the cache dir. [progress] 0..100 and [done] (null on failure) run on the UI thread. */
     fun download(ctx: Context, info: Info, progress: (Int) -> Unit, done: (File?) -> Unit) {
+        cancelFlag = false
         Thread {
             var out: File? = null
             try {
@@ -71,12 +78,14 @@ object PrismUpdater {
                 c.inputStream.use { i -> f.outputStream().use { o ->
                     val buf = ByteArray(64 * 1024)
                     while (true) {
+                        if (cancelFlag) throw java.io.IOException("cancelled")
                         val n = i.read(buf); if (n < 0) break
                         o.write(buf, 0, n); read += n
                         if (total > 0) { val p = (read * 100 / total).toInt(); if (p != last) { last = p; AndroidUtilities.runOnUIThread { progress(p) } } }
                     }
                 } }
                 out = f
+                downloaded = f
             } catch (t: Throwable) {
                 FileLog.e(t)
             }

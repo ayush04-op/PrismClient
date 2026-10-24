@@ -33,7 +33,7 @@ class InuSettingsActivity : SettingsPageActivity() {
             listView.overScrollMode = View.OVER_SCROLL_NEVER
             listView.isVerticalScrollBarEnabled = false
 
-            if (updateValue == null) PrismUpdater.check(context) { _ -> updateValue = PrismUpdater.status; if (!isSearchOpen) listView.adapter.update(true) }
+            if (updateValue == null) PrismUpdater.check(context) { _ -> updateValue = PrismUpdater.status; if (!isSearchOpen) listView.adapter.update(false) }
 
             val sAdapter = object : ProfileActivity.SearchAdapter(this, context) {
                 override fun notifyDataSetChanged() {
@@ -74,43 +74,6 @@ class InuSettingsActivity : SettingsPageActivity() {
     }
 
     private var updateValue: String? = null
-
-    private fun checkForUpdate(ctx: Context) {
-        updateValue = "Checking…"; listView.adapter.update(true)
-        PrismUpdater.check(ctx) { info ->
-            updateValue = PrismUpdater.status; listView.adapter.update(true)
-            if (info != null) {
-                val mb = if (info.size > 0) " (" + (info.size / 1048576) + " MB)" else ""
-                showDialog(
-                    org.telegram.ui.ActionBar.AlertDialog.Builder(ctx)
-                        .setTitle("Prism build ${info.build} is available")
-                        .setMessage("Download and install the update$mb? Your chats and settings stay as they are.")
-                        .setPositiveButton("Update") { _, _ -> downloadUpdate(ctx, info) }
-                        .setNegativeButton("Later", null)
-                        .create()
-                )
-            }
-        }
-    }
-
-    private fun downloadUpdate(ctx: Context, info: PrismUpdater.Info) {
-        var lastShown = -10
-        PrismUpdater.download(ctx, info, { p ->
-            // refresh in 10% steps without the list animation: a rebuild per percent made the section flicker
-            if (p >= lastShown + 10 || p == 100) {
-                lastShown = p
-                updateValue = "Downloading $p%"; listView.adapter.update(false)
-            }
-        }) { file ->
-            if (file == null) {
-                updateValue = "Download failed"; listView.adapter.update(false)
-            } else {
-                updateValue = "Installing…"; listView.adapter.update(false)
-                val act = parentActivity
-                if (act != null) desu.inugram.helpers.update.ApkInstaller.installFromFile(act, file)
-            }
-        }
-    }
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
         if (isSearchOpen) {
@@ -232,7 +195,7 @@ class InuSettingsActivity : SettingsPageActivity() {
                 PrismSafe.leaveSafeMode(ctx)
                 BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.PrismSafeModeLeft)).show()
             }
-            BUTTON_UPDATE -> checkForUpdate(ctx)
+            BUTTON_UPDATE -> presentFragment(PrismUpdateActivity())
             BUTTON_FONT_CHECK -> showDialog(
                 org.telegram.ui.ActionBar.AlertDialog.Builder(ctx)
                     .setTitle(LocaleController.getString(R.string.PrismFontCheck))
