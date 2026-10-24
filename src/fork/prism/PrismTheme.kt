@@ -56,7 +56,7 @@ object PrismTheme {
 
     /** Installs a palette's day + night themes, makes them the pair the day/night switch uses, and shows the right one. */
     @JvmStatic
-    fun installPalette(p: Palette, wantDark: Boolean) {
+    fun installPalette(p: Palette, wantDark: Boolean, followSystem: Boolean = false) {
         val ctx = ApplicationLoader.applicationContext
         val dark = Theme.applyThemeFile(asset("prism_theme/${p.darkAsset}", "${p.darkName}.attheme"), p.darkName, null, false)
         val light = Theme.applyThemeFile(asset("prism_theme/${p.lightAsset}", "${p.lightName}.attheme"), p.lightName, null, false)
@@ -66,13 +66,14 @@ object PrismTheme {
             if (light != null) putString("lastDayTheme", light.key)
             if (dark != null) putString("lastDarkTheme", dark.key)
         }.commit()
-        Theme.selectedAutoNightType = Theme.AUTO_NIGHT_TYPE_SYSTEM
-        Theme.saveAutoNightThemeConfig()
-        if (wantDark && dark != null) {
+        if (followSystem) {
+            Theme.selectedAutoNightType = Theme.AUTO_NIGHT_TYPE_SYSTEM
+            Theme.saveAutoNightThemeConfig()
+            Theme.checkAutoNightThemeConditions(true)
+        } else if (wantDark && dark != null) {
+            // a manual pick: show the mode the user is in and leave the auto-night setting alone
             org.telegram.messenger.NotificationCenter.getGlobalInstance()
                 .postNotificationName(org.telegram.messenger.NotificationCenter.needSetDayNightTheme, dark, false, null, -1)
-        } else {
-            Theme.checkAutoNightThemeConditions(true)
         }
     }
 
@@ -81,7 +82,7 @@ object PrismTheme {
         val ctx = ApplicationLoader.applicationContext
         val prefs = ctx.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
         prefs.edit().putBoolean("paper_v5", true).commit() // first: a failure must not loop
-        installPalette(palettes[0], false)
+        installPalette(palettes[0], false, followSystem = true)
     }
 
     private fun needsInstall(): Boolean {

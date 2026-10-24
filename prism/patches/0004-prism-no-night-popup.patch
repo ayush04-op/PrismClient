@@ -1,0 +1,22 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java
+index e69af7b5..5818d5c8 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java
+@@ -10121,7 +10121,7 @@ public class Theme {
+ 
+     public static void turnOffAutoNight(@NonNull BaseFragment fragment) {
+         if (selectedAutoNightType != AUTO_NIGHT_TYPE_NONE) {
+-            if (fragment != null) {
++            if (false && fragment != null) { // prism: no "auto night off" popup
+                 try {
+                     BulletinFactory.of(fragment).createSimpleBulletin(
+                         R.raw.auto_night_off,
+@@ -10144,7 +10144,7 @@ public class Theme {
+ 
+     public static void turnOffAutoNight(BulletinFactory bulletinFactory, Runnable openSettings) {
+         if (selectedAutoNightType != AUTO_NIGHT_TYPE_NONE) {
+-            if (bulletinFactory != null && openSettings != null) {
++            if (false && bulletinFactory != null && openSettings != null) { // prism: no popup
+                 try {
+                     bulletinFactory.createSimpleBulletin(
+                         R.raw.auto_night_off,
