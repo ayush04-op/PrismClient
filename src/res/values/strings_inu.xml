@@ -2120,7 +2120,11 @@
     <string name="PrismLiquidGlassInfo">Real-time glass refraction on bars and bubbles. Needs Android 13 or newer.</string>
     <string name="PrismFontActive">In use</string>
     <string name="PrismFontsInfo">Tap a font to use it everywhere. Hold an imported font to remove it. Add your own .ttf or .otf files with Add font.</string>
-    <string name="PrismSecAccount">Account</string>
+    <string name="PrismSecAppearance">Appearance</string>
+    <string name="PrismSecData">Notifications &amp; data</string>
+    <string name="PrismSecSystem">System</string>
+    <string name="PrismSecAbout">About Prism</string>
+    <string name="PrismSecAccount">Account &amp; privacy</string>
     <string name="PrismSecChats">Chats and data</string>
     <string name="PrismSecDevice">Device</string>
     <string name="PrismSecPremium">Premium</string>

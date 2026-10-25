@@ -1,0 +1,27 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+index 4408134a..90efecef 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+@@ -722,11 +722,6 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
+         // (InuConfig.PROFILE_SETTINGS_ROWS). Separators added here are rebuilt per stock group
+         // by ProfileSettingsHelper.reorder after the user's order is applied.
+ 
+-        if (!desu.inugram.helpers.security.ParanoiaHelper.shouldHideSettings()) {
+-            items.add(SettingCell.Factory.of(99, IconBackgroundColors.ENTINY.top, IconBackgroundColors.ENTINY.bottom, R.drawable.icon_settings_inu, getString(R.string.InuSettings), getString(R.string.InuSettingsInfo)));
+-            items.add(UItem.asShadow(null));
+-        }
+-
+         items.add(SettingCell.Factory.of(1, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_account, getString(R.string.SettingsAccount), getString(R.string.SettingsAccountInfo)));
+         items.add(SettingCell.Factory.of(2, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_chat, getString(R.string.SettingsChat), getString(R.string.SettingsChatInfo)));
+         items.add(SettingCell.Factory.of(3, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_privacy, getString(R.string.SettingsPrivacySecurity), getString(R.string.SettingsPrivacySecurityInfo)));
+@@ -928,8 +923,8 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
+                 break;
+             }
+ 
+-            case 99:
+-                presentFragment(new desu.inugram.ui.settings.InuSettingsActivity());
++            default:
++                desu.inugram.helpers.PrismSettingsRows.open(item.id, this);
+                 break;
+         }
+     }
