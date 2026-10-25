@@ -302,7 +302,6 @@ class FontsSettingsActivity : SettingsPageActivity(), NotificationCenter.Notific
             factory = ::FontsSettingsActivity,
             entries = listOf(
                 SearchRegistry.Entry("app-font", R.string.InuAppFont, BUTTON_APP_FONT),
-                SearchRegistry.Entry("include-system-fonts", R.string.InuFontIncludeSystem, BUTTON_INCLUDE_SYSTEM),
                 SearchRegistry.Entry("add-font", R.string.InuFontAdd, BUTTON_ADD),
             ),
         )

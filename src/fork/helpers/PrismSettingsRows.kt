@@ -62,7 +62,9 @@ object PrismSettingsRows {
             row(MAIN_SCREEN, R.drawable.msg_home_solar, LocaleController.getString(R.string.InuMainScreen), "Tabs, drawer and chat list layout"),
             row(INTERFACE, R.drawable.msg_newphone, LocaleController.getString(R.string.InuIosSettings), "Liquid glass and the input bar"),
             row(PREMIUM, R.drawable.inu_tabler_shield_cancel, LocaleController.getString(R.string.PrismPremium), "Hide gifts, Stars and upsells"),
+            // #if PLUGINS
             row(PLUGINS, R.drawable.inu_tabler_code, LocaleController.getString(R.string.InuPlugins), "Extend Prism with plugins"),
+            // #endif
             row(BACKUP, R.drawable.inu_tabler_device_floppy, "Backup & more", "Backup, restore and extras"),
             row(UPDATE, R.drawable.msg_download, "Software update", "Check for a newer Prism build", if (build > 0) "Build $build" else null),
             row(DEVELOPER, R.drawable.inu_tabler_brand_github, LocaleController.getString(R.string.PrismDeveloper), null, "Ayush"),
@@ -88,7 +90,9 @@ object PrismSettingsRows {
             MAIN_SCREEN -> f.presentFragment(MainScreenSettingsActivity())
             INTERFACE -> f.presentFragment(IosStyleSettingsActivity())
             PREMIUM -> f.presentFragment(AnnoyancesSettingsActivity(true))
+            // #if PLUGINS
             PLUGINS -> f.presentFragment(PluginsActivity())
+            // #endif
             BACKUP -> f.presentFragment(AdditionalSettingsActivity())
             UPDATE -> f.presentFragment(PrismUpdateActivity())
             DEVELOPER -> org.telegram.messenger.browser.Browser.openUrl(ctx, "https://github.com/ayush04-op")
