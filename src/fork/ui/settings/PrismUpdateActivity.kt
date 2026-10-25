@@ -125,12 +125,7 @@ class PrismUpdateActivity : SettingsPageActivity() {
         private fun c(key: Int) = Theme.getColor(key)
 
         private val logo = ImageView(context).apply {
-            setBackgroundResource(R.drawable.prism_icon_bg)
             setImageResource(R.drawable.prism_icon_fg)
-            clipToOutline = true
-            outlineProvider = object : android.view.ViewOutlineProvider() {
-                override fun getOutline(v: View, o: android.graphics.Outline) { o.setRoundRect(0, 0, v.width, v.height, dp(22f).toFloat()) }
-            }
         }
         private val title = TextView(context).apply { setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f); gravity = Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD }
         private val sub = TextView(context).apply { setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f); gravity = Gravity.CENTER; setLineSpacing(0f, 1.15f) }
@@ -163,6 +158,12 @@ class PrismUpdateActivity : SettingsPageActivity() {
         }
 
         fun recolor() {
+            // logo plate follows the active accent (light and dark)
+            val accent = c(Theme.key_featuredStickers_addButton)
+            logo.background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(
+                androidx.core.graphics.ColorUtils.blendARGB(accent, 0xFFFFFFFF.toInt(), 0.18f),
+                androidx.core.graphics.ColorUtils.blendARGB(accent, 0xFF000000.toInt(), 0.35f)
+            )).apply { cornerRadius = dp(22f).toFloat() }
             title.setTextColor(c(Theme.key_windowBackgroundWhiteBlackText))
             sub.setTextColor(c(Theme.key_windowBackgroundWhiteGrayText))
             notes.setTextColor(c(Theme.key_windowBackgroundWhiteGrayText))
