@@ -1,8 +1,7 @@
-# Setting up the project on Windows (from scratch)
+# Setting up Prism Client on Windows
 
-This is a step-by-step guide to setting up `entinyGram` on a clean Windows install (e.g.
-after reinstalling the OS). Building/signing the APK is a separate topic — will be covered
-in `BUILD.md` once Android Studio / JDK / Android SDK are set up.
+This is a step-by-step guide to setting up the Prism Client source on a clean Windows
+install. Building and signing the APK are covered in [BUILD.md](BUILD.md).
 
 ## 1. Install tools
 
@@ -105,5 +104,4 @@ stg series   # every patch should be marked `+` (applied)
 ## Next
 
 - Open `worktree/` in Android Studio to work on the code.
-- Building the APK (JDK 21, Android SDK, `gradlew`, signing, versionCode) is a separate
-  step — will be documented in `BUILD.md` once we get there.
+- Follow [BUILD.md](BUILD.md) to build a debug or release APK with JDK 21 and the Android SDK.

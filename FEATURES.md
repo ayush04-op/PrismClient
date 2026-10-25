@@ -1,16 +1,23 @@
-# entinyGram features
+# Prism Client features
 
-> non-exhaustive list of what this fork adds, tweaks or fixes vs stock telegram android.
-> keep this updated as patches are added/removed.
+> Current published release: build 35, a signed arm64 pluginless APK.
+> This is a non-exhaustive inventory of the broader source tree. It includes Prism changes and inherited Telegram for Android, Inugram, entinyGram, and third-party features; some inherited or plugin-only items may be hidden or unavailable in the pluginless release. See [README.md](README.md) for the build-35 download and release-specific summary.
 
-most things are toggleable in `Settings → entinyGram`, with sensible opinionated defaults.
+## Build 35 highlights
 
-🐶 - Inugram-exclusive (as far as i know, as of writing)
-📡 - entinyGram-exclusive
+- **Paper themes:** Paper and Paper Dark palettes are installed by default; other stock themes are hidden, while themes the user imports or creates are preserved. Chat themes are off by default.
+- **Typography:** Prism Serif is the default app font, Prism Sans is available, and users can import TTF/OTF font families. Anthropic Mono is used for monospaced text and code.
+- **Prism identity:** themed adaptive launcher icons use Prism's own mark.
+- **Interface:** adjustable Liquid Glass effects, chat-header customization, and message-input previews.
+- **Settings and updates:** Telegram and Prism settings share a grouped page, with a dedicated software-update screen.
+- **Release:** the published build is pluginless and targets arm64 Android devices.
 
-## entinyGram additions
+🐶 - Inugram contribution
+📡 - entinyGram contribution
 
-our own layer on top of the inugram patchset: restricted Telegram features, privacy tools, and power-user controls.
+## Inherited entinyGram and Inugram features
+
+The source tree includes entinyGram's layer on top of the Inugram patchset, alongside Prism-specific changes: restricted Telegram features, privacy tools, and power-user controls.
 
 ### privacy & protection
 
@@ -100,24 +107,22 @@ our own layer on top of the inugram patchset: restricted Telegram features, priv
 - 📡 **avatar corners**: adjustable radius - *ported from [NagramXF](https://github.com/Keeperorowner/NagramXF)*
 - 📡 **clown avatar for blocked users**: blocked users show 🤡 (or 💩 / 💀) instead of their photo - *ported from [NiagramX](https://github.com/HSSkyBoy/NiagramX)*
 - 📡 **clown avatar for users who blocked me**: guessed from a missing photo and last seen, so it can be wrong - *ported from [NagramXF](https://github.com/Keeperorowner/NagramXF)*
-- 📡 **standalone AMOLED theme** - *ported from NagramX Turbo*
 - 📡 **theme switch recovery**: fixes interrupted theme transitions and stale Monet palettes
 - 📡 **liquid glass controls**: adjustable refraction angle and intensity - *ported from [Nagram](https://github.com/NextAlone/Nagram)*
 - 📡 **niche settings**: extra hidden options, revealed by tapping the settings header five times
 - 📡 **icon packs**: Stock, Solar, VKUI and Phosphor
-- 📡 **iOS-style design** - *ported from [exteraless](https://github.com/exteraless/exteraless), [Cherrygram](https://github.com/arsLan4k1390/Cherrygram) and [Nagram X Turbo](https://github.com/temporaryna/NagramXTurbo)*:
+- 📡 **interface style and navigation** - *ported from [exteraless](https://github.com/exteraless/exteraless), [Cherrygram](https://github.com/arsLan4k1390/Cherrygram) and [Nagram X Turbo](https://github.com/temporaryna/NagramXTurbo)*:
   - compact bottom navigation bar
   - compact chat header pill with adjustable avatar placement
   - option to hide the chat avatar and keep the three-dot menu
-  - iOS-style input bar with optional compact mode
-- 📡 **action button style**: Accent, Neutral or White - *ported from [Nagram X Turbo](https://github.com/temporaryna/NagramXTurbo) (@temporaryna)*
+  - customizable message-input layout and glass appearance
 - 📡 **header centering** and customizable chat headers
 - 📡 **compact pill & profile transition fixes**
 - 📡 **raise bottom bar**: slider to lift the compact bottom bar off the screen edge
 - 📡 **raise FAB buttons**: toggle to lift the floating action buttons a bit higher
 - 📡 **fix topics side panel flicker**: no more constant jitter/smearing after using search inside the panel
 - 📡 **auto marquee** for long titles - *inspired by auto_marquee plugin (@chestertech)*
-- 📡 **unread counter on the chat header back button**, with an iOS-styled variant and a live preview in chat header settings - *ported from [Finegram](https://github.com/Th3Nekit/Finegram)*
+- 📡 **unread counter on the chat header back button**, with an alternate compact style and a live preview in chat header settings - *ported from [Finegram](https://github.com/Th3Nekit/Finegram)*
 - 📡 **Material 3 music player**: full-screen player with cover-based colors, wavy seek bar, morphing controls, queue, synced lyrics and a mini player - *ported from [exteraless](https://github.com/exteraless/exteraless)*
 - 📡 **show spoilers directly**
 - 📡 **customizable bottom tabs**, with an optional separate Search button; the Chats tab can be moved too - *button layout ported from [NagramXF](https://github.com/Keeperorowner/NagramXF)*
@@ -136,13 +141,12 @@ our own layer on top of the inugram patchset: restricted Telegram features, priv
 - 📡 **pill stack**: interactive pills in chats search bar - *ported from [exteraGram](https://github.com/exteraless/exteraless)*
 - 📡 **support card**: optional way to support the developer, can be hidden
 - 📡 **downloads button**: always show the downloads list button in the chats header
-- 📡 **app icon picker**: full-screen icon chooser with live preview - *ported from [exteraless](https://github.com/exteraless/exteraless)*
+- 📡 **Prism-branded app icon picker**: full-screen icon chooser with live preview and themed adaptive icons that use Prism's mark - *icon chooser based on [exteraless](https://github.com/exteraless/exteraless)*
 - 📡 **messages appearance**: hide reply background, custom reply colors and pattern emoji - *inspired by [Finegram](https://github.com/Th3Nekit/Finegram)*
 - 📡 **snowflakes in chats**: falling snow over the chat background any time of year
 - 📡 **snowflakes in header**: falling snow over the title bar any time of year - *ported from [Cherrygram](https://github.com/arsLan4k1390/Cherrygram)*
 - 📡 **chat list sections**: chats as rounded Material 3 cards with adjustable side margins and pinned chats and archive as their own card - *inspired by Modular Sections (@RnPlugins)*
 - 📡 **forum topic cards**: topics of a forum as rounded Material 3 cards with pinned topics as their own card
-- 📡 **retro mode**: old-style profile header, flat lists and a classic settings screen - *ported from retro-views plugin (@sophietelle)*
 
 ### profile & identity tools
 
@@ -238,11 +242,10 @@ the sections below contain the broader feature set: inugram functionality, featu
 
 - navigation drawer, like in older Telegram versions; can be used alongside or instead of the bottom tabs
   - 🐶 an option to (ab)use predictive back to open the drawer
-- monet (material you) theme support - *based on [NagramX](https://github.com/risin42/NagramX)*, 🐶 improved. plus a quick switcher in appearance settings (light/dark/amoled/auto)
-- 🐶 classic ui mode for folders bar, shared media tabs, global search and chat elements (reverts the >12.6 "liquid glass" look)
+- upstream Monet (Material You) theme support is inherited, but Prism build 35 exposes its Paper palettes instead of the other stock themes
 - icon replacement (solar pack by [480 Design](https://t.me/Design480) - *ported from [NagramX](https://github.com/risin42/NagramX)*; vkui pack by [VK](https://github.com/VKCOM/icons) - *ported from [Catogram](https://github.com/Catogram/Catogram)*)
 - 22 concept launcher icons (Inu tribute, Radar, Constellation, Orbit, Avatar, Nothing, Mono, Sunset, Amethyst, Aurora, Google ’26, Lunar, Math Book, Jungle, Gold, Dish, Blush, Nox Sky, Inverse, osu!, Among Us, Crimson) in the app icon picker, free for everyone - *icons by [@xiurann](https://t.me/xiurann) and [@mkr_infinity](https://t.me/mkr_infinity)*
-- notification icon: Telegram (default) or entinyGram
+- notification icon selector: Telegram by default, with legacy upstream glyphs also available
 - show seconds in timestamps
 - override Telegram's detected device performance class
 - 🐶 customizable animation speed multiplier (incl. instant)

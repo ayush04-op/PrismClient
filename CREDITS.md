@@ -9,6 +9,8 @@ Prism would not exist without these projects. Thank you.
 - **Inugram** by [teidesu](https://github.com/teidesu/inugram) — the upstream patchset entinyGram builds on.
 - **Telegram for Android** by [DrKLO / Telegram FZ-LLC](https://github.com/DrKLO/Telegram) — the base
   application (GPL-2.0-or-later).
-- Other forks credited inside entinyGram's own `FEATURES.md`.
-- **Anthropic Serif (Text)** — default font, a third-party font bundled under its distributor's terms
-  (see `prism/assets/prism_font/FONT-NOTICE.txt`).
+- Other forks and contributors are credited inline in [FEATURES.md](FEATURES.md) and in the source patches.
+- **Anthropic Serif (Text), Anthropic Sans (Text), and Anthropic Mono** — third-party font assets.
+  Serif is Prism's default app font, Sans is an optional app font, and Mono is used for monospaced
+  text and code. Their rights remain with their respective owners; the Serif notice is at
+  `prism/assets/prism_font/FONT-NOTICE.txt`.

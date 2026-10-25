@@ -1,6 +1,6 @@
 # Building the APK
 
-Assumes you've already run through [Development](README.md#development) —
+Assumes you've followed [Build from source](README.md#build-from-source) —
 `bun install`, `bun run setup`, `worktree/` exists and `bun run lint-patches` is clean.
 (Windows-specific environment setup: [WINDOWS_SETUP.md](WINDOWS_SETUP.md).)
 
@@ -52,15 +52,15 @@ cd worktree
   a debug build replaces the installed release build.
 - **Output:** `worktree/TMessagesProj_App/build/outputs/apk/debug/app.apk`.
 - **versionCode:** locally this auto-increments from `worktree/.local_build_number`
-  (starts at `1000000`), completely separate from the CI date-based scheme below — you
+  (starts at `1000000`), separate from the GitHub Actions run-number scheme below — you
   don't need to set anything for local builds.
 - **ABI:** defaults to `arm64-v8a` only (fast local builds). Set the `ABI_FILTERS` env
   var (comma-separated ABIs, or `all`) before running Gradle if you need other
   architectures, e.g. `ABI_FILTERS=all ./gradlew TMessagesProj_App:assembleDebug`.
   For the x86 emulator, use `ABI_FILTERS=x86_64` on its own (unverified with a list).
-- **Pluginless vs plugins:** the default build is pluginless. Setup with
-  `bun run setup -- --pluginless` builds the pluginless variant; plugins are opt-in.
-  CI builds both.
+- **Pluginless vs plugins:** `bun run setup -- --pluginless` creates the
+  `worktree-pluginless/` source tree; use `bun run build-debug-pluginless` to build it.
+  The published GitHub release is pluginless and arm64-only.
 
 Only `:TMessagesProj_App` is a real, buildable app module — `TMessagesProj_AppHuawei`,
 `TMessagesProj_AppHockeyApp`, and `TMessagesProj_AppStandalone` still exist as
@@ -79,18 +79,18 @@ Same local keystore/credentials as the debug build above, with
 
 Output: `worktree/TMessagesProj_App/build/outputs/apk/release/app.apk`.
 
-## How this differs from CI
+## GitHub Actions release build
 
-`.github/workflows/apk.yml` runs the same two Gradle tasks (`--no-daemon`), but:
+The workflow is [`.github/workflows/android.yml`](.github/workflows/android.yml). It runs
+when manually dispatched or after a push to `main`. CI sets up the pluginless source tree,
+builds `:TMessagesProj_App:assembleRelease` for `arm64-v8a`, and uploads the result as the
+`prism-apk` artifact for 30 days. The published APK is named `prism-arm64.apk`.
 
-- `INU_BUILD` (the real `versionCode`) is computed by `scripts/ci/version.ts` from the
-  `INU_DAY_STATE` GitHub variable — date-based, not the local `.local_build_number`
-  counter. See the "Release Bumping" rule in `CLAUDE.md` for the exact format.
-- `COMMIT_ID` is set from `github.sha` (locally it falls back to `git rev-parse --short
-  HEAD` automatically, so `verName` still gets a commit suffix either way).
-- `ABI_FILTERS=arm64-v8a` is set explicitly (same as the local default).
-- Signing in CI may use a different keystore via the `RELEASE_KEYSTORE_PATH` env var and
-  injected secrets, rather than the repo-committed dev keystore used above.
+The workflow requires the repository secrets `API_ID` and `API_HASH`. `INU_BUILD` and the
+release tag use the GitHub Actions run number (`build-N`). If `KEYSTORE_PASSPHRASE` is set,
+CI decrypts the Prism release key, signs the APK, and publishes a GitHub Release. Without
+that secret, CI still uploads an APK artifact, but it is unsigned and cannot update an
+installation signed with the Prism release key.
 
 ## Troubleshooting
 
