@@ -31,12 +31,13 @@ object PrismSettingsRows {
     const val CREDITS = 216
     const val FONT_CHECK = 217
     const val SAFE_MODE = 218
+    const val AI = 219
 
     /** settings section of every Prism row (see ProfileSettingsHelper) */
     @JvmStatic
     fun sectionOf(id: Int): Int = when (id) {
         PRIVACY, RESTRICTED -> 10
-        CHATS, CLUTTER, BEHAVIOR, TRANSLATOR -> 11
+        CHATS, CLUTTER, BEHAVIOR, TRANSLATOR, AI -> 11
         DESIGN, MAIN_SCREEN, INTERFACE -> 14
         PREMIUM -> 2
         PLUGINS, BACKUP, UPDATE, SAFE_MODE -> 15
@@ -58,6 +59,7 @@ object PrismSettingsRows {
             row(CLUTTER, R.drawable.inu_tabler_shield_cancel, LocaleController.getString(R.string.InuAnnoyances), "Hide buttons, banners and badges"),
             row(BEHAVIOR, R.drawable.inu_tabler_adjustments_horizontal, LocaleController.getString(R.string.InuCategoryBehavior), "Downloads, input and small tools"),
             row(TRANSLATOR, R.drawable.msg_translate, LocaleController.getString(R.string.InuTranslator), "Translate messages in place"),
+            row(AI, R.drawable.msg_translate, "AI assistant", "Add your OpenRouter or other API key"),
             row(DESIGN, R.drawable.msg_palette, LocaleController.getString(R.string.InuCategoryAppearance), "Fonts, icons, avatars and motion"),
             row(MAIN_SCREEN, R.drawable.msg_home_solar, LocaleController.getString(R.string.InuMainScreen), "Tabs, drawer and chat list layout"),
             row(INTERFACE, R.drawable.msg_newphone, LocaleController.getString(R.string.InuIosSettings), "Liquid glass and the input bar"),
@@ -86,6 +88,7 @@ object PrismSettingsRows {
             CLUTTER -> f.presentFragment(AnnoyancesSettingsActivity())
             BEHAVIOR -> f.presentFragment(BehaviorSettingsActivity())
             TRANSLATOR -> f.presentFragment(TranslatorSettingsActivity())
+            AI -> f.presentFragment(AiSettingsActivity())
             DESIGN -> f.presentFragment(AppearanceSettingsActivity())
             MAIN_SCREEN -> f.presentFragment(MainScreenSettingsActivity())
             INTERFACE -> f.presentFragment(IosStyleSettingsActivity())
