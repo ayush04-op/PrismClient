@@ -1,0 +1,13 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java
+index d228427a..dd6f962f 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java
+@@ -268,7 +268,7 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
+     private boolean overrideBackgroundColor;
+     private BlurredBackgroundWithFadeDrawable bottomFadeDrawable;
+ 
+-    public boolean captionAbove;
++    public boolean captionAbove = desu.inugram.InuConfig.CAPTION_ABOVE_DEFAULT.getValue();
+ 
+     public TLRPC.Chat getChat() {
+         if (baseFragment instanceof ChatActivity) {

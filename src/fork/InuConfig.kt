@@ -457,6 +457,11 @@ object InuConfig {
 
     @JvmField
     val DOWNLOAD_DIRECTORY = StringItem("download_directory", "Prism")
+    val CAPTION_ABOVE_DEFAULT = BoolItem("prism_caption_above", false)
+    val SORT_DOWNLOADS = BoolItem("prism_sort_downloads", true)
+    val QUIET_ENABLED = BoolItem("prism_quiet_enabled", false)
+    val QUIET_START = IntItem("prism_quiet_start", 22 * 60)
+    val QUIET_END = IntItem("prism_quiet_end", 7 * 60)
 
     @JvmField
     val SAVE_FILENAME_DATE = BoolItem("save_filename_date", false)

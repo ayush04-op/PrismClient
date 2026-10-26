@@ -1,0 +1,14 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
+index 431ca3c0..bbd270aa 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MediaController.java
+@@ -5919,6 +5919,9 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
+                     filename = sourceFile.getName();
+                 }
+                 File dirDest = new File(Environment.DIRECTORY_DOWNLOADS, desu.inugram.InuConfig.DOWNLOAD_DIRECTORY.getValue());
++                if (desu.inugram.InuConfig.SORT_DOWNLOADS.getValue()) {
++                    dirDest = new File(dirDest, desu.inugram.helpers.PrismDownloads.categoryFolder(filename, mimeType));
++                }
+                 contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, dirDest + File.separator);
+                 uriToInsert = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                 contentValues.put(MediaStore.Downloads.DISPLAY_NAME, filename);

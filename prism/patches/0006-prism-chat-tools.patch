@@ -1,0 +1,45 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index fadc7d7b..8ae9e834 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -4039,6 +4039,22 @@ public class ChatActivity extends BaseFragment implements
+                     } else {
+                         getNotificationCenter().postNotificationName(NotificationCenter.openBoostForUsersDialog, dialog_id);
+                     }
++                } else if (id == desu.inugram.helpers.PrismChatTools.MENU_REPLIES) {
++                    desu.inugram.helpers.PrismChatTools.showReplies(ChatActivity.this, chatActivityEnterView != null ? chatActivityEnterView.getEditField() : null);
++                } else if (id == desu.inugram.helpers.PrismChatTools.MENU_LOCK) {
++                    if (!desu.inugram.helpers.PrismChatTools.canAuthenticate()) {
++                        BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.chats_infotip, "Set a screen lock or fingerprint on your phone first").show();
++                    } else {
++                        boolean nowLocked = desu.inugram.helpers.PrismChatTools.toggleLock(getDialogId());
++                        BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.chats_infotip, nowLocked ? "Chat locked" : "Chat unlocked").show();
++                    }
++                } else if (id == desu.inugram.helpers.PrismChatTools.MENU_PDF) {
++                    File pdf = desu.inugram.helpers.PrismChatTools.exportPdf(ChatActivity.this, avatarContainer != null && avatarContainer.getTitleTextView() != null ? String.valueOf(avatarContainer.getTitleTextView().getText()) : "Chat", messages);
++                    if (pdf == null) {
++                        BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.chats_infotip, "Nothing to export").show();
++                    } else {
++                        AndroidUtilities.openForView(pdf, pdf.getName(), "application/pdf", getParentActivity(), null, false);
++                    }
+                 } else if (id == report) {
+                     ReportBottomSheet.openChat(ChatActivity.this);
+                 } else if (id == star) {
+@@ -4631,6 +4647,9 @@ public class ChatActivity extends BaseFragment implements
+             if (themeDelegate.isThemeChangeAvailable(true)) {
+                 headerItem.lazilyAddSubItem(change_colors, R.drawable.msg_background, LocaleController.getString(R.string.SetWallpapers));
+             }
++            headerItem.lazilyAddSubItem(desu.inugram.helpers.PrismChatTools.MENU_REPLIES, R.drawable.msg_text_outlined, "Saved replies");
++            headerItem.lazilyAddSubItem(desu.inugram.helpers.PrismChatTools.MENU_LOCK, R.drawable.msg_text_check, desu.inugram.helpers.PrismChatTools.isLocked(getDialogId()) ? "Unlock chat" : "Lock chat");
++            headerItem.lazilyAddSubItem(desu.inugram.helpers.PrismChatTools.MENU_PDF, R.drawable.msg_openin, "Export loaded messages as PDF");
+             if (currentUser != null && currentUser.self && getDialogId() != UserObject.VERIFY) {
+                 headerItem.lazilyAddSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
+             }
+@@ -30641,6 +30660,7 @@ public class ChatActivity extends BaseFragment implements
+     @Override
+     public void onResume() {
+         super.onResume();
++        desu.inugram.helpers.PrismChatTools.guard(this, dialog_id);
+         checkShowBlur(false);
+         inu_updateMenuSlotAvatar();
+         desu.inugram.helpers.chat.AttachMinimizeHelper.syncBadge(this);

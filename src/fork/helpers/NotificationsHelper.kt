@@ -41,6 +41,7 @@ object NotificationsHelper {
     @JvmStatic
     fun shouldSuppressNotifications(account: Int): Boolean =
         PasscodeHelper.isAccountHidden(account) ||
+            desu.inugram.helpers.PrismChatTools.quietNow() ||
             ParanoiaHelper.shouldSuppressNotifications()
             // #if PLUGINS
             || PluginNotifications.areNotificationsSuppressed(account)
