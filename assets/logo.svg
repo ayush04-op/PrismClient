@@ -1,21 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="108" height="108">
-  <defs>
-    <linearGradient id="entinyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF2855"/>
-      <stop offset="100%" stop-color="#D6002A"/>
-    </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
-      <feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#000000" flood-opacity="0.18" />
-    </filter>
-  </defs>
-  <!-- Google / AOSP Adaptive Icon Squircle -->
-  <path d="M50,2 C12,2 2,12 2,50 C2,88 12,98 50,98 C88,98 98,88 98,50 C98,12 88,2 50,2 Z" fill="url(#entinyGrad)" filter="url(#shadow)"/>
-  <svg x="20" y="20" width="60" height="60" viewBox="0 0 24 24" fill="none">
-    <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
-      <path d="M4 10a7.31 7.31 0 0 0 10 10Z" />
-      <path d="m9 15 3-3" />
-      <path d="M17 13a6 6 0 0 0-6-6" />
-      <path d="M21 13A10 10 0 0 0 11 3" />
-    </g>
-  </svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <defs><linearGradient id="prismGrad" x1="10" y1="0" x2="98" y2="108" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#6A3DFF"/><stop offset="1" stop-color="#2B0E8A"/></linearGradient></defs>
+  <rect width="108" height="108" rx="26" fill="url(#prismGrad)"/>
+  <path d="M62.1,38.4 L56.8,44.7 L48.7,43.3 L45.9,35.6 L51.2,29.3 L59.3,30.7 Z" fill="#fff" fill-opacity="1" stroke="#fff" stroke-opacity="1" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M79.5,51.6 L72.8,56.3 L65.4,52.8 L64.6,44.7 L71.4,40.0 L78.8,43.4 Z" fill="#fff" fill-opacity="1" stroke="#fff" stroke-opacity="1" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M72.7,69.3 L68.0,76.0 L59.9,75.3 L56.4,67.8 L61.1,61.1 L69.3,61.8 Z" fill="#fff" fill-opacity="1" stroke="#fff" stroke-opacity="1" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M49.7,73.8 L42.0,76.6 L35.7,71.4 L37.1,63.3 L44.8,60.5 L51.1,65.8 Z" fill="#fff" fill-opacity="1" stroke="#fff" stroke-opacity="1" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M43.9,50.3 L38.1,56.0 L30.1,53.9 L28.0,46.0 L33.8,40.2 L41.7,42.3 Z" fill="#fff" fill-opacity="1" stroke="#fff" stroke-opacity="1" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M63.9,57.6 L55.8,64.3 L46.0,60.7 L44.1,50.4 L52.2,43.7 L62.0,47.3 Z" fill="#fff" fill-opacity="0.35" stroke="#fff" stroke-opacity="0.35" stroke-width="2.6" stroke-linejoin="round"/>
 </svg>

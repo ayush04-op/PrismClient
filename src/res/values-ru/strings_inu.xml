@@ -226,7 +226,7 @@
     <string name="InuBubbleTails">Хвостики у сообщений</string>
     <string name="InuSendAsRoundVideo">Отправить как кружок</string>
     <string name="InuMiscPreviewForwardedFrom">inu</string>
-    <string name="InuMiscPreviewForwardedMessage">гав! Prism или inuGram? 🐶</string>
+    <string name="InuMiscPreviewForwardedMessage">гав! Prism или Telegram? 🐶</string>
     <string name="InuMiscPreviewEditedMessage">оба лучшие, собачья база 🐶⚡</string>
     <string name="InuDeleteForBoth">«Удалить у всех» по умолчанию</string>
     <string name="InuDeleteForBothMessages">Отдельные сообщения</string>

@@ -70,7 +70,7 @@ object UnifiedPushHelper {
             val saved = UnifiedPush.getSavedDistributor(context)
             val target = preferred?.takeIf { it in all } ?: saved?.takeIf { it in all } ?: all.first()
             if (target != saved) UnifiedPush.saveDistributor(context, target)
-            UnifiedPush.register(context, INSTANCE, "entinyGram", null)
+            UnifiedPush.register(context, INSTANCE, "Prism", null)
             awaitAnswer()
         } catch (e: Throwable) {
             FileLog.e(e)

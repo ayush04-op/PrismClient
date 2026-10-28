@@ -157,7 +157,7 @@ object CrashReporter {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "application/octet-stream"
-            putExtra(Intent.EXTRA_TITLE, "entinygram-heap-dump.hprof")
+            putExtra(Intent.EXTRA_TITLE, "prism-heap-dump.hprof")
         }
         @Suppress("DEPRECATION")
         activity.startActivityForResult(intent, SAVE_HEAP_DUMP_REQUEST)

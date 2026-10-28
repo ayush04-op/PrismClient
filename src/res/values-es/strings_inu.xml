@@ -512,7 +512,7 @@ Sistema: %6$s
     <string name="InuBubbleTails">Colas de las burbujas</string>
     <string name="InuSendAsRoundVideo">Enviar como vídeo redondo</string>
     <string name="InuMiscPreviewForwardedFrom">inu</string>
-    <string name="InuMiscPreviewForwardedMessage">¡guau! ¿Prism o inuGram? 🐶</string>
+    <string name="InuMiscPreviewForwardedMessage">¡guau! ¿Prism o Telegram? 🐶</string>
     <string name="InuMiscPreviewEditedMessage">ambos son los mejores, base perruna 🐶⚡</string>
     <string name="InuDeleteForBoth">«Eliminar para todos» por defecto</string>
     <string name="InuDeleteForBothMessages">Mensajes</string>

@@ -37,7 +37,7 @@ object ArchiveExportHelper {
         val dir = File(filesDir, "cache/inu_share_once")
         if (!dir.exists()) dir.mkdirs()
         val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
-        val target = File(dir, "entinygram-archive-$stamp.json")
+        val target = File(dir, "prism-archive-$stamp.json")
         val count = target.bufferedWriter().use { InuDatabaseHelper.writeArchiveJson(db, it) }
         return target to count
     }

@@ -62,7 +62,7 @@ object DownloadKeepAliveHelper {
         if (wakeLock != null) return
         try {
             val pm = ApplicationLoader.applicationContext.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return
-            val wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "entinyGram:keepDownloadsAwake")
+            val wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Prism:keepDownloadsAwake")
             wl.setReferenceCounted(false)
             wl.acquire()
             wakeLock = wl

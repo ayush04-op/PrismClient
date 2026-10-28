@@ -434,7 +434,7 @@ the sections below contain the broader feature set: inugram functionality, featu
   - optional launcher long-press shortcut to enter it quickly (hidden while active)
 - biometric confirmation before deleting/clearing a chat or logging out - *inspired by [Cherrygram](https://github.com/arsLan4k1390/Cherrygram)*
 - optional biometric lock on Archived Chats — ask once per app session or every time you open the archive
-- session list in Settings > Devices shows the real app name (entinyGram) instead of the registered api_id title ("Inugram")
+- session list in Settings > Devices shows the real app name (Prism) instead of the registered api_id title ("Inugram")
 
 ### behavior
 

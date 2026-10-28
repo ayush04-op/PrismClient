@@ -121,9 +121,9 @@ object LogsHelper {
 
     fun stagedFile(kind: String, ext: String, time: Long = System.currentTimeMillis()): File {
         val dir = AndroidUtilities.getCacheDir().apply { mkdirs() }
-        dir.listFiles { f -> f.name.startsWith("entinygram-$kind-") }?.forEach { it.delete() }
+        dir.listFiles { f -> f.name.startsWith("prism-$kind-") }?.forEach { it.delete() }
         val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date(time))
-        return File(dir, "entinygram-$kind-$stamp.$ext")
+        return File(dir, "prism-$kind-$stamp.$ext")
     }
 
     private fun stageCurrentLog(): File? {
