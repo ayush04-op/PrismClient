@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/prism-poster.svg" alt="Prism, an unofficial Telegram client for Android" width="100%"></p>
+
 # Prism Client
 
 [![Android release workflow](https://github.com/ayush04-op/PrismClient/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/ayush04-op/PrismClient/actions/workflows/android.yml) [![Latest release](https://img.shields.io/github/v/release/ayush04-op/PrismClient?label=latest%20APK)](https://github.com/ayush04-op/PrismClient/releases/latest)
@@ -20,6 +22,16 @@ The build-35 APK is [`prism-arm64.apk`](https://github.com/ayush04-op/PrismClien
 - **Interface customization:** adjustable Liquid Glass effects, chat-header controls, and message-input previews.
 - **Settings and updates:** Prism and Telegram settings are grouped together, with a dedicated in-app software-update page.
 - **Telegram client features:** privacy, messaging, media, and other inherited capabilities from the upstream projects. See the [feature inventory](FEATURES.md) and [credits](CREDITS.md); some inherited or plugin-only options may not appear in the pluginless release.
+
+## Telegram API and your account
+
+Prism is an independent, unofficial client. Like every Telegram app, it talks to Telegram through the public Telegram API (MTProto). It identifies itself with its **own registered `api_id` and `api_hash`**, not the credentials of the official Telegram app and not those of any other client.
+
+Telegram allows third-party clients, but you use Prism at your own risk, as with any unofficial app. Accounts are usually limited for what they do, not for which app they use: mass-joining, mass-messaging, adding many users, and automation can get an account restricted on any client, including the official one.
+
+- Optional features such as device spoofing, local Premium, and ghost mode are **off by default**. Turning them on is your choice and may draw extra scrutiny.
+- If you are trying Prism for the first time, consider using a secondary account before your main one.
+- If you build your own fork, register your own app at [my.telegram.org/apps](https://my.telegram.org/apps) and set the `API_ID` and `API_HASH` repository secrets. Do not reuse someone else's credentials.
 
 ## Build from source
 
