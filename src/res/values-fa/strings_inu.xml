@@ -486,10 +486,10 @@
     <string name="InuConfirmReactionText">واکنش %1$s در **%2$s** ارسال شود؟</string>
     <string name="InuNotificationIcon">نماد اعلان</string>
     <string name="InuNotificationIconTelegram">Telegram</string>
-    <string name="InuNotificationIconInugram">entinyGram</string>
-    <string name="InuNotificationIconOldEntinygram">entinyGram قدیمی</string>
+    <string name="InuNotificationIconInugram">Classic</string>
+    <string name="InuNotificationIconOldEntinygram">Legacy</string>
     <string name="InuNotificationIconInfo">در Xiaomi (MIUI/HyperOS) ممکن است سیستم این آیکون را با آیکون برنامه جایگزین کند، پس انتخاب شما آنجا دیده نشود</string>
-    <string name="InuAppIconOldEntinygram">entinyGram قدیمی</string>
+    <string name="InuAppIconOldEntinygram">Legacy</string>
     <string name="InuDisableChatBubbles">غیرفعال کردن حباب‌های اعلان Android</string>
     <string name="InuKeepChatsInStack">باز نگه داشتن گفتگوهای قبلی</string>
     <string name="InuKeepChatsInStackInfo">باز کردن گفتگوی دیگر، گفتگوهای پشت آن را نمی‌بندد</string>
@@ -760,7 +760,7 @@
     <string name="InuLiquidGlassTint">رنگ‌مایه شیشه مایع</string>
     <string name="InuNicheSettings">تنظیمات ویژه</string>
     <string name="InuNicheSettingsInfo">قابلیت‌های درخواستی که شاید برای همه مفید نباشند. اگر کار نکنند حذف می‌شوند.</string>
-    <string name="InuNicheUnlockedToast">رفیق، entiny tv رو فعال نکن خواهشاً💀💀</string>
+    <string name="InuNicheUnlockedToast">Unlocked</string>
     <string name="InuNicheAlreadyUnlockedToast">رفیق، قبلاً فعالش کردی 💀</string>
 
     <string name="InuReduceMenuMotion">کاهش حرکت منوها</string>
@@ -922,7 +922,7 @@
     <string name="InuAppIconJungle">جنگل</string>
     <string name="InuAppIconGold">طلایی</string>
     <string name="InuAppIconDish">بشقاب</string>
-    <string name="InuAppIconLicenseConcept">نماد مفهومی از **entinyGram**</string>
+    <string name="InuAppIconLicenseConcept">Concept icon</string>
     <string name="InuAppIconLicenseInugram">نماد موقت؛ برای ساخت نمادی بهتر آزادانه مشارکت کنید</string>
     <string name="InuAppIconLicenseTelegram">نماد از **Telegram**. همه حقوق محفوظ است.</string>
     <string name="InuJumpToBeginning">پرش به ابتدا</string>
@@ -1597,8 +1597,8 @@
     <string name="InuDeletedMarkPreviewSender">سارا</string>
     <string name="InuHideDevBadges">غیرفعال کردن نشان‌های Prism</string>
     <string name="InuHideDevBadgesInfo">معنایی ندارند و هیچ برتری‌ای نمی‌دهند — فقط یک تشکر از طرف توسعه‌دهنده</string>
-    <string name="InuDevBadge">تیم entinyGram</string>
-    <string name="InuDevBadgeInfo">این حساب برای تیم entinyGram شناخته‌شده است.</string>
+    <string name="InuDevBadge">Prism team</string>
+    <string name="InuDevBadgeInfo">This account is recognized by the Prism team.</string>
     <string name="InuStopBot">توقف ربات</string>
     <string name="InuStopBotAlert">مطمئن هستید که می‌خواهید **%1$s** را متوقف کنید؟ دیگر نمی‌تواند برای شما پیام بفرستد.</string>
     <string name="InuStopBotAction">توقف</string>

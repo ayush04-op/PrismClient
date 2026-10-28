@@ -511,7 +511,7 @@
     <string name="InuAppIconJungle">ジャングル</string>
     <string name="InuAppIconGold">ゴールド</string>
     <string name="InuAppIconDish">お皿</string>
-    <string name="InuAppIconLicenseConcept">**entinyGram** によるコンセプトアイコン</string>
+    <string name="InuAppIconLicenseConcept">Concept icon</string>
     <string name="InuAppIconLicenseInugram">仮アイコンです。より良いものを提供していただけたら嬉しいです</string>
     <string name="InuAppIconLicenseTelegram">**Telegram** によるアイコン。All rights reserved.</string>
     <string name="InuJumpToBeginning">最初へ移動</string>
@@ -760,7 +760,7 @@
     <string name="InuConfirmReactionText">**%2$s** に %1$s リアクションを送信しますか？</string>
     <string name="InuNotificationIcon">通知アイコン</string>
     <string name="InuNotificationIconTelegram">Telegram</string>
-    <string name="InuNotificationIconInugram">entinyGram</string>
+    <string name="InuNotificationIconInugram">Classic</string>
     <string name="InuNothingToTranslate">翻訳対象のメッセージが選択されていません。</string>
     <string name="InuSummarize">要約</string>
     <string name="InuHiddenSendersAndCaptionDescription">送信者名とキャプションを削除しました</string>
@@ -884,7 +884,7 @@
     <string name="InuLiquidGlassTint">リキッドグラスの色味</string>
     <string name="InuNicheSettings">ニッチな設定</string>
     <string name="InuNicheSettingsInfo">一部のユーザーから要望があった、すべての人に必要とは限らない機能です。動作しない場合は削除します。</string>
-    <string name="InuNicheUnlockedToast">bro、entiny tvは有効にしないで pls💀💀</string>
+    <string name="InuNicheUnlockedToast">Unlocked</string>
     <string name="InuNicheAlreadyUnlockedToast">bro、もう有効にしたじゃん 💀</string>
     <string name="InuStripTrackingParamsOnOpen">リンクを開くとき</string>
     <string name="InuStripTrackingParamsOnPaste">貼り付け時</string>
@@ -1065,7 +1065,7 @@
     <string name="InuDisableFlagSecure">FLAG_SECUREを無効化</string>
     <string name="InuDisableFlagSecureInfo">スクリーンショット禁止を解除し、秘密チャット、消えるメディア、保護されたチャンネルでのスクショや画面録画を許可します。</string>
     <string name="InuAntiDeletion">メッセージの保存</string>
-    <string name="InuAppIconOldEntinygram">旧 entinyGram</string>
+    <string name="InuAppIconOldEntinygram">Legacy</string>
     <string name="InuCategoryAppearance">デザイン</string>
     <string name="InuCategoryBackup">詳細設定</string>
     <string name="InuCategoryBehavior">動作とツール</string>
@@ -1314,7 +1314,7 @@
     <string name="InuMsgDetailWaveformLength">波形サンプル数</string>
     <string name="InuNo">いいえ</string>
     <string name="InuNoProfilePhotos">プロフィール写真が見つかりません</string>
-    <string name="InuNotificationIconOldEntinygram">旧 entinyGram</string>
+    <string name="InuNotificationIconOldEntinygram">Legacy</string>
     <string name="InuNotificationIconInfo">Xiaomi（MIUI/HyperOS）では、システムがこのアイコンをアプリのアイコンに置き換える場合があり、選択が反映されないことがあります</string>
     <string name="InuPoweredByProvider">翻訳提供: %1$s</string>
     <string name="InuProfilePhotosDeleted">すべてのプロフィール写真を削除しました</string>
@@ -1514,8 +1514,8 @@
     <string name="InuIgnoreTranslationsDisabledInfo">チャンネルやユーザーが翻訳を無効にしていても翻訳バーを表示します。</string>
     <string name="InuLocalCustomEmoji">ローカルカスタム絵文字</string>
     <string name="InuLocalCustomEmojiInfo">Premium絵文字を非表示リンクとして送信し、他のクライアントでも表示できるようにします。ローカルTelegram Premiumと併用してください。</string>
-    <string name="InuDevBadge">entinyGramチーム</string>
-    <string name="InuDevBadgeInfo">このアカウントはentinyGramチームによって公認されています。</string>
+    <string name="InuDevBadge">Prism team</string>
+    <string name="InuDevBadgeInfo">This account is recognized by the Prism team.</string>
     <string name="InuMapProviderOsmLite">OpenStreetMap (軽量)</string>
     <string name="InuProfileSettingsRowsOrder">設定画面の並び順</string>
     <string name="InuProfileSettingsRowsItems">行</string>

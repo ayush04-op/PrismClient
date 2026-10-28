@@ -387,7 +387,7 @@
     <string name="InuConfirmReactionText">**%2$s** sohbetine %1$s tepkisi gönderilsin mi?</string>
     <string name="InuNotificationIcon">Bildirim simgesi</string>
     <string name="InuNotificationIconTelegram">Telegram</string>
-    <string name="InuNotificationIconInugram">entinyGram</string>
+    <string name="InuNotificationIconInugram">Classic</string>
     <string name="InuDisableChatBubbles">Android bildirim balonlarını devre dışı bırak</string>
     <string name="InuKeepChatsInStack">Önceki sohbetleri açık tut</string>
     <string name="InuKeepChatsInStackInfo">Başka bir sohbet açmak arkadaki sohbetleri kapatmaz</string>
@@ -532,7 +532,7 @@
     <string name="InuLiquidGlassTint">Liquid Glass renk tonu</string>
     <string name="InuNicheSettings">Niş ayarlar</string>
     <string name="InuNicheSettingsInfo">Herkesin ihtiyaç duymadığı ancak istenen özellikler burada bulunur. Çalışmıyorlarsa kaldırılacaklar.</string>
-    <string name="InuNicheUnlockedToast">kanka entiny tv\'yi açma lütfen💀💀</string>
+    <string name="InuNicheUnlockedToast">Unlocked</string>
     <string name="InuNicheAlreadyUnlockedToast">kanka, bunu zaten açtın 💀</string>
     <string name="InuReduceMenuMotion">Menü hareketlerini azalt</string>
     <string name="InuReduceMenuMotionInfo">Bağlam menüsü kademeli açılışını atlar ve mesaj menüsü animasyonlarını sadeleştirir</string>
@@ -669,7 +669,7 @@
     <string name="InuAppIconJungle">Orman</string>
     <string name="InuAppIconGold">Altın</string>
     <string name="InuAppIconDish">Çanak</string>
-    <string name="InuAppIconLicenseConcept">**entinyGram** tarafından konsept simge</string>
+    <string name="InuAppIconLicenseConcept">Concept icon</string>
     <string name="InuAppIconLicenseInugram">Yer tutucu simge, daha iyisini katkıda bulunmaktan çekinmeyin</string>
     <string name="InuAppIconLicenseTelegram">Simge **Telegram** tarafından yapılmıştır. Tüm hakları saklıdır.</string>
     <string name="InuJumpToBeginning">En başa git</string>
@@ -1061,7 +1061,7 @@
     <string name="InuDisableFlagSecure">FLAG_SECURE\'ı devre dışı bırak</string>
     <string name="InuDisableFlagSecureInfo">Ekran görüntüsü engelini kaldırır: gizli sohbetlerde, süreli medyalarda ve korumalı kanallarda ekran görüntüsü ve video kaydına izin verir.</string>
     <string name="InuAntiDeletion">Mesajları saklama</string>
-    <string name="InuAppIconOldEntinygram">Eski entinyGram</string>
+    <string name="InuAppIconOldEntinygram">Legacy</string>
     <string name="InuCategoryAppearance">Tasarım</string>
     <string name="InuCategoryBackup">Ek ayarlar</string>
     <string name="InuCategoryBehavior">Davranış ve Araçlar</string>
@@ -1315,7 +1315,7 @@
     <string name="InuMsgDetailWaveformLength">Dalga formu örnekleri</string>
     <string name="InuNo">Hayır</string>
     <string name="InuNoProfilePhotos">Profil fotoğrafı bulunamadı</string>
-    <string name="InuNotificationIconOldEntinygram">Eski entinyGram</string>
+    <string name="InuNotificationIconOldEntinygram">Legacy</string>
     <string name="InuNotificationIconInfo">Xiaomi cihazlarda (MIUI/HyperOS) sistem bu simgeyi uygulama simgesiyle değiştirebilir; bu nedenle seçim orada görünmeyebilir</string>
     <string name="InuPoweredByProvider">Çeviriler %1$s tarafından desteklenmektedir.</string>
     <string name="InuProfilePhotosDeleted">Tüm profil fotoğrafları silindi</string>
@@ -1524,8 +1524,8 @@
     <string name="InuIgnoreTranslationsDisabledInfo">Kanal veya kullanıcı çeviriyi kapatsa bile çeviri çubuğu gösterilir.</string>
     <string name="InuLocalCustomEmoji">Yerel Özel Emoji</string>
     <string name="InuLocalCustomEmojiInfo">Premium emojiler, diğer istemcilerin gösterebilmesi için gizli bağlantı olarak gönderilir. Yerel Telegram Premium ile birlikte kullanın.</string>
-    <string name="InuDevBadge">entinyGram ekibi</string>
-    <string name="InuDevBadgeInfo">Bu hesap entinyGram ekibi tarafından tanınmaktadır.</string>
+    <string name="InuDevBadge">Prism team</string>
+    <string name="InuDevBadgeInfo">This account is recognized by the Prism team.</string>
     <string name="InuMapProviderOsmLite">OpenStreetMap (hafif)</string>
     <string name="InuProfileSettingsRowsOrder">Ayarlar ekranı sırası</string>
     <string name="InuProfileSettingsRowsItems">Satırlar</string>

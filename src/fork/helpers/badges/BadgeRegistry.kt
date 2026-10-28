@@ -29,7 +29,7 @@ object BadgeRegistry {
         val emojiId: Long,
     )
 
-    private const val ENDPOINT = "https://entaytion.is-a.dev/api/entinygram/badges"
+    private const val ENDPOINT = "" // Prism never contacts a badge server; see init()
     private const val TTL_MS = 60L * 60 * 1000 // 1 hour, matches Vercel edge max-age=3600
 
     private const val KV_MANIFEST = "badges:manifest"
@@ -270,14 +270,6 @@ object BadgeRegistry {
         return map
     }
 
-    private fun bundledHolders(): Map<Long, Badge> {
-        val json = runCatching {
-            ApplicationLoader.applicationContext
-                ?.resources
-                ?.openRawResource(org.telegram.messenger.R.raw.inu_badges_bundled)
-                ?.bufferedReader()
-                ?.use(BufferedReader::readText)
-        }.getOrNull()
-        return json?.let { parse(it) }.orEmpty()
-    }
+    /** Prism ships no inherited badge holders (these were entinyGram's own channel and team). */
+    private fun bundledHolders(): Map<Long, Badge> = emptyMap()
 }

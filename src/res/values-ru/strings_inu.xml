@@ -592,7 +592,7 @@
     <string name="InuAppIconJungle">Джунгли</string>
     <string name="InuAppIconGold">Золото</string>
     <string name="InuAppIconDish">Тарелка</string>
-    <string name="InuAppIconLicenseConcept">Концепт иконки от **entinyGram**</string>
+    <string name="InuAppIconLicenseConcept">Concept icon</string>
     <string name="InuAppIconLicenseInugram">Временная иконка, не стесняйтесь предложить лучше</string>
     <string name="InuAppIconLicenseTelegram">Иконка от **Telegram**. Все права защищены.</string>
     <string name="InuJumpToBeginning">Перейти в начало</string>
@@ -869,7 +869,7 @@
     <string name="InuConfirmReactionText">Отправить реакцию %1$s в **%2$s**?</string>
     <string name="InuNotificationIcon">Иконка уведомления</string>
     <string name="InuNotificationIconTelegram">Telegram</string>
-    <string name="InuNotificationIconInugram">entinyGram</string>
+    <string name="InuNotificationIconInugram">Classic</string>
     <string name="InuNothingToTranslate">Нет сообщений для перевода.</string>
     <string name="InuAlreadyInTargetLanguage">Это сообщение уже на %1$s.</string>
     <string name="InuSummarize">Пересказ</string>
@@ -1048,7 +1048,7 @@
     <string name="InuLiquidGlassTint">Тонировка жидкого стекла</string>
     <string name="InuNicheSettings">Нишевые настройки</string>
     <string name="InuNicheSettingsInfo">Здесь собраны функции, которые нужны не всем, но о которых попросили. Если они не работают, мы их удалим.</string>
-    <string name="InuNicheUnlockedToast">бро, не включай entiny tv плз💀💀</string>
+    <string name="InuNicheUnlockedToast">Unlocked</string>
     <string name="InuNicheAlreadyUnlockedToast">бро, ты уже включил это 💀</string>
     <string name="InuStripTrackingParamsOnOpen">При открытии ссылок</string>
     <string name="InuStripTrackingParamsOnPaste">При вставке</string>
@@ -1480,8 +1480,8 @@
     <string name="InuAiReasoningMedium">Средняя</string>
     <string name="InuAiReasoningHigh">Высокая</string>
     <string name="InuAiSummaryTemperatureInfo">Меньшие значения держат пересказ ближе к оригиналу. Пока вы не меняли, используется температура редактора.</string>
-    <string name="InuAppIconOldEntinygram">Старый entinyGram</string>
-    <string name="InuNotificationIconOldEntinygram">Старый entinyGram</string>
+    <string name="InuAppIconOldEntinygram">Legacy</string>
+    <string name="InuNotificationIconOldEntinygram">Legacy</string>
     <string name="InuNotificationIconInfo">На Xiaomi (MIUI/HyperOS) система может подменять эту иконку иконкой приложения, поэтому выбор там может быть незаметен</string>
     <string name="InuShowDrawerAccounts">Аккаунты в боковом меню</string>
     <string name="InuShowDrawerAccountsInfo">Показывать переключатель аккаунтов под профилем в боковой панели.</string>
@@ -1632,8 +1632,8 @@
     <string name="InuAiModelsLoading">Загрузка моделей…</string>
     <string name="InuAiModelEnterManually">Ввести модель вручную</string>
     <string name="InuAiTranscribeFetchModelsFailed">Не удалось загрузить модели: %1$s</string>
-    <string name="InuDevBadge">Команда entinyGram</string>
-    <string name="InuDevBadgeInfo">Этот аккаунт подтверждён командой entinyGram.</string>
+    <string name="InuDevBadge">Prism team</string>
+    <string name="InuDevBadgeInfo">This account is recognized by the Prism team.</string>
     <string name="InuGhostAutoOffline">Автоматически переходить в офлайн</string>
     <string name="InuGhostAutoOfflineInfo">Вновь отправляет статус офлайн вскоре после отправки сообщений или реакций.</string>
     <string name="InuIgnoreTranslationsDisabled">Игнорировать «Перевод отключён»</string>

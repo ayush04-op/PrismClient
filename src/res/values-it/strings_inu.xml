@@ -615,10 +615,10 @@ Sistema: %6$s
     <string name="InuConfirmReactionText">Inviare la reazione %1$s in **%2$s**?</string>
     <string name="InuNotificationIcon">Icona di notifica</string>
     <string name="InuNotificationIconTelegram">Telegram</string>
-    <string name="InuNotificationIconInugram">entinyGram</string>
-    <string name="InuNotificationIconOldEntinygram">entinyGram vecchio</string>
+    <string name="InuNotificationIconInugram">Classic</string>
+    <string name="InuNotificationIconOldEntinygram">Legacy</string>
     <string name="InuNotificationIconInfo">Su Xiaomi (MIUI/HyperOS) il sistema può sostituire questa icona con quella dell\'app, quindi la scelta potrebbe non essere visibile lì</string>
-    <string name="InuAppIconOldEntinygram">entinyGram vecchio</string>
+    <string name="InuAppIconOldEntinygram">Legacy</string>
     <string name="InuDisableChatBubbles">Disattiva le bolle di notifica di Android</string>
     <string name="InuKeepChatsInStack">Mantieni aperte le chat precedenti</string>
     <string name="InuKeepChatsInStackInfo">Aprire un\'altra chat non chiuderà le chat dietro di essa</string>
@@ -906,7 +906,7 @@ Sistema: %6$s
     <string name="InuLiquidGlassTint">Tinta del Liquid Glass</string>
     <string name="InuNicheSettings">Impostazioni di nicchia</string>
     <string name="InuNicheSettingsInfo">Funzioni richieste che potrebbero non essere utili a tutti. Se non funzionano, verranno rimosse.</string>
-    <string name="InuNicheUnlockedToast">bro non attivare entiny tv per favore💀💀</string>
+    <string name="InuNicheUnlockedToast">Unlocked</string>
     <string name="InuNicheAlreadyUnlockedToast">bro, l\'hai già attivato 💀</string>
 
     <string name="InuReduceMenuMotion">Riduci il movimento dei menu</string>
@@ -1084,7 +1084,7 @@ Tocca per personalizzare…</string>
     <string name="InuAppIconJungle">Giungla</string>
     <string name="InuAppIconGold">Oro</string>
     <string name="InuAppIconDish">Piatto</string>
-    <string name="InuAppIconLicenseConcept">Icona concettuale di **entinyGram**</string>
+    <string name="InuAppIconLicenseConcept">Concept icon</string>
     <string name="InuAppIconLicenseInugram">Icona segnaposto, sentiti libero di proporne una migliore</string>
     <string name="InuAppIconLicenseTelegram">Icona di **Telegram**. Tutti i diritti riservati.</string>
     <string name="InuJumpToBeginning">Vai all\'inizio</string>
@@ -1819,8 +1819,8 @@ Questa azione non può essere annullata.</string>
     <string name="InuDeletedMarkPreviewSender">Alina</string>
     <string name="InuHideDevBadges">Disattiva i badge di Prism</string>
     <string name="InuHideDevBadgesInfo">Non significano nulla e non danno alcun vantaggio: sono solo un ringraziamento dallo sviluppatore</string>
-    <string name="InuDevBadge">Team di entinyGram</string>
-    <string name="InuDevBadgeInfo">Questo account è riconosciuto dal team di entinyGram.</string>
+    <string name="InuDevBadge">Prism team</string>
+    <string name="InuDevBadgeInfo">This account is recognized by the Prism team.</string>
     <string name="InuStopBot">Ferma il bot</string>
     <string name="InuStopBotAlert">Sei sicuro di voler fermare **%1$s**? Non potrà più inviarti messaggi.</string>
     <string name="InuStopBotAction">Ferma</string>

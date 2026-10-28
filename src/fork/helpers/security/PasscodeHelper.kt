@@ -118,6 +118,9 @@ object PasscodeHelper {
         prefs.edit { putBoolean("hideSettings", hide) }
     }
 
+    /** Hosts that open the hidden passcode page. Prism links use "prismsettings"; the older names keep saved links working. */
+    private val SETTINGS_HOSTS = setOf("prismsettings", "entinysettings", "inusettings")
+
     fun getSettingsKey(): String {
         prefs.getString("settingsHash", null)?.takeIf { it.isNotEmpty() }?.let { return it }
         val bytes = ByteArray(8).also { Utilities.random.nextBytes(it) }
@@ -141,7 +144,7 @@ object PasscodeHelper {
 
             else -> return false
         }
-        if (host != "inusettings" || key.isNullOrEmpty() || key != getSettingsKey()) return false
+        if (host.lowercase() !in SETTINGS_HOSTS || key.isNullOrEmpty() || key != getSettingsKey()) return false
         activity.actionBarLayout.presentFragment(PasscodeSettingsActivity())
         return true
     }

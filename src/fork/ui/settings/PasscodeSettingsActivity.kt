@@ -134,7 +134,7 @@ class PasscodeSettingsActivity : SettingsPageActivity() {
     }
 
     private fun buildSettingsLinkInfo(): CharSequence {
-        val link = "https://t.me/entinySettings/${PasscodeHelper.getSettingsKey()}"
+        val link = "tg://prismSettings/${PasscodeHelper.getSettingsKey()}"
         val info = SpannableStringBuilder(
             AndroidUtilities.replaceTags(LocaleController.getString(R.string.InuPasscodeShowInSettingsInfo))
         )

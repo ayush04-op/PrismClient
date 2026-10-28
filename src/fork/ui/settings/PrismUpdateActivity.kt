@@ -34,13 +34,8 @@ class PrismUpdateActivity : SettingsPageActivity() {
 
     override fun createView(context: Context): View {
         return super.createView(context).also {
-            val pending = PrismUpdater.downloaded
-            state = when {
-                pending != null && pending.exists() && PrismUpdater.latest != null -> State.READY
-                PrismUpdater.latest != null -> State.AVAILABLE
-                else -> State.CHECKING
-            }
-            if (state == State.CHECKING) check()
+            state = if (PrismUpdater.latest != null) State.AVAILABLE else State.CHECKING
+            if (state == State.CHECKING) check() else syncDownload()
         }
     }
 
@@ -59,13 +54,42 @@ class PrismUpdateActivity : SettingsPageActivity() {
         state = State.CHECKING; render()
         PrismUpdater.check(ctx) { info ->
             if (context == null) return@check
-            PrismUpdater.downloaded = null
             state = when {
                 PrismUpdater.status == "Could not check" -> { errorText = "Couldn't reach the update server. Check your connection and try again."; State.ERROR }
                 info != null -> State.AVAILABLE
                 else -> State.UP_TO_DATE
             }
             render()
+            if (state == State.AVAILABLE) syncDownload()
+        }
+    }
+
+    private val pollRunnable = Runnable { pollDownload() }
+
+    /** Picks up a download that is already running or finished (for example after leaving this screen or restarting the app). */
+    private fun syncDownload() {
+        val ctx = context ?: return
+        val info = PrismUpdater.latest ?: return
+        when (PrismUpdater.downloadStatus(ctx, info.build, info.size).state) {
+            PrismUpdater.Dl.RUNNING -> { state = State.DOWNLOADING; render(); pollDownload() }
+            PrismUpdater.Dl.DONE -> { state = State.READY; render() }
+            else -> {}
+        }
+    }
+
+    private fun pollDownload() {
+        val ctx = context ?: return
+        val info = PrismUpdater.latest ?: return
+        if (state != State.DOWNLOADING) return
+        val st = PrismUpdater.downloadStatus(ctx, info.build, info.size)
+        when (st.state) {
+            PrismUpdater.Dl.RUNNING -> {
+                progress = st.percent
+                card?.setProgress(st.percent, animate = true)
+                AndroidUtilities.runOnUIThread(pollRunnable, 700)
+            }
+            PrismUpdater.Dl.DONE -> { state = State.READY; render() }
+            else -> { errorText = "The download didn't finish. Try again."; state = State.ERROR; render() }
         }
     }
 
@@ -75,18 +99,13 @@ class PrismUpdateActivity : SettingsPageActivity() {
             State.UP_TO_DATE, State.ERROR -> check()
             State.AVAILABLE -> {
                 val info = PrismUpdater.latest ?: return
-                state = State.DOWNLOADING; progress = 0; render()
-                PrismUpdater.download(ctx, info, { p ->
-                    progress = p
-                    card?.setProgress(p, animate = true)
-                }) { file ->
-                    if (context == null) return@download
-                    if (file == null) {
-                        errorText = "The download didn't finish. Try again."
-                        state = State.ERROR
-                    } else state = State.READY
-                    render()
+                if (!PrismUpdater.startDownload(ctx, info)) {
+                    errorText = "Couldn't start the download. Try again."
+                    state = State.ERROR; render()
+                    return
                 }
+                state = State.DOWNLOADING; progress = 0; render()
+                pollDownload()
             }
             State.READY -> {
                 val file = PrismUpdater.downloaded ?: return
@@ -98,7 +117,12 @@ class PrismUpdateActivity : SettingsPageActivity() {
     }
 
     private fun onSecondary() {
-        if (state == State.DOWNLOADING) PrismUpdater.cancelDownload()
+        if (state == State.DOWNLOADING) {
+            val ctx = context ?: return
+            AndroidUtilities.cancelRunOnUIThread(pollRunnable)
+            PrismUpdater.cancelDownload(ctx)
+            state = State.AVAILABLE; render()
+        }
     }
 
     private fun render() {
@@ -113,7 +137,7 @@ class PrismUpdateActivity : SettingsPageActivity() {
             State.CHECKING -> c.show("Checking for updates", "Looking for the newest Prism build…", null, null, busy = true)
             State.UP_TO_DATE -> c.show("Prism is up to date", "Build $cur" + (if (checked.isNotEmpty()) "\n$checked" else ""), "Check for updates", null)
             State.AVAILABLE -> c.show("Build ${info?.build} is ready", "You have build $cur$size", "Download and install", null, notes = info?.notes)
-            State.DOWNLOADING -> { c.show("Downloading update", "Keep this screen open", null, "Cancel", showBar = true); c.setProgress(progress, animate = false) }
+            State.DOWNLOADING -> { c.show("Downloading update", "Safe to leave this screen. It keeps downloading in the background.", null, "Cancel", showBar = true); c.setProgress(progress, animate = false) }
             State.READY -> c.show("Ready to install", "Build ${info?.build} has been downloaded. Your chats and settings stay as they are.", "Install now", null, notes = info?.notes)
             State.ERROR -> c.show("Update problem", errorText, "Try again", null)
         }

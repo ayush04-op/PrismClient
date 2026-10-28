@@ -28,17 +28,17 @@ import kotlin.math.max
 import kotlin.math.min
 
 object UpdateHelper {
-    const val USERNAME = "entinyGramCI"
-    private const val CHANGELOG_JSON_URL = "https://raw.githubusercontent.com/entaytion/entinyGram/main/assets/changelog.json"
+    const val USERNAME = "" // Prism: no Telegram update channel; updates come from PrismUpdater
+    private const val CHANGELOG_JSON_URL = ""
     private const val CHECK_INTERVAL_MS = 4L * 60 * 60 * 1000
     private const val INFLIGHT_TIMEOUT_MS = 60L * 1000
     private const val RESOLVE_BACKOFF_MS = 30L * 60 * 1000
 
     // pluginless is the default APK name; plugins builds are "-plugins-" so each variant only sees its own
     private val APK_RE = if (BuildConfig.INU_PLUGINLESS) {
-        Regex("^entinygram(?:-beta)?-arm64-(.+)-(\\d+)\\.apk$")
+        Regex("^prism(?:-beta)?-arm64-(.+)-(\\d+)\\.apk$")
     } else {
-        Regex("^entinygram(?:-beta)?-plugins-arm64-(.+)-(\\d+)\\.apk$")
+        Regex("^prism(?:-beta)?-plugins-arm64-(.+)-(\\d+)\\.apk$")
     }
 
     @Volatile
@@ -506,7 +506,7 @@ object UpdateHelper {
                 if (conn.responseCode == 200) {
                     val body = conn.inputStream.bufferedReader().use { it.readText() }
                     val root = JSONObject(body)
-                    val exactKey = "entinyGram ${info.appVerName} (${info.verCode})"
+                    val exactKey = "Prism ${info.appVerName} (${info.verCode})"
                     var entry = root.optJSONObject(exactKey)
                     if (entry == null) {
                         val keys = root.keys()

@@ -447,7 +447,7 @@
     <string name="InuConfirmReactionText">Надіслати %1$s реакцію у **%2$s**?</string>
     <string name="InuNotificationIcon">Іконка сповіщень</string>
     <string name="InuNotificationIconTelegram">Telegram</string>
-    <string name="InuNotificationIconInugram">entinyGram</string>
+    <string name="InuNotificationIconInugram">Classic</string>
     <string name="InuDisableChatBubbles">Вимкнути бульбашки сповіщень Android</string>
     <string name="InuKeepChatsInStack">Не закривати попередні чати</string>
     <string name="InuKeepChatsInStackInfo">Відкриття іншого чату не закриє чати позаду нього</string>
@@ -676,7 +676,7 @@
     <string name="InuLiquidGlassTint">Тонування рідкого скла</string>
     <string name="InuNicheSettings">Нішеві налаштування</string>
     <string name="InuNicheSettingsInfo">Тут зібрані функції, які потрібні не всім, але про які попросили. Якщо вони не працюватимуть, ми їх видалимо.</string>
-    <string name="InuNicheUnlockedToast">бро, не вмикай entiny tv пліз💀💀</string>
+    <string name="InuNicheUnlockedToast">Unlocked</string>
     <string name="InuNicheAlreadyUnlockedToast">бро, ти це вже вмикав 💀</string>
 
     <string name="InuReduceMenuMotion">Зменшити анімації меню</string>
@@ -840,7 +840,7 @@
     <string name="InuAppIconJungle">Джунглі</string>
     <string name="InuAppIconGold">Золото</string>
     <string name="InuAppIconDish">Тарілка</string>
-    <string name="InuAppIconLicenseConcept">Концепт іконки від **entinyGram**</string>
+    <string name="InuAppIconLicenseConcept">Concept icon</string>
     <string name="InuAppIconLicenseInugram">Тимчасова іконка, можете запропонувати кращу</string>
     <string name="InuAppIconLicenseTelegram">Іконка від **Telegram**. Усі права захищено.</string>
     <string name="InuJumpToBeginning">Перейти на самий початок</string>
@@ -1645,10 +1645,10 @@
     <string name="InuDeletedMarkPreviewSender">Аліна</string>
     <string name="InuHideDevBadges">Вимкнути бейджі Prism</string>
     <string name="InuHideDevBadgesInfo">Вони нічого не означають і не дають жодних переваг — просто подяка від розробника</string>
-    <string name="InuDevBadge">Команда entinyGram</string>
-    <string name="InuDevBadgeInfo">Цей акаунт визнаний командою entinyGram.</string>
-    <string name="InuAppIconOldEntinygram">Старий entinyGram</string>
-    <string name="InuNotificationIconOldEntinygram">Старий entinyGram</string>
+    <string name="InuDevBadge">Prism team</string>
+    <string name="InuDevBadgeInfo">This account is recognized by the Prism team.</string>
+    <string name="InuAppIconOldEntinygram">Legacy</string>
+    <string name="InuNotificationIconOldEntinygram">Legacy</string>
     <string name="InuNotificationIconInfo">На Xiaomi (MIUI/HyperOS) система може підміняти цю іконку іконкою застосунку, тому вибір там може бути непомітним</string>
     <string name="InuPoweredByProvider">Переклад виконано через %1$s.</string>
     <string name="InuShowDrawerAccounts">Показувати акаунти в меню</string>

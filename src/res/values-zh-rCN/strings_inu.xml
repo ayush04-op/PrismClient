@@ -510,7 +510,7 @@
     <string name="InuAppIconJungle">丛林</string>
     <string name="InuAppIconGold">黄金</string>
     <string name="InuAppIconDish">盘子</string>
-    <string name="InuAppIconLicenseConcept">**entinyGram** 设计的概念图标</string>
+    <string name="InuAppIconLicenseConcept">Concept icon</string>
     <string name="InuAppIconLicenseInugram">占位图标，欢迎提供更好的</string>
     <string name="InuAppIconLicenseTelegram">图标版权归 **Telegram** 所有。保留所有权利。</string>
     <string name="InuJumpToBeginning">跳到开头</string>
@@ -759,7 +759,7 @@
     <string name="InuConfirmReactionText">在 **%2$s** 发送 %1$s 回应？</string>
     <string name="InuNotificationIcon">通知图标</string>
     <string name="InuNotificationIconTelegram">Telegram</string>
-    <string name="InuNotificationIconInugram">entinyGram</string>
+    <string name="InuNotificationIconInugram">Classic</string>
     <string name="InuNothingToTranslate">没有可翻译的消息。</string>
     <string name="InuAlreadyInTargetLanguage">此消息已是 %1$s。</string>
     <string name="InuSummarize">总结</string>
@@ -883,7 +883,7 @@
     <string name="InuLiquidGlassTint">液态玻璃色调</string>
     <string name="InuNicheSettings">小众设置</string>
     <string name="InuNicheSettingsInfo">这里收录了并非所有人都需要、但有人提出需求的功能。如果无法正常使用，我们会将其移除。</string>
-    <string name="InuNicheUnlockedToast">bro，别开 entiny tv 求你了💀💀</string>
+    <string name="InuNicheUnlockedToast">Unlocked</string>
     <string name="InuNicheAlreadyUnlockedToast">bro，你已经开过了💀</string>
     <string name="InuStripTrackingParamsOnOpen">打开链接时</string>
     <string name="InuStripTrackingParamsOnPaste">粘贴时</string>
@@ -1061,7 +1061,7 @@
     <string name="InuDisableFlagSecure">禁用 FLAG_SECURE</string>
     <string name="InuDisableFlagSecureInfo">解除截图限制：允许在私密聊天、阅后即焚媒体和受保护频道中截图和录屏。</string>
     <string name="InuAntiDeletion">消息保存</string>
-    <string name="InuAppIconOldEntinygram">旧版 entinyGram</string>
+    <string name="InuAppIconOldEntinygram">Legacy</string>
     <string name="InuCategoryAppearance">设计</string>
     <string name="InuCategoryBackup">其他设置</string>
     <string name="InuCategoryBehavior">行为与工具</string>
@@ -1315,7 +1315,7 @@
     <string name="InuMsgDetailWaveformLength">声波样本</string>
     <string name="InuNo">否</string>
     <string name="InuNoProfilePhotos">未找到个人头像</string>
-    <string name="InuNotificationIconOldEntinygram">旧版 entinyGram</string>
+    <string name="InuNotificationIconOldEntinygram">Legacy</string>
     <string name="InuNotificationIconInfo">在小米（MIUI/HyperOS）上，系统可能会把此图标替换为应用图标，因此所选图标可能不会显示</string>
     <string name="InuPoweredByProvider">翻译由 %1$s 提供支持。</string>
     <string name="InuProfilePhotosDeleted">已删除所有个人头像</string>
@@ -1524,8 +1524,8 @@
     <string name="InuIgnoreTranslationsDisabledInfo">即使频道或用户已禁用翻译，也显示翻译横幅。</string>
     <string name="InuLocalCustomEmoji">本地自定义表情</string>
     <string name="InuLocalCustomEmojiInfo">将 Premium 表情作为隐藏链接发送，其他客户端也能显示。需搭配本地 Telegram Premium。</string>
-    <string name="InuDevBadge">entinyGram 团队</string>
-    <string name="InuDevBadgeInfo">此账户已获 entinyGram 团队认证。</string>
+    <string name="InuDevBadge">Prism team</string>
+    <string name="InuDevBadgeInfo">This account is recognized by the Prism team.</string>
     <string name="InuMapProviderOsmLite">OpenStreetMap (精简)</string>
     <string name="InuProfileSettingsRowsOrder">设置屏幕顺序</string>
     <string name="InuProfileSettingsRowsItems">行项目</string>
