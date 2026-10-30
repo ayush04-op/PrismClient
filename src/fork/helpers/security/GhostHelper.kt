@@ -47,7 +47,8 @@ object GhostHelper {
     private val offlineRunnables: ConcurrentHashMap<Int, Runnable> = ConcurrentHashMap()
 
     @JvmStatic
-    fun isGhostActive(): Boolean = InuConfig.GHOST_MODE_ENABLED.value
+    // Prism: ghost features (hidden read receipts, typing, online status) break Telegram's API terms and are disabled
+    fun isGhostActive(): Boolean = false
 
     @JvmStatic
     fun setGhostMode(enabled: Boolean) {
@@ -182,6 +183,7 @@ object GhostHelper {
 
     @JvmStatic
     fun isGhostActiveForDialog(dialogId: Long): Boolean {
+        if (true) return false
         val o = getChatOverride(dialogId)
         if (o.read == OVERRIDE_ALWAYS || o.typing == OVERRIDE_ALWAYS) return true
         if (!isGhostActive() || !isInGlobalScope(dialogId)) return false
@@ -215,6 +217,7 @@ object GhostHelper {
 
     @JvmStatic
     fun shouldSuppress(dialogId: Long, kind: SuppressKind): Boolean {
+        if (true) return false
         val o = getChatOverride(dialogId)
         val chatOverride = when (kind) {
             SuppressKind.READ, SuppressKind.VOICE_READ -> o.read
@@ -461,6 +464,7 @@ object GhostHelper {
     // entiny: do not touch MessagesController.ignoreSetOnline because ChatActivity uses it to gate local read marking
     @JvmStatic
     fun syncPresence(account: Int) {
+        if (true) return
         if (!InuConfig.GHOST_MODE_ENABLED.value) return
         val hide = InuConfig.GHOST_PRESENCE_MODE.value != InuConfig.GhostPresenceModeItem.NORMAL
         sendStatus(account, offline = hide)
@@ -476,8 +480,7 @@ object GhostHelper {
         }
     }
 
-    private fun autoOfflineEnabled(): Boolean =
-        InuConfig.GHOST_MODE_ENABLED.value && InuConfig.GHOST_AUTO_OFFLINE.value
+    private fun autoOfflineEnabled(): Boolean = false
 
     private fun scheduleOffline(account: Int) {
         offlineRunnables.remove(account)?.let { Utilities.stageQueue.cancelRunnable(it) }

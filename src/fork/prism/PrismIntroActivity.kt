@@ -104,7 +104,7 @@ class PrismIntroActivity : BaseFragment() {
         button.setOnClickListener { onStart() }
 
         val credit = TextView(context).apply {
-            text = LocaleController.getString(R.string.PrismCreatedWith)
+            text = LocaleController.getString(R.string.PrismCreatedWith) + "\nUnofficial client. Uses the Telegram API."
             setTextColor(0x99FFFFFF.toInt())
             setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f)
             gravity = Gravity.CENTER

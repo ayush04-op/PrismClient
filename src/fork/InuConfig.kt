@@ -989,7 +989,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val HIDE_SUGGESTION_CUSTOM = BoolItem("hide_suggestion_custom", false)
 
     @JvmField
-    val HIDE_PROXY_SPONSOR_CHAT = BoolItem("hide_proxy_sponsor_chat", true)
+    val HIDE_PROXY_SPONSOR_CHAT = BoolItem("hide_proxy_sponsor_chat", false)
 
     @JvmField
     val HIDE_PSA_PROMO_CHAT = BoolItem("hide_psa_promo_chat", false)
@@ -1672,7 +1672,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val SUPPRESS_SCREENSHOT_NOTIFICATION = BoolItem("suppress_screenshot_notification", false)
 
     @JvmField
-    val HIDE_SPONSORED_MESSAGES = BoolItem("hide_sponsored_messages", true)
+    val HIDE_SPONSORED_MESSAGES = BoolItem("hide_sponsored_messages", false)
 
     @JvmField
     val SAVE_EDITED_MESSAGES = BoolItem("save_edited_messages", false)

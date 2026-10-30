@@ -243,7 +243,7 @@ object ChatActionsHelper {
             )
         }
         addArchiveItems(activity, headerItem)
-        if (activity.dialogId != 0L && activity.dialogId != UserConfig.getInstance(activity.currentAccount).clientUserId && !GhostHelper.isChannelDialog(activity.dialogId)) {
+        if (false && activity.dialogId != 0L && activity.dialogId != UserConfig.getInstance(activity.currentAccount).clientUserId && !GhostHelper.isChannelDialog(activity.dialogId)) {
             headerItem.lazilyAddSubItem(
                 ACTION_GHOST_MODE, R.drawable.inu_ghost,
                 LocaleController.getString(R.string.InuGhostMode),

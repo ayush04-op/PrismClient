@@ -798,7 +798,7 @@ object DrawerHelper {
                 DialogsMenuConfig.Item.FEED -> io.add(R.drawable.msg_channel, getString(R.string.InuFeed)) {
                     instance.presentFragment(desu.inugram.ui.feed.FeedActivity())
                 }
-                DialogsMenuConfig.Item.GHOST_MODE -> {
+                DialogsMenuConfig.Item.GHOST_MODE -> if (false) {
                     val isGhostOn = GhostHelper.isGhostActive()
                     io.add(if (isGhostOn) R.drawable.inu_ghost_filled else R.drawable.inu_ghost, getString(R.string.InuGhostMode)) {
                         val isGhost = GhostHelper.toggleGhostMode()

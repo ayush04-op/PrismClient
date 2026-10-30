@@ -31,7 +31,6 @@ class TosSettingsActivity : SettingsPageActivity() {
     private var unlimitedPinsSlider: SliderCell? = null
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
-        items.add(mkSubPageButton(CAT_GHOST_MODE, R.drawable.inu_ghost_filled, LocaleController.getString(R.string.InuGhostMode)))
         items.add(mkSubPageButton(CAT_ANTI_DELETION, R.drawable.inu_tabler_trash_off, LocaleController.getString(R.string.InuAntiDeletion)))
         items.add(mkSubPageButton(CAT_STALKER_PACK, R.drawable.inu_tabler_radar, LocaleController.getString(R.string.InuStalkerPack)))
         items.add(mkSubPageButton(CAT_REGEX_FILTER, R.drawable.inu_tabler_filter, LocaleController.getString(R.string.InuRegexFilter)))

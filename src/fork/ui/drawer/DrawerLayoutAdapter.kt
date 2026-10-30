@@ -293,8 +293,7 @@ class DrawerLayoutAdapter(
                     }
                 DrawerMenuConfig.Item.PROXY ->
                     items.add(Item(ITEM_PROXY, LocaleController.getString(R.string.ProxySettings), R.drawable.outline_shield_check))
-                DrawerMenuConfig.Item.GHOST_MODE ->
-                    items.add(Item(ITEM_GHOST, LocaleController.getString(R.string.InuGhostMode), R.drawable.inu_ghost))
+                DrawerMenuConfig.Item.GHOST_MODE -> Unit
                 DrawerMenuConfig.Item.SETTINGS ->
                     items.add(Item(8, LocaleController.getString(R.string.Settings), R.drawable.msg_settings))
                 DrawerMenuConfig.Item.ENTINY_SETTINGS ->

@@ -82,7 +82,7 @@ object ShortcutHelper {
             // entiny: rank 2 sank below the "1 + a" ranks MediaDataController.buildShortcuts() gives recent
             // chats, so the toggle showed up after them instead of right under "New conversation" (rank 0)
             rank = 0,
-            shouldShow = { InuConfig.GHOST_MODE_LAUNCHER_SHORTCUT.value },
+            shouldShow = { false },
             onClick = { activity -> GhostHelper.toggleGhostMode() },
         ),
         // #if PLUGINS

@@ -31,25 +31,6 @@ class RegexFilterSettingsActivity : SettingsPageActivity(), NotificationCenter.N
     }
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
-        items.add(UItem.asHeader("AdBlock"))
-        items.add(
-            mkTwoLineCheckItem(
-                TOGGLE_HIDE_SPONSORED_MESSAGES,
-                R.string.InuHideSponsoredMessages,
-                R.string.InuHideSponsoredMessagesInfo,
-                InuConfig.HIDE_SPONSORED_MESSAGES.value,
-            )
-        )
-        items.add(
-            mkTwoLineCheckItem(
-                TOGGLE_HIDE_PROXY_SPONSOR_CHAT,
-                R.string.InuHideProxySponsorChat,
-                R.string.InuHideProxySponsorChatInfo,
-                InuConfig.HIDE_PROXY_SPONSOR_CHAT.value,
-            )
-        )
-        items.add(UItem.asShadow(null))
-
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuRegexFilter)))
         items.add(
             mkTwoLineCheckItem(
