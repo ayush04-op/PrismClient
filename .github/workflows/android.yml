@@ -161,7 +161,7 @@ jobs:
         run: |
           set -o pipefail
           ./gradlew --no-daemon :TMessagesProj_App:assembleRelease 2>&1 | tee ../build.log || {
-            grep -E "What went wrong|Execution failed|error:|Could not|FAILURE" -A6 ../build.log | head -50 | while read -r l; do echo "::error::$l"; done
+            grep -E "^e: " ../build.log | sed "s#file:///[^ ]*/inugram/##" | sort -u | head -45 | while read -r l; do echo "::error::$l"; done; grep -E "What went wrong|Execution failed|error:|Could not|FAILURE" -A6 ../build.log | head -12 | while read -r l; do echo "::error::$l"; done
             exit 1
           }
 
