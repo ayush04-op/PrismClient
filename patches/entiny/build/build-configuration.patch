@@ -1,24 +1,22 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Oleksii Kulinich <entaytion@gmail.com>
 Date: Tue, 1 Sep 2026 11:12:44 +0300
-Subject: [*] build configuration: AGP 9, gradle and plugin build fixes
+Subject: [*] build configuration: gradle 8 / AGP 8 like inugram, plugin build fixes
 
-Includes former agp-9 and plugins-gradle-fixes patches.
 ---
  .gitignore                                    |   3 +
- TMessagesProj/build.gradle                    |  72 +++++++----
- TMessagesProj/proguard-rules.pro              |  14 ++-
+ TMessagesProj/build.gradle                    |  63 +++++++---
+ TMessagesProj/jni/CMakeLists.txt              |   3 +
+ TMessagesProj/jni/exports.map                 |   1 +
+ TMessagesProj/proguard-rules.pro              |  17 ++-
  TMessagesProj/src/main/AndroidManifest.xml    |   6 -
  .../java/org/telegram/ui/LaunchActivity.java  |  21 ----
  .../org/telegram/ui/PaymentFormActivity.java  |  28 +++--
- TMessagesProj_App/build.gradle                | 112 +++++++++---------
- build.gradle                                  |  52 ++++++--
- buildSrc/build.gradle.kts                     |   2 +-
- .../telegram/plugin/TelegramBuildAppPlugin.kt |  14 ---
- gradle.properties                             |   4 +-
- gradle/wrapper/gradle-wrapper.properties      |   2 +-
- settings.gradle                               |   8 +-
- 13 files changed, 187 insertions(+), 151 deletions(-)
+ TMessagesProj_App/build.gradle                | 113 ++++++++++--------
+ build.gradle                                  |  49 +++++++-
+ gradle.properties                             |   2 +-
+ settings.gradle                               |   6 +-
+ 12 files changed, 194 insertions(+), 118 deletions(-)
 
 diff --git a/.gitignore b/.gitignore
 index 0000000..0000000 100644
@@ -41,15 +39,7 @@ diff --git a/TMessagesProj/build.gradle b/TMessagesProj/build.gradle
 index 0000000..0000000 100644
 --- a/TMessagesProj/build.gradle
 +++ b/TMessagesProj/build.gradle
-@@ -26,7 +26,6 @@ idea {
-         ]
-     }
- }
--apply plugin: 'kotlin-android'
- 
- repositories {
-     mavenCentral()
-@@ -45,6 +44,7 @@ configurations.all {
+@@ -45,6 +45,7 @@ configurations.all {
  dependencies {
      implementation project(':InuCore')
      implementation 'androidx.core:core:1.16.0'
@@ -57,7 +47,7 @@ index 0000000..0000000 100644
      implementation 'androidx.palette:palette:1.0.0'
      implementation 'androidx.exifinterface:exifinterface:1.3.6'
      implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
-@@ -58,15 +58,12 @@ dependencies {
+@@ -58,15 +59,12 @@ dependencies {
      implementation 'com.google.zxing:core:3.5.4'
      implementation 'com.neovisionaries:nv-websocket-client:2.14'
  
@@ -74,7 +64,7 @@ index 0000000..0000000 100644
      implementation 'com.google.android.gms:play-services-maps:18.1.0'
      implementation 'com.google.android.gms:play-services-auth:20.4.0'
      implementation 'com.google.android.gms:play-services-vision:20.1.3'
-@@ -74,11 +71,23 @@ dependencies {
+@@ -74,11 +72,23 @@ dependencies {
      implementation 'com.google.android.gms:play-services-location:21.0.1'
      implementation 'com.google.android.gms:play-services-wallet:19.1.0'
      implementation 'com.googlecode.mp4parser:isoparser:1.0.6'
@@ -100,7 +90,7 @@ index 0000000..0000000 100644
  
      implementation 'com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1'
      implementation 'com.google.android.gms:play-services-mlkit-image-labeling:16.0.8'
-@@ -103,9 +112,8 @@ dependencies {
+@@ -103,9 +113,8 @@ dependencies {
      api project(':jlatexmath')
  
      // inu
@@ -109,10 +99,10 @@ index 0000000..0000000 100644
 -    }
 +    // pure-java osm renderer, no native libs (replaces maplibre, which cost ~12MB of .so per ABI)
 +    implementation 'org.osmdroid:osmdroid-android:6.1.20'
+     implementation 'com.caverock:androidsvg-aar:1.4'
      androidTestImplementation 'androidx.test:runner:1.6.2'
      androidTestImplementation 'junit:junit:4.13.2'
-     androidTestImplementation "org.jetbrains.kotlin:kotlin-test:2.1.20"
-@@ -185,24 +193,23 @@ def preprocessInuSources = tasks.register('preprocessInuSources') {
+@@ -178,7 +187,7 @@ def preprocessInuSources = tasks.register('preprocessInuSources') {
  }
  
  android {
@@ -121,41 +111,29 @@ index 0000000..0000000 100644
      buildToolsVersion '36.0.0'
      ndkVersion "27.2.12479018"
  
--    sourceSets.main.jniLibs.srcDirs = ['./jni/']
--    sourceSets.androidTest.kotlin.srcDirs += ['src/androidTest/kotlin']
--    sourceSets.main.kotlin.srcDir inuGeneratedSources
-+    sourceSets.main.jniLibs.directories.clear()
-+    sourceSets.main.jniLibs.directories.add('./jni/')
-+    sourceSets.androidTest.kotlin.directories.add('src/androidTest/kotlin')
-+    sourceSets.main.kotlin.directories.add(inuGeneratedSources.get().asFile.absolutePath)
-     if (rootProject.ext.inuPluginless) {
--        sourceSets.androidTest.kotlin.setSrcDirs([])
--        sourceSets.androidTest.assets.setSrcDirs([])
-+        sourceSets.androidTest.kotlin.directories.clear()
-+        sourceSets.androidTest.assets.directories.clear()
-     } else {
--        sourceSets.androidTest.jniLibs.srcDirs += ["$rootDir/TMessagesProj_App/build/inuTestJniLibs"]
-+        sourceSets.androidTest.jniLibs.directories.add("$rootDir/TMessagesProj_App/build/inuTestJniLibs")
+@@ -193,9 +202,7 @@ android {
      }
  
      // inu
 -    if (!project.hasProperty("NOMAPS")) {
 -        sourceSets.main.java.srcDirs += 'src/main/kotlin-maps'
 -    }
-+    sourceSets.main.kotlin.directories.add('src/main/kotlin-osmdroid')
++    sourceSets.main.java.srcDirs += 'src/main/kotlin-osmdroid'
      // end inu
  
      externalNativeBuild {
-@@ -212,7 +219,7 @@ android {
+@@ -205,6 +212,10 @@ android {
          }
      }
  
--    lintOptions {
-+    lint {
++    kotlinOptions {
++        jvmTarget = "1.8"
++    }
++
+     lintOptions {
          disable 'MissingTranslation'
          disable 'ExtraTranslation'
-         disable 'BlockedPrivateApi'
-@@ -223,9 +230,6 @@ android {
+@@ -216,9 +227,6 @@ android {
          targetCompatibility JavaVersion.VERSION_1_8
      }
  
@@ -165,7 +143,7 @@ index 0000000..0000000 100644
  
      defaultConfig {
          buildConfigField "boolean", "INU_PLUGINLESS", rootProject.ext.inuPluginless.toString()
-@@ -235,7 +239,12 @@ android {
+@@ -228,7 +236,12 @@ android {
          targetSdkVersion 36
  
          ndk {
@@ -179,7 +157,17 @@ index 0000000..0000000 100644
          }
  
          externalNativeBuild {
-@@ -255,6 +264,7 @@ android {
+@@ -236,6 +249,9 @@ android {
+                 version '3.22.1'
+                 arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-26' //, '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
+                 targets 'tmessages.49'
++                if (!rootProject.ext.inuPluginless) {
++                    arguments += ['-DINU_EXPORT_SQLITE=ON']
++                }
+                 if (rootProject.ext.ccachePath) {
+                     arguments += ["-DCMAKE_C_COMPILER_LAUNCHER=${rootProject.ext.ccachePath}", "-DCMAKE_CXX_COMPILER_LAUNCHER=${rootProject.ext.ccachePath}"]
+                 }
+@@ -248,6 +264,7 @@ android {
              jniDebuggable true
              shrinkResources false
              multiDexEnabled true
@@ -187,7 +175,7 @@ index 0000000..0000000 100644
              ndk.debugSymbolLevel = 'FULL'
              buildConfigField "String", "BUILD_VERSION_STRING", "\"" + rootProject.ext.verName + "\""
              buildConfigField "String", "BUILD_DATE", "\"" + rootProject.ext.buildDate + "\""
-@@ -267,9 +277,15 @@ android {
+@@ -260,9 +277,15 @@ android {
  
          release {
              jniDebuggable false
@@ -204,7 +192,7 @@ index 0000000..0000000 100644
              buildConfigField "String", "BUILD_VERSION_STRING", "\"" + rootProject.ext.verName + "\""
              buildConfigField "String", "BUILD_DATE", "\"" + rootProject.ext.buildDate + "\""
              buildConfigField "String", "INU_BUILD_TYPE", "\"" + (System.getenv('INU_BUILD_TYPE') ?: 'debug') + "\""
-@@ -280,6 +296,10 @@ android {
+@@ -273,6 +296,10 @@ android {
          }
      }
  
@@ -215,6 +203,33 @@ index 0000000..0000000 100644
      namespace 'org.telegram.messenger'
  }
  
+diff --git a/TMessagesProj/jni/CMakeLists.txt b/TMessagesProj/jni/CMakeLists.txt
+index 0000000..0000000 100644
+--- a/TMessagesProj/jni/CMakeLists.txt
++++ b/TMessagesProj/jni/CMakeLists.txt
+@@ -174,6 +174,9 @@ set_target_properties(sqlite PROPERTIES
+         ANDROID_ARM_MODE arm)
+ target_compile_definitions(sqlite PUBLIC
+         NULL=0 SOCKLEN_T=socklen_t LOCALE_NOT_USED ANDROID_NDK DISABLE_IMPORTGL AVOID_TABLES ANDROID_TILE_BASED_DECODE HAVE_STRCHRNUL=0 ANDROID_ARMV6_IDCT)
++if(INU_EXPORT_SQLITE)
++    target_compile_options(sqlite PRIVATE -fvisibility=default)
++endif()
+ 
+ #breakpad
+ add_library(breakpad STATIC
+diff --git a/TMessagesProj/jni/exports.map b/TMessagesProj/jni/exports.map
+index 0000000..0000000 100644
+--- a/TMessagesProj/jni/exports.map
++++ b/TMessagesProj/jni/exports.map
+@@ -3,6 +3,7 @@
+     Java_*;        # all JNI functions resolved by name
+     JNI_OnLoad;
+     JNI_OnUnload;
++    sqlite3_*;     # only when built with INU_EXPORT_SQLITE, hidden otherwise
+   local:
+     *;             # hide everything else (FFmpeg, libyuv, webrtc, ...)
+ };
+\ No newline at end of file
 diff --git a/TMessagesProj/proguard-rules.pro b/TMessagesProj/proguard-rules.pro
 index 0000000..0000000 100644
 --- a/TMessagesProj/proguard-rules.pro
@@ -244,7 +259,7 @@ index 0000000..0000000 100644
  -keep class org.telegram.messenger.time.* { *; }
  -keep class org.telegram.messenger.video.* { *; }
  -keep class org.telegram.messenger.voip.* { *; }
-@@ -63,9 +66,16 @@
+@@ -63,9 +66,19 @@
  -dontwarn javax.naming.**
  -dontwarn org.bouncycastle.cert.**
  -dontwarn org.bouncycastle.openssl.**
@@ -258,6 +273,9 @@ index 0000000..0000000 100644
  -keep class desu.inugram.** { *; }
 +-keep class org.telegram.ui.Wallet.WalletEngine2 { *; }
 +-keep class org.telegram.ui.Wallet.WalletEngine2$** { *; }
++# entiny: plugins reach app classes by name, so keep their public members and inlined constants (TextStyleSpan.FLAG_STYLE_SPOILER)
++-keep class org.telegram.ui.** { public *; protected *; }
++-keepclassmembers class org.telegram.** { public static final <fields>; }
  -dontobfuscate
  -dontoptimize
  # /inu
@@ -292,7 +310,7 @@ index 0000000..0000000 100644
  
  import org.telegram.PhoneFormat.PhoneFormat;
  import org.telegram.messenger.AccountInstance;
-@@ -1948,15 +1945,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+@@ -1951,15 +1948,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
  
                      final LinkManager linkManager = new LinkManager(this, intentAccount[0], progress, openedTelegram);
                      if (linkManager.handle(data)) {
@@ -308,7 +326,7 @@ index 0000000..0000000 100644
                          return true;
                      }
  
-@@ -2865,15 +2853,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+@@ -2878,15 +2866,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                  }
                              }
                          }
@@ -410,14 +428,7 @@ diff --git a/TMessagesProj_App/build.gradle b/TMessagesProj_App/build.gradle
 index 0000000..0000000 100644
 --- a/TMessagesProj_App/build.gradle
 +++ b/TMessagesProj_App/build.gradle
-@@ -1,6 +1,5 @@
- apply plugin: 'com.android.application'
- apply plugin: 'org.telegram.build-app-plugin'
--apply plugin: 'kotlin-android'
- 
- repositories {
-     mavenCentral()
-@@ -31,19 +30,33 @@ dependencies {
+@@ -31,16 +31,29 @@ dependencies {
  }
  
  android {
@@ -428,8 +439,7 @@ index 0000000..0000000 100644
  
      defaultConfig.applicationId = "app.prism.client"
  
-+    sourceSets.main.jniLibs.directories.clear()
-+    sourceSets.main.jniLibs.directories.add('../TMessagesProj/jni/')
++    sourceSets.main.jniLibs.srcDirs = ['../TMessagesProj/jni/']
  
      packaging {
          jniLibs {
@@ -448,11 +458,7 @@ index 0000000..0000000 100644
 +        }
      }
  
--    lintOptions {
-+    lint {
-         disable 'MissingTranslation'
-         disable 'ExtraTranslation'
-         disable 'BlockedPrivateApi'
+     lintOptions {
 @@ -81,11 +94,10 @@ android {
              debuggable true
              jniDebuggable true
@@ -548,39 +554,38 @@ index 0000000..0000000 100644
          }
  
          if (!rootProject.ext.inuPluginless) externalNativeBuild {
-@@ -183,12 +165,15 @@ android {
+@@ -190,6 +172,13 @@ android {
+     kotlinOptions {
+         jvmTarget = "1.8"
      }
-     namespace 'org.telegram.messenger.regular'
- 
--    lintOptions {
-+    lint {
-         checkReleaseBuilds false
-     }
- 
--    kotlinOptions {
--        jvmTarget = "1.8"
++
 +}
 +
 +androidComponents {
 +    onVariants(selector().all()) { variant ->
 +        variant.outputs.each { it.outputFileName.set("app.apk") }
-     }
++    }
  }
  
-@@ -208,7 +193,7 @@ tasks.register('unpackShadowhook', Copy) {
-     into shadowhookJniLibsDir
- }
- 
--android.sourceSets.main.jniLibs.srcDirs += shadowhookJniLibsDir
-+android.sourceSets.main.jniLibs.directories.add(shadowhookJniLibsDir.absolutePath)
- tasks.matching { it.name ==~ /merge.*JniLibFolders/ }.configureEach {
-     dependsOn 'unpackShadowhook'
- }
-@@ -238,9 +223,9 @@ inuNativeProfiles.each { buildType, cargoProfile ->
+ apply plugin: 'com.google.gms.google-services'
+@@ -236,11 +225,22 @@ def inuNativeProfiles = [debug: 'profiling', release: 'release']
+ inuNativeProfiles.each { buildType, cargoProfile ->
+     def taskName = "buildInuNative${buildType.capitalize()}"
      def outputDir = new File(rustJniLibsDir, buildType)
++    def stockJniTask = "copy${buildType.capitalize()}JniLibsProjectOnly"
++    def stockLib = project(':TMessagesProj').file("build/intermediates/library_jni/$buildType/$stockJniTask/jni/${System.getenv('ABI_FILTERS') ?: 'arm64-v8a'}/libtmessages.49.so")
++    def sqliteLinkDir = file("$buildDir/inuSqliteLink/$buildType")
      tasks.register(taskName, Exec) {
++        dependsOn ":TMessagesProj:$stockJniTask"
          workingDir rustModuleDir
 -        environment 'ANDROID_NDK_HOME', android.ndkDirectory.absolutePath
++        // libsqlite3-sys always links `-lsqlite3`, so a linker script by that name points it at the stock lib
++        environment 'SQLITE3_LIB_DIR', sqliteLinkDir.absolutePath
++        environment 'SQLITE3_INCLUDE_DIR', project(':TMessagesProj').file('jni/sqlite').absolutePath
++        doFirst {
++            sqliteLinkDir.mkdirs()
++            new File(sqliteLinkDir, 'libsqlite3.so').text = "INPUT(${stockLib.absolutePath})\n"
++        }
 +        environment 'ANDROID_NDK_HOME', androidComponents.sdkComponents.ndkDirectory.get().asFile.absolutePath
          environment 'PATH', (cargoPathDirs + [System.getenv('PATH') ?: '']).join(File.pathSeparator)
 -        def prebuilt = file("${android.ndkDirectory}/toolchains/llvm/prebuilt")
@@ -588,7 +593,7 @@ index 0000000..0000000 100644
          def ndkHost = prebuilt.listFiles()?.find { it.isDirectory() }
          def libclangCandidates = [
              project.findProperty('libclang.path'),
-@@ -250,16 +235,27 @@ inuNativeProfiles.each { buildType, cargoProfile ->
+@@ -250,13 +250,24 @@ inuNativeProfiles.each { buildType, cargoProfile ->
              '/opt/homebrew/opt/llvm/lib', '/usr/local/opt/llvm/lib',
              '/run/current-system/sw/lib', "${System.getProperty('user.home')}/.nix-profile/lib",
              '/usr/lib/llvm/lib', '/usr/lib',
@@ -614,29 +619,21 @@ index 0000000..0000000 100644
 +        commandLine cargoExe, 'ndk', '-t', (System.getenv('ABI_FILTERS') ?: 'arm64-v8a'), '-o', outputDir.absolutePath, 'build', '--profile', cargoProfile
      }
  
--    android.sourceSets[buildType].jniLibs.srcDirs += outputDir
-+    android.sourceSets[buildType].jniLibs.directories.add(outputDir.absolutePath)
-     tasks.matching { it.name ==~ /merge${buildType.capitalize()}.*JniLibFolders/ }.configureEach {
-         dependsOn taskName
-     }
+     android.sourceSets[buildType].jniLibs.srcDirs += outputDir
 diff --git a/build.gradle b/build.gradle
 index 0000000..0000000 100644
 --- a/build.gradle
 +++ b/build.gradle
-@@ -6,17 +6,23 @@ buildscript {
-         maven { url 'https://developer.huawei.com/repo/' }
+@@ -7,7 +7,7 @@ buildscript {
      }
      dependencies {
--        classpath 'com.android.tools.build:gradle:8.13.2'
+         classpath 'com.android.tools.build:gradle:8.13.2'
 -        classpath 'com.google.gms:google-services:4.3.15'
-+        classpath 'com.android.tools.build:gradle:9.4.0'
 +        classpath 'com.google.gms:google-services:4.4.4'
          classpath 'com.huawei.agconnect:agcp:1.9.1.301'
          classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.0'
--        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.20"
-     }
- }
- repositories {
+         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.20"
+@@ -17,6 +17,13 @@ repositories {
      google()
  }
  
@@ -650,7 +647,7 @@ index 0000000..0000000 100644
  // Strip JLatexMath fonts we don't ship (transitive AAR assets from
  // io.noties.markwon:ext-latex -> ru.noties:jlatexmath-android, ~764 KB total under
  // assets/org/scilab/forge/jlatexmath/fonts/). Has to live in the APK modules — a
-@@ -41,7 +47,7 @@ subprojects {
+@@ -41,7 +48,7 @@ subprojects {
                      def manifestFile = file("${project.projectDir}/src/main/AndroidManifest.xml")
  
                      if (manifestFile.exists()) {
@@ -659,7 +656,7 @@ index 0000000..0000000 100644
                          def manifestPackage = manifest.@package.text()
  
                          if (manifestPackage) {
-@@ -58,13 +64,45 @@ def inuBuildProperties = new Properties()
+@@ -58,13 +65,45 @@ def inuBuildProperties = new Properties()
  def inuBuildFile = file('inu-build.properties')
  if (inuBuildFile.exists()) inuBuildFile.withInputStream { inuBuildProperties.load(it) }
  
@@ -708,78 +705,19 @@ index 0000000..0000000 100644
 +    // outside a git-bash/WSL terminal) -- ccache is just an optional speedup
 +  }
  }
-diff --git a/buildSrc/build.gradle.kts b/buildSrc/build.gradle.kts
-index 0000000..0000000 100644
---- a/buildSrc/build.gradle.kts
-+++ b/buildSrc/build.gradle.kts
-@@ -40,7 +40,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach
- 
- dependencies {
-     implementation(gradleApi())
--    implementation("com.android.tools.build:gradle:8.13.2")
-+    implementation("com.android.tools.build:gradle:9.4.0")
- 
-     implementation("com.squareup.moshi:moshi:1.15.0")
-     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
-diff --git a/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildAppPlugin.kt b/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildAppPlugin.kt
-index 0000000..0000000 100644
---- a/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildAppPlugin.kt
-+++ b/buildSrc/src/main/kotlin/org/telegram/plugin/TelegramBuildAppPlugin.kt
-@@ -3,7 +3,6 @@ package org.telegram.plugin
- import com.android.build.api.artifact.SingleArtifact
- import com.android.build.api.variant.AndroidComponentsExtension
- import com.android.build.api.variant.ApplicationVariant
--import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
- import org.gradle.api.Plugin
- import org.gradle.api.Project
- import org.gradle.kotlin.dsl.register
-@@ -84,19 +83,6 @@ class TelegramBuildAppPlugin : Plugin<Project> {
-                 }
-             )
- 
--            project.tasks.withType(LinkApplicationAndroidResourcesTask::class.java).configureEach {
--                if (name == "process${suffix}Resources") {
--                    dependsOn(task)
--
--                    doFirst {
--                        println("=== $path ===")
--                        println("AAPT additional parameters:")
--                        aaptAdditionalParameters.get().forEach {
--                            println("  $it")
--                        }
--                    }
--                }
--            }
-         }
- 
-         androidComponents.onVariants { variant ->
 diff --git a/gradle.properties b/gradle.properties
 index 0000000..0000000 100644
 --- a/gradle.properties
 +++ b/gradle.properties
-@@ -26,8 +26,10 @@ org.gradle.parallel=true
+@@ -25,7 +25,7 @@ org.gradle.daemon=true
+ org.gradle.parallel=true
  org.gradle.configureondemand=false
  android.useAndroidX=true
- android.enableJetifier=false
--android.defaults.buildfeatures.buildconfig=true
+-android.enableJetifier=false
++android.enableJetifier=true
+ android.defaults.buildfeatures.buildconfig=true
  android.enableR8.fullMode=true
  android.r8.optimizedResourceShrinking=true
-+android.r8.strictFullModeForKeepRules=false
- android.enableResourceOptimizations=true
-+
-+# Enabled parallel sync for Gradle 9.4+
- org.gradle.tooling.parallel=true
-diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
-index 0000000..0000000 100644
---- a/gradle/wrapper/gradle-wrapper.properties
-+++ b/gradle/wrapper/gradle-wrapper.properties
-@@ -1,5 +1,5 @@
- distributionBase=GRADLE_USER_HOME
- distributionPath=wrapper/dists
--distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip
-+distributionUrl=https\://services.gradle.org/distributions/gradle-9.6.0-bin.zip
- zipStoreBase=GRADLE_USER_HOME
- zipStorePath=wrapper/dists
 diff --git a/settings.gradle b/settings.gradle
 index 0000000..0000000 100644
 --- a/settings.gradle
@@ -791,7 +729,7 @@ index 0000000..0000000 100644
  import java.nio.channels.FileChannel
  import java.nio.channels.FileLock
  import java.nio.file.StandardOpenOption
-@@ -46,5 +49,8 @@ dependencyResolutionManagement {
+@@ -46,5 +49,6 @@ dependencyResolutionManagement {
      }
  }
  
@@ -800,5 +738,3 @@ index 0000000..0000000 100644
 -apply from: file("TMessagesProj_Modules/media/core_settings.gradle")
 \ No newline at end of file
 +apply from: file("TMessagesProj_Modules/media/core_settings.gradle")
-+// entiny: lib-common-ktx still applies kotlin-android and nothing uses it
-+project(':TMessagesProj_Modules:media3:media-lib-common-ktx').buildFileName = 'inu-unused.gradle'

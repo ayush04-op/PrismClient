@@ -10,15 +10,17 @@ Subject: monet theme, almost directly ported from NagramX
  .../java/org/telegram/ui/ActionBar/Theme.java | 76 ++++++++++++++++++-
  .../telegram/ui/ActionBar/ThemeColors.java    | 14 ++++
  .../telegram/ui/Cells/ChatMessageCell.java    |  4 +-
+ .../telegram/ui/Cells/SharedDocumentCell.java | 10 ++-
  .../ui/Components/AvatarDrawable.java         |  2 +-
+ .../poll/attached/PollAttachedMediaFile.java  |  4 +-
  .../java/org/telegram/ui/DialogsActivity.java |  4 +
- 8 files changed, 113 insertions(+), 23 deletions(-)
+ 10 files changed, 122 insertions(+), 28 deletions(-)
 
 diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
 +++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
-@@ -8928,7 +8928,7 @@ public class MessageObject {
+@@ -8941,7 +8941,7 @@ public class MessageObject {
                  if (block.code && !block.quote && textLayout.getText() instanceof Spannable) {
                      SpannableString sb;
                      if (!TextUtils.isEmpty(range.language)) {
@@ -27,7 +29,7 @@ index 0000000..0000000 100644
                      } else {
                          sb = new SpannableString(blockText.toString());
                      }
-@@ -8968,7 +8968,7 @@ public class MessageObject {
+@@ -8981,7 +8981,7 @@ public class MessageObject {
                  try {
                      SpannableString sb;
                      if (block.code && !block.quote) {
@@ -36,7 +38,7 @@ index 0000000..0000000 100644
                      } else {
                          sb = SpannableString.valueOf(blockText);
                      }
-@@ -9391,7 +9391,7 @@ public class MessageObject {
+@@ -9404,7 +9404,7 @@ public class MessageObject {
                      if (block.code && !block.quote && textLayout.getText() instanceof Spannable) {
                          SpannableString sb;
                          if (!TextUtils.isEmpty(range.language)) {
@@ -45,7 +47,7 @@ index 0000000..0000000 100644
                          } else {
                              sb = new SpannableString(text.subSequence(range.start, range.end));
                          }
-@@ -9418,7 +9418,7 @@ public class MessageObject {
+@@ -9431,7 +9431,7 @@ public class MessageObject {
                      try {
                          SpannableString sb;
                          if (block.code && !block.quote) {
@@ -54,7 +56,7 @@ index 0000000..0000000 100644
                          } else {
                              sb = SpannableString.valueOf(text.subSequence(startCharacter, endCharacter));
                          }
-@@ -9434,7 +9434,7 @@ public class MessageObject {
+@@ -9447,7 +9447,7 @@ public class MessageObject {
                  }
  
                  if (block.code && block.textLayout.getText() instanceof Spannable && TextUtils.isEmpty(range.language)) {
@@ -127,7 +129,7 @@ diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/RichMessageLayou
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/messenger/RichMessageLayout.java
 +++ b/TMessagesProj/src/main/java/org/telegram/messenger/RichMessageLayout.java
-@@ -5910,7 +5910,7 @@ public class RichMessageLayout {
+@@ -5967,7 +5967,7 @@ public class RichMessageLayout {
                      }
                  }
                  if (!TextUtils.isEmpty(block.language)) {
@@ -306,7 +308,7 @@ diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.j
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
 +++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
-@@ -24051,7 +24051,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+@@ -24082,7 +24082,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
              if (currentMessageObject != null && currentMessageObject.sendPreview) {
                  alpha *= effectDrawable == null ? 0f : effectDrawable.isNotEmpty();
              }
@@ -315,7 +317,7 @@ index 0000000..0000000 100644
  
              int r;
              if (documentAttachType != DOCUMENT_ATTACH_TYPE_ROUND && documentAttachType != DOCUMENT_ATTACH_TYPE_STICKER && currentMessageObject.type != MessageObject.TYPE_EMOJIS) {
-@@ -24094,7 +24094,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
+@@ -24125,7 +24125,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                      canvas.restore();
                      Paint dimPaint = getThemedPaint(Theme.key_paint_chatTimeBackground);
                      int oldAlpha2 = dimPaint.getAlpha();
@@ -324,6 +326,41 @@ index 0000000..0000000 100644
                      canvas.drawRoundRect(rect, r, r, dimPaint);
                      dimPaint.setAlpha(oldAlpha2);
                  } else {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedDocumentCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedDocumentCell.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedDocumentCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/SharedDocumentCell.java
+@@ -266,7 +266,9 @@ public class SharedDocumentCell extends FrameLayout implements DownloadControlle
+         }
+         needDivider = divider;
+         if (resId == 0) {
+-            placeholderImageView.setImageResource(AndroidUtilities.getThumbForNameOrMime(text, type, false));
++            int thumbResId = AndroidUtilities.getThumbForNameOrMime(text, type, false);
++            placeholderImageView.setImageResource(thumbResId);
++            extTextView.setTextColor(desu.inugram.helpers.theme.MonetHelper.getFileThumbTextColor(getThemedColor(Theme.key_files_iconText), thumbResId));
+             placeholderImageView.setVisibility(VISIBLE);
+         } else {
+             placeholderImageView.setVisibility(INVISIBLE);
+@@ -297,7 +299,7 @@ public class SharedDocumentCell extends FrameLayout implements DownloadControlle
+                     iconKey = Theme.key_files_folderIcon;
+                 }
+                 Theme.setCombinedDrawableColor(drawable, getThemedColor(backKey), false);
+-                Theme.setCombinedDrawableColor(drawable, getThemedColor(iconKey), true);
++                Theme.setCombinedDrawableColor(drawable, desu.inugram.helpers.theme.MonetHelper.getFileIconColor(getThemedColor(iconKey), getThemedColor(backKey)), true);
+                 thumbImageView.setImageDrawable(drawable);
+             }
+             thumbImageView.setVisibility(VISIBLE);
+@@ -442,7 +444,9 @@ public class SharedDocumentCell extends FrameLayout implements DownloadControlle
+ 
+             placeholderImageView.setVisibility(VISIBLE);
+             extTextView.setVisibility(VISIBLE);
+-            placeholderImageView.setImageResource(AndroidUtilities.getThumbForNameOrMime(fileName, document.mime_type, false));
++            int thumbResId = AndroidUtilities.getThumbForNameOrMime(fileName, document.mime_type, false);
++            placeholderImageView.setImageResource(thumbResId);
++            extTextView.setTextColor(desu.inugram.helpers.theme.MonetHelper.getFileThumbTextColor(getThemedColor(Theme.key_files_iconText), thumbResId));
+             extTextView.setText((idx = fileName.lastIndexOf('.')) == -1 ? "" : fileName.substring(idx + 1).toLowerCase());
+             TLRPC.PhotoSize bigthumb = FileLoader.getClosestPhotoSizeWithSize(document.thumbs, 320);
+             TLRPC.PhotoSize thumb = FileLoader.getClosestPhotoSizeWithSize(document.thumbs, 40);
 diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/AvatarDrawable.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/AvatarDrawable.java
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/Components/AvatarDrawable.java
@@ -337,11 +374,33 @@ index 0000000..0000000 100644
          Paint backgroundPaint = Theme.avatar_backgroundPaint;
          if (hasAdvancedGradient && advancedGradient != null) {
              advancedGradient.setBounds(bounds.left, bounds.top, bounds.left + size, bounds.top + size);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/poll/attached/PollAttachedMediaFile.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/poll/attached/PollAttachedMediaFile.java
+index 0000000..0000000 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/poll/attached/PollAttachedMediaFile.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/poll/attached/PollAttachedMediaFile.java
+@@ -70,7 +70,7 @@ public class PollAttachedMediaFile extends PollAttachedMedia {
+             tp = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+             tp.setTextSize(dp(13));
+             tp.setTypeface(AndroidUtilities.bold());
+-            tp.setColor(Theme.getColor(Theme.key_files_iconText));
++            tp.setColor(desu.inugram.helpers.theme.MonetHelper.getFileThumbTextColor(Theme.getColor(Theme.key_files_iconText), res));
+ 
+ 
+             CharSequence ext = TextUtils.ellipsize(this.ext, tp, dp(34), TextUtils.TruncateAt.END);
+@@ -106,7 +106,7 @@ public class PollAttachedMediaFile extends PollAttachedMedia {
+             tp = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+             tp.setTextSize(dp(13));
+             tp.setTypeface(AndroidUtilities.bold());
+-            tp.setColor(Theme.getColor(Theme.key_files_iconText));
++            tp.setColor(desu.inugram.helpers.theme.MonetHelper.getFileThumbTextColor(Theme.getColor(Theme.key_files_iconText), res));
+ 
+ 
+             CharSequence ext = TextUtils.ellipsize(this.ext, tp, dp(34), TextUtils.TruncateAt.END);
 diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
 +++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
-@@ -13657,6 +13657,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+@@ -13704,6 +13704,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
      private void showItemOptions() {
          ItemOptions io = ItemOptions.makeOptions(this, optionsItem);
          io.setColors(getThemedColor(Theme.key_actionBarDefaultTitle), getThemedColor(Theme.key_actionBarDefaultTitle));

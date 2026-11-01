@@ -22,6 +22,7 @@ import android.widget.FrameLayout
 import androidx.annotation.Keep
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
+import desu.inugram.InuConfig
 import desu.inugram.helpers.dialogs.DrawerHelper
 import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.R
@@ -75,7 +76,8 @@ class DrawerSwipeController(private val host: DrawerLayoutContainer) {
 
     val canOpenFromBackGesture: Boolean
         get() = allowOpenDrawer && !drawerOpened && drawerPosition == 0f &&
-            drawerWidth > 0 && canTrackGesture()
+            drawerWidth > 0 && canTrackGesture() &&
+            (getVisibleFragment() as? DialogsActivity)?.actionBar?.isActionModeShowed != true
 
     fun dragDrawerTo(value: Float) {
         cancelCurrentAnimation()
@@ -96,6 +98,20 @@ class DrawerSwipeController(private val host: DrawerLayoutContainer) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             host.addOnAttachStateChangeListener(attachListener)
             if (host.isAttachedToWindow) host.viewTreeObserver.addOnPreDrawListener(preDrawListener)
+        }
+    }
+
+    fun detach() {
+        cancelCurrentAnimation()
+        setAllowOpenDrawer(false, false)
+        host.removeView(drawerLayout)
+        drawerLayout = null
+        drawerListView = null
+        velocityTracker?.recycle()
+        velocityTracker = null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            host.removeOnAttachStateChangeListener(attachListener)
+            host.viewTreeObserver.removeOnPreDrawListener(preDrawListener)
         }
     }
 
@@ -210,7 +226,8 @@ class DrawerSwipeController(private val host: DrawerLayoutContainer) {
         if (mainTabs != null && mainTabs.viewPager?.currentPosition != 0) return true
         val top = getVisibleFragment() as? DialogsActivity ?: return false
         val tabs = top.filterTabsView ?: return false
-        return tabs.visibility == View.VISIBLE && !tabs.isFirstTabSelected
+        if (tabs.visibility != View.VISIBLE) return false
+        return !tabs.isFirstTabSelected || InuConfig.FOLDERS_INFINITE_SWIPE.value && tabs.tabsCount >= 2
     }
 
     private fun updateGestureExclusion() {

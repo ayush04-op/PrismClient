@@ -2,6 +2,7 @@ package desu.inugram.helpers.chat
 
 import android.view.View
 import desu.inugram.InuConfig
+import desu.inugram.helpers.restrictions.RestrictedFeaturesHelper
 import desu.inugram.helpers.translate.TranslateHelper
 import org.telegram.messenger.ChatObject
 import org.telegram.messenger.LocaleController
@@ -26,6 +27,7 @@ enum class DoubleTapAction(
     QUICK_REACTION(1, R.string.InuQuickReaction),
     SHOW_REACTIONS(2, R.string.InuShowReactions),
     TRANSLATE(3, R.string.TranslateMessage, setOf(DoubleTapContext.INCOMING, DoubleTapContext.OUTGOING, DoubleTapContext.CHANNEL)),
+    REPLY(4, R.string.Reply),
     SAVE(5, R.string.Save),
     EDIT(6, R.string.Edit, setOf(DoubleTapContext.OUTGOING, DoubleTapContext.CHANNEL)),
     DELETE(7, R.string.Delete),
@@ -44,11 +46,55 @@ enum class DoubleTapAction(
     }
 }
 
+enum class SideButtonAction(val value: Int, private val labelRes: Int) {
+    FORWARD(0, R.string.Forward),
+    FORWARD_PRO(1, R.string.InuForwardPro),
+    SAVE(2, R.string.Save),
+    EDIT(3, R.string.Edit),
+    FORWARD_NO_QUOTE(4, R.string.InuForwardNoQuote),
+    COPY(5, R.string.Copy),
+    TRANSLATE(6, R.string.TranslateMessage),
+    DETAILS(7, R.string.InuMessageDetails),
+    DELETE(8, R.string.Delete),
+    ;
+
+    fun label(): CharSequence = LocaleController.getString(labelRes)
+
+    companion object {
+        fun fromValue(value: Int): SideButtonAction = entries.firstOrNull { it.value == value } ?: FORWARD
+    }
+}
+
 object DoubleTapActionHelper {
     const val INHERIT_INCOMING = -1
 
+    @JvmStatic
+    fun onSideButton(activity: ChatActivity, view: ChatMessageCell): Boolean {
+        val action = SideButtonAction.fromValue(InuConfig.SIDE_BUTTON_ACTION.value)
+        if (action == SideButtonAction.FORWARD || activity.chatMode != 0) return false
+        val message = extractMessage(view) ?: return false
+        val option = when (action) {
+            SideButtonAction.FORWARD_PRO -> ChatHelper.OPTION_FORWARD_PRO
+            SideButtonAction.SAVE -> ChatHelper.OPTION_SAVE.takeIf { canPerformAction(activity, message, DoubleTapAction.SAVE) }
+            SideButtonAction.EDIT -> ChatActivity.OPTION_EDIT.takeIf { canPerformAction(activity, message, DoubleTapAction.EDIT) }
+            SideButtonAction.DELETE -> ChatActivity.OPTION_DELETE.takeIf { canPerformAction(activity, message, DoubleTapAction.DELETE) }
+            SideButtonAction.TRANSLATE -> menuOptionForAction(DoubleTapAction.TRANSLATE, message)
+            SideButtonAction.DETAILS -> ChatHelper.OPTION_DETAILS
+            SideButtonAction.FORWARD_NO_QUOTE -> ChatHelper.OPTION_FORWARD_NO_QUOTE.takeIf { canForwardOrAllowed(message) }
+            SideButtonAction.COPY -> ChatActivity.OPTION_COPY.takeIf { canForwardOrAllowed(message) }
+            else -> null
+        } ?: return false
+        setSelection(activity, message)
+        activity.processSelectedOption(option)
+        return true
+    }
+
+    private fun canForwardOrAllowed(message: MessageObject): Boolean =
+        !RestrictedFeaturesHelper.noforwards(message.messageOwner)
+
     private fun menuOptionForAction(action: DoubleTapAction, message: MessageObject): Int? {
         return when (action) {
+            DoubleTapAction.REPLY -> ChatActivity.OPTION_REPLY
             DoubleTapAction.EDIT -> ChatActivity.OPTION_EDIT
             DoubleTapAction.DELETE -> ChatActivity.OPTION_DELETE
             DoubleTapAction.TRANSLATE -> if (TranslateHelper.isManualTranslated(message)) ChatHelper.OPTION_TRANSLATE_REVERT else ChatActivity.OPTION_TRANSLATE
@@ -64,6 +110,7 @@ object DoubleTapActionHelper {
         }
 
         return when (action) {
+            DoubleTapAction.REPLY -> activity.chatMode != ChatActivity.MODE_WELCOME_MESSAGES && message.id > 0
             DoubleTapAction.EDIT -> message.canEditMessage(activity.currentChat)
             DoubleTapAction.DELETE -> message.canDeleteMessage(activity.isInScheduleMode, activity.currentChat)
             DoubleTapAction.SAVE -> !message.messageOwner.noforwards &&

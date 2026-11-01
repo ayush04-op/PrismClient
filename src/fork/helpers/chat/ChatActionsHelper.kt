@@ -1,12 +1,14 @@
 package desu.inugram.helpers.chat
 
+import desu.inugram.helpers.archive.ArchiveCache
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.view.Gravity
-import desu.inugram.helpers.vibration.HapticFeedbackConstants
+import android.view.HapticFeedbackConstants
 import android.util.SparseArray
 import android.view.View
 import android.view.ViewGroup
@@ -28,13 +30,15 @@ import desu.inugram.helpers.menu.reorderByMenu
 import desu.inugram.helpers.security.GhostHelper
 import desu.inugram.helpers.translate.TranslateHelper
 import desu.inugram.ui.showInputDialog
-import desu.inugram.ui.AyuMessageHistoryActivity
+import desu.inugram.ui.DeletedArchiveActivity
+import desu.inugram.ui.EditHistoryActivity
 import desu.inugram.helpers.menu.reorderByKeys
 import java.util.WeakHashMap
 import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.BuildVars
 import org.telegram.messenger.ChatObject
 import org.telegram.messenger.LocaleController
+import org.telegram.messenger.MediaController
 import org.telegram.messenger.MessageObject
 import org.telegram.messenger.MessagesController
 import org.telegram.messenger.R
@@ -89,6 +93,10 @@ object ChatActionsHelper {
     const val ACTION_CHAT_MARK_READ = 545
     const val ACTION_CHAT_DELETE_MY_MESSAGES = 546
     const val ACTION_EDITED_MESSAGES = 547
+    const val ACTION_CHAT_PROXY = 548
+    const val ACTION_SHOW_HIDDEN = 549
+    const val ACTION_BUSINESS_BOT = 550
+    const val ACTION_SILENT_BROADCAST = 551
 
     const val ACTION_SELECT_RANGE = 1500
     const val ACTION_SELECTION_MENU = 1501
@@ -98,6 +106,7 @@ object ChatActionsHelper {
     const val ACTION_SEL_PIN = 1505
     const val ACTION_SEL_UNPIN = 1506
     const val ACTION_SEL_FORWARD_NO_QUOTE = 1507
+    const val ACTION_SEL_DOWNLOADS = 1508
     private const val SELECTION_RENDER_DEBOUNCE_MS = 32L
 
     /** the back row and the gap under it, which every plugin submenu keeps across a rebuild */
@@ -124,9 +133,9 @@ object ChatActionsHelper {
         for ((id, icon, title) in visible) {
             submenu.add(icon, LocaleController.getString(title)) {
                 activity.presentFragment(if (id == ACTION_EDITED_MESSAGES) {
-                    AyuMessageHistoryActivity.forEditedMessagesInDialog(activity.currentAccount, activity.dialogId)
+                    EditHistoryActivity(activity.dialogId, activity.currentAccount)
                 } else {
-                    AyuMessageHistoryActivity.forDeletedMessagesInDialog(activity.currentAccount, activity.dialogId)
+                    DeletedArchiveActivity(activity.dialogId, activity.currentAccount)
                 })
                 headerItem.closeSubMenu()
             }
@@ -167,6 +176,13 @@ object ChatActionsHelper {
             menu.inu_rematerializeLazyItems()
         }
     }
+
+    @JvmStatic
+    fun hideNotifyBell(): Boolean = InuConfig.NOTIFY_BELL_IN_MENU.value
+
+    private fun canPostToChannel(chat: TLRPC.Chat?): Boolean =
+        chat != null && ChatObject.isChannel(chat) && !chat.megagroup &&
+            (chat.creator || chat.admin_rights?.post_messages == true)
 
     @JvmStatic
     fun addItems(activity: ChatActivity, headerItem: ActionBarMenuItem) {
@@ -257,6 +273,26 @@ object ChatActionsHelper {
                 LocaleController.getString(R.string.InuChatExport),
             )
         }
+        if (InuConfig.NOTIFY_BELL_IN_MENU.value && canPostToChannel(activity.currentChat)) {
+            headerItem.lazilyAddSubItem(
+                ACTION_SILENT_BROADCAST, R.drawable.input_notify_on,
+                LocaleController.getString(R.string.InuSilentBroadcast),
+            )
+        }
+        if (BusinessBotHelper.menuAvailable(activity)) {
+            headerItem.lazilyAddSubItem(
+                ACTION_BUSINESS_BOT, R.drawable.msg_bot,
+                LocaleController.getString(R.string.InuBusinessBot),
+            )
+        }
+        headerItem.lazilyAddSubItem(
+            ACTION_SHOW_HIDDEN, R.drawable.inu_tabler_eye,
+            LocaleController.getString(R.string.InuRestoreHiddenMessages),
+        )
+        headerItem.lazilyAddSubItem(
+            ACTION_CHAT_PROXY, R.drawable.outline_shield_check,
+            LocaleController.getString(R.string.ProxySettings),
+        )
         if (InuConfig.LOCAL_NAMES.value && notEncrypted) {
             headerItem.lazilyAddSubItem(
                 ACTION_CHAT_LOCAL_NAME, R.drawable.msg_edit,
@@ -542,8 +578,8 @@ object ChatActionsHelper {
 
             ACTION_GO_TO_BEGINNING -> ChatHelper.jumpToBeginning(activity)
             ACTION_GO_TO_MESSAGE -> showGoToMessageDialog(activity)
-            ACTION_DELETED_MESSAGES -> activity.presentFragment(AyuMessageHistoryActivity.forDeletedMessagesInDialog(activity.currentAccount, activity.dialogId))
-            ACTION_EDITED_MESSAGES -> activity.presentFragment(AyuMessageHistoryActivity.forEditedMessagesInDialog(activity.currentAccount, activity.dialogId))
+            ACTION_DELETED_MESSAGES -> activity.presentFragment(DeletedArchiveActivity(activity.dialogId, activity.currentAccount))
+            ACTION_EDITED_MESSAGES -> activity.presentFragment(EditHistoryActivity(activity.dialogId, activity.currentAccount))
             ACTION_STATISTICS -> {
                 val chat = activity.currentChat
                 if (chat != null) activity.presentFragment(StatisticActivity.create(chat, false))
@@ -580,6 +616,16 @@ object ChatActionsHelper {
             ACTION_TYPING_SPOOF -> showTypingSpoofSelector(activity)
             // same handlers as the profile menu, keyed by its ids
             ACTION_CHAT_EXPORT -> ProfileHelper.handleMenuClick(ProfileHelper.ACTION_EXPORT_CHAT, null, activity.currentAccount, activity.dialogId)
+            ACTION_SHOW_HIDDEN -> {
+                if (BlockedMessagesHelper.manualHiddenCount(activity.currentAccount, activity.dialogId) > 0) {
+                    BlockedMessagesHelper.restoreManual(activity.chatAdapter, activity.currentAccount, activity.dialogId)
+                } else {
+                    BulletinFactory.of(activity).createSimpleBulletin(R.raw.info, LocaleController.getString(R.string.InuNoHiddenMessages)).show()
+                }
+            }
+            ACTION_CHAT_PROXY -> activity.presentFragment(org.telegram.ui.ProxyListActivity())
+            ACTION_BUSINESS_BOT -> BusinessBotHelper.toggle(activity)
+            ACTION_SILENT_BROADCAST -> activity.chatActivityEnterView?.inu_toggleSilent()
             ACTION_CHAT_LOCAL_NAME -> ProfileHelper.handleMenuClick(ProfileHelper.ACTION_EDIT_LOCAL_NAME, null, activity.currentAccount, activity.dialogId)
             ACTION_CHAT_MARK_READ -> ProfileHelper.handleMenuClick(ProfileHelper.ACTION_MARK_AS_READ, null, activity.currentAccount, activity.dialogId)
             ACTION_CHAT_DELETE_MY_MESSAGES -> ProfileHelper.handleMenuClick(ProfileHelper.ACTION_DELETE_MY_MESSAGES, null, activity.currentAccount, activity.dialogId)
@@ -589,7 +635,7 @@ object ChatActionsHelper {
             }
 
             ACTION_SELECT_RANGE -> fillSelectionGaps(activity)
-            ACTION_SEL_SAVE, ACTION_SEL_FORWARD_NO_QUOTE, ACTION_SEL_GALLERY ->
+            ACTION_SEL_SAVE, ACTION_SEL_FORWARD_NO_QUOTE, ACTION_SEL_GALLERY, ACTION_SEL_DOWNLOADS ->
                 return selectionMenus[activity]?.let { handleSelectionClick(it, id) } ?: false
             ACTION_SEL_TRANSLATE -> translateSelection(activity)
             ACTION_SEL_PIN -> pinSelection(activity)
@@ -620,7 +666,7 @@ object ChatActionsHelper {
             .setTitle(LocaleController.getString(R.string.InuClearDeletedHere))
             .setMessage(LocaleController.getString(R.string.InuClearDeletedHereAlert))
             .setPositiveButton(LocaleController.getString(R.string.ClearButton).uppercase()) { _, _ ->
-                SavedMessagesHelper.clearCache(activity.currentAccount, listOf(activity.dialogId), true) {
+                ArchiveCache.clearCache(activity.currentAccount, listOf(activity.dialogId), true) {
                     BulletinFactory.of(activity)
                         .createSimpleBulletin(R.raw.ic_delete, LocaleController.getString(R.string.InuClearDeletedCacheDone))
                         .show()
@@ -874,8 +920,13 @@ object ChatActionsHelper {
         }
         overflow.addSubItem(
             ACTION_SEL_GALLERY,
-            R.drawable.msg_download,
+            R.drawable.msg_gallery,
             LocaleController.getString(R.string.SaveToGallery),
+        )
+        overflow.addSubItem(
+            ACTION_SEL_DOWNLOADS,
+            R.drawable.msg_download,
+            LocaleController.getString(R.string.SaveToDownloads),
         )
         if (menu.chat != null) {
             overflow.addSubItem(
@@ -927,6 +978,7 @@ object ChatActionsHelper {
             ACTION_SEL_SAVE -> saveSelectionToSavedMessages(menu)
             ACTION_SEL_FORWARD_NO_QUOTE -> menu.forwardWithoutQuote.run()
             ACTION_SEL_GALLERY -> saveSelectionToGallery(menu)
+            ACTION_SEL_DOWNLOADS -> saveSelectionToDownloads(menu)
             // #if PLUGINS
             else -> return dispatchSelectionPluginItem(menu, id)
             // #else
@@ -959,12 +1011,14 @@ object ChatActionsHelper {
         val messages = collectSelected(menu)
         var hasText = false
         var hasMedia = false
+        var hasFiles = false
         var canPin = false
         var canUnpin = false
         var allForwardable = true
         for (msg in messages) {
             if (!msg.messageOwner?.message.isNullOrEmpty()) hasText = true
             if (msg.isPhoto || msg.isVideo) hasMedia = true
+            if (msg.isDocument || msg.isMusic) hasFiles = true
             if (chat != null && canPinMessage(chat, msg)) {
                 if (isPinnedMessage(chat, msg)) {
                     canUnpin = true
@@ -979,15 +1033,18 @@ object ChatActionsHelper {
         val canForward = messages.isNotEmpty() && allForwardable && !noForwards
         val canSave = canForward && menu.dialogId != UserConfig.getInstance(account).clientUserId
         val canTranslate = chat != null && hasText && InuConfig.IN_PLACE_TRANSLATION.value
+        val canSaveToGallery = hasMedia && canForward
+        val canSaveToDownloads = hasFiles && canForward
         overflow.setSubItemShown(ACTION_SEL_SAVE, canSave)
         overflow.setSubItemShown(ACTION_SEL_FORWARD_NO_QUOTE, canForward)
-        overflow.setSubItemShown(ACTION_SEL_GALLERY, hasMedia)
+        overflow.setSubItemShown(ACTION_SEL_GALLERY, canSaveToGallery)
+        overflow.setSubItemShown(ACTION_SEL_DOWNLOADS, canSaveToDownloads)
         if (chat != null) {
             overflow.setSubItemShown(ACTION_SEL_TRANSLATE, canTranslate)
             overflow.setSubItemShown(ACTION_SEL_PIN, canPin)
             overflow.setSubItemShown(ACTION_SEL_UNPIN, canUnpin)
         }
-        val anyShown = canSave || canForward || canTranslate || hasMedia || canPin || canUnpin
+        val anyShown = canSave || canForward || canTranslate || canSaveToGallery || canSaveToDownloads || canPin || canUnpin
         overflow.visibility = if (anyShown) View.VISIBLE else View.GONE
         // #if PLUGINS
         updateSelectionPluginItems(menu)
@@ -1142,9 +1199,7 @@ object ChatActionsHelper {
         }
     }
 
-    private fun saveSelectionToGallery(menu: SelectionMenu) {
-        val fragment = menu.fragment
-        val parent = fragment.parentActivity ?: return
+    private fun requestStoragePermissionIfNeeded(parent: Activity): Boolean {
         if (Build.VERSION.SDK_INT >= 23 && (Build.VERSION.SDK_INT <= 28 || BuildVars.NO_SCOPED_STORAGE) &&
             parent.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -1152,8 +1207,30 @@ object ChatActionsHelper {
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 BasePermissionsActivity.REQUEST_CODE_EXTERNAL_STORAGE,
             )
-            return
+            return true
         }
+        return false
+    }
+
+    private fun saveSelectionToDownloads(menu: SelectionMenu) {
+        val fragment = menu.fragment
+        val parent = fragment.parentActivity ?: return
+        if (requestStoragePermissionIfNeeded(parent)) return
+        val files = collectSelected(menu).filter { it.isDocument || it.isMusic }
+        if (files.isEmpty()) return
+        val type = if (files.all { it.isMusic }) BulletinFactory.FileType.AUDIOS else BulletinFactory.FileType.UNKNOWNS
+        MediaController.saveFilesFromMessages(parent, fragment.accountInstance, ArrayList(files)) { count ->
+            if (count > 0 && fragment.parentActivity != null) {
+                BulletinFactory.of(fragment).createDownloadBulletin(type, count, fragment.resourceProvider).show()
+            }
+        }
+        menu.clearSelection.run()
+    }
+
+    private fun saveSelectionToGallery(menu: SelectionMenu) {
+        val fragment = menu.fragment
+        val parent = fragment.parentActivity ?: return
+        if (requestStoragePermissionIfNeeded(parent)) return
         var photos = 0
         var videos = 0
         for (msg in collectSelected(menu)) {

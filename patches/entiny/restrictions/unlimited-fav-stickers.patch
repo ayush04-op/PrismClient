@@ -4,14 +4,14 @@ Date: Thu, 20 Aug 2026 00:27:43 +0300
 Subject: Remove the local storage cap on favorite stickers and GIFs
 
 ---
- .../java/org/telegram/messenger/MediaDataController.java  | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ .../org/telegram/messenger/MediaDataController.java | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
 
 diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java
 +++ b/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java
-@@ -1001,7 +1001,7 @@ public class MediaDataController extends BaseController {
+@@ -1002,7 +1002,7 @@ public class MediaDataController extends BaseController {
                      AndroidUtilities.runOnUIThread(() -> getMediaDataController().loadRecents(MediaDataController.TYPE_FAVE, false, false, true));
                  }
              });
@@ -20,7 +20,7 @@ index 0000000..0000000 100644
          } else {
              if (type == TYPE_IMAGE && remove) {
                  NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.showBulletin, Bulletin.TYPE_STICKER, document, StickerSetBulletinLayout.TYPE_REMOVED_FROM_RECENT);
-@@ -1115,7 +1115,7 @@ public class MediaDataController extends BaseController {
+@@ -1116,7 +1116,7 @@ public class MediaDataController extends BaseController {
          if (!found) {
              recentGifs.add(0, document);
          }
@@ -29,7 +29,26 @@ index 0000000..0000000 100644
              TLRPC.Document old = recentGifs.remove(recentGifs.size() - 1);
              getMessagesStorage().getStorageQueue().postRunnable(() -> {
                  try {
-@@ -2090,12 +2090,12 @@ public class MediaDataController extends BaseController {
+@@ -2020,7 +2020,7 @@ public class MediaDataController extends BaseController {
+                     ArrayList<TLRPC.Document> arrayList = null;
+                     if (response instanceof TLRPC.TL_messages_savedGifs) {
+                         TLRPC.TL_messages_savedGifs res = (TLRPC.TL_messages_savedGifs) response;
+-                        arrayList = res.gifs;
++                        arrayList = desu.inugram.helpers.FaveStickersHelper.mergeWithLocal(res.gifs, recentGifs);
+                     }
+                     processLoadedRecentDocuments(type, arrayList, true, 0, true);
+                 });
+@@ -2064,6 +2064,9 @@ public class MediaDataController extends BaseController {
+                             arrayList = res.stickers;
+                         }
+                     }
++                    if (type == TYPE_FAVE) {
++                        arrayList = desu.inugram.helpers.FaveStickersHelper.mergeWithLocal(arrayList, recentStickers[type]);
++                    }
+                     processLoadedRecentDocuments(type, arrayList, false, 0, true);
+                 });
+             }
+@@ -2091,12 +2094,12 @@ public class MediaDataController extends BaseController {
                      SQLiteDatabase database = getMessagesStorage().getDatabase();
                      int maxCount;
                      if (gif) {

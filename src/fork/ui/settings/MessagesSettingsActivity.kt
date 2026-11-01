@@ -10,6 +10,7 @@ import desu.inugram.helpers.chat.BlockedMessagesHelper
 import desu.inugram.helpers.chat.DoubleTapAction
 import desu.inugram.helpers.chat.DoubleTapActionHelper
 import desu.inugram.helpers.chat.DoubleTapContext
+import desu.inugram.helpers.chat.SideButtonAction
 import org.telegram.messenger.LocaleController
 import org.telegram.messenger.NotificationCenter
 import org.telegram.messenger.R
@@ -154,6 +155,14 @@ class MessagesSettingsActivity : SettingsPageActivity() {
                     ),
                 )
             )
+            items.add(
+                mkTwoLineCheckItem(
+                    TOGGLE_BLOCKED_MESSAGES_REPLIES,
+                    R.string.InuBlockedMessagesHideReplies,
+                    R.string.InuBlockedMessagesHideRepliesInfo,
+                    InuConfig.BLOCKED_MESSAGES_HIDE_REPLIES.value,
+                )
+            )
         }
         items.add(UItem.asShadow(null))
 
@@ -240,6 +249,26 @@ class MessagesSettingsActivity : SettingsPageActivity() {
         }
         items.add(UItem.asCustom(doubleTapDelaySlider))
         items.add(UItem.asShadow(LocaleController.getString(R.string.InuDoubleTapInfo)))
+        items.add(
+            UItem.asButton(
+                BUTTON_SIDE_BUTTON_ACTION,
+                LocaleController.getString(R.string.InuSideButtonAction),
+                SideButtonAction.fromValue(InuConfig.SIDE_BUTTON_ACTION.value).label()
+            )
+        )
+        items.add(UItem.asShadow(LocaleController.getString(R.string.InuSideButtonActionInfo)))
+    }
+
+    private fun showSideButtonSelector(anchor: View) {
+        val actions = SideButtonAction.entries
+        RadioItemOptions.show(
+            this, anchor,
+            actions.map { it.label() },
+            actions.indexOfFirst { it.value == InuConfig.SIDE_BUTTON_ACTION.value }.coerceAtLeast(0),
+        ) { which ->
+            InuConfig.SIDE_BUTTON_ACTION.value = actions.getOrNull(which)?.value ?: return@show
+            listView?.adapter?.update(true)
+        }
     }
 
     override fun onClick(item: UItem, view: View, position: Int, x: Float, y: Float) {
@@ -351,10 +380,18 @@ class MessagesSettingsActivity : SettingsPageActivity() {
             }
 
             BUTTON_BLOCKED_MESSAGES_EXTRA -> openBlockedExtraPicker()
+
+            TOGGLE_BLOCKED_MESSAGES_REPLIES -> {
+                val new = InuConfig.BLOCKED_MESSAGES_HIDE_REPLIES.toggle()
+                (view as? NotificationsCheckCell)?.isChecked = new
+                BlockedMessagesHelper.notifyChanged(currentAccount)
+            }
+
             BUTTON_PINNED_REACTIONS -> presentFragment(PinnedReactionsActivity())
             BUTTON_DOUBLE_TAP_INCOMING -> showDoubleTapSelector(view, DoubleTapContext.INCOMING)
             BUTTON_DOUBLE_TAP_OUTGOING -> showDoubleTapSelector(view, DoubleTapContext.OUTGOING)
             BUTTON_DOUBLE_TAP_CHANNEL -> showDoubleTapSelector(view, DoubleTapContext.CHANNEL)
+            BUTTON_SIDE_BUTTON_ACTION -> showSideButtonSelector(view)
         }
     }
 
@@ -429,6 +466,7 @@ class MessagesSettingsActivity : SettingsPageActivity() {
         private val BUTTON_DOUBLE_TAP_INCOMING = InuUtils.generateId()
         private val BUTTON_DOUBLE_TAP_OUTGOING = InuUtils.generateId()
         private val BUTTON_DOUBLE_TAP_CHANNEL = InuUtils.generateId()
+        private val BUTTON_SIDE_BUTTON_ACTION = InuUtils.generateId()
         private val TOGGLE_SHOW_SPOILERS_DIRECTLY = InuUtils.generateId()
         private val BUTTON_TEXT_SPOILER_MODE = InuUtils.generateId()
         private val TOGGLE_SPOILER_EXTEND_TO_LINE_END = InuUtils.generateId()
@@ -437,6 +475,7 @@ class MessagesSettingsActivity : SettingsPageActivity() {
         private val BUTTON_MEDIA_SPOILER_MODE = InuUtils.generateId()
         private val BUTTON_BLOCKED_MESSAGES_MODE = InuUtils.generateId()
         private val BUTTON_BLOCKED_MESSAGES_EXTRA = InuUtils.generateId()
+        private val TOGGLE_BLOCKED_MESSAGES_REPLIES = InuUtils.generateId()
 
         private fun textSpoilerModeLabel(value: Int): String = when (value) {
             InuConfig.TextSpoilerModeItem.SIMPLE -> LocaleController.getString(R.string.InuTextSpoilerModeSimple)
@@ -484,6 +523,7 @@ class MessagesSettingsActivity : SettingsPageActivity() {
                 SearchRegistry.Entry("double-tap-incoming", R.string.InuIncomingMessages, BUTTON_DOUBLE_TAP_INCOMING),
                 SearchRegistry.Entry("double-tap-outgoing", R.string.InuOutgoingMessages, BUTTON_DOUBLE_TAP_OUTGOING),
                 SearchRegistry.Entry("double-tap-channel", R.string.InuChannelMessages, BUTTON_DOUBLE_TAP_CHANNEL),
+                SearchRegistry.Entry("side-button-action", R.string.InuSideButtonAction, BUTTON_SIDE_BUTTON_ACTION),
                 SearchRegistry.Entry("show-spoilers-directly", R.string.InuShowSpoilersDirectly, TOGGLE_SHOW_SPOILERS_DIRECTLY),
                 SearchRegistry.Entry("text-spoiler-mode", R.string.InuTextSpoilerMode, BUTTON_TEXT_SPOILER_MODE),
                 SearchRegistry.Entry("spoiler-extend-to-line-end", R.string.InuSpoilerExtendToLineEnd, TOGGLE_SPOILER_EXTEND_TO_LINE_END),
@@ -492,6 +532,7 @@ class MessagesSettingsActivity : SettingsPageActivity() {
                 SearchRegistry.Entry("media-spoiler-mode", R.string.InuMediaSpoilerMode, BUTTON_MEDIA_SPOILER_MODE),
                 SearchRegistry.Entry("blocked-messages-mode", R.string.InuBlockedMessagesMode, BUTTON_BLOCKED_MESSAGES_MODE),
                 SearchRegistry.Entry("blocked-messages-extra", R.string.InuBlockedMessagesExtra, BUTTON_BLOCKED_MESSAGES_EXTRA),
+                SearchRegistry.Entry("blocked-messages-replies", R.string.InuBlockedMessagesHideReplies, TOGGLE_BLOCKED_MESSAGES_REPLIES),
             ),
         )
     }

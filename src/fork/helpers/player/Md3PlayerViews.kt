@@ -474,7 +474,8 @@ class Md3RingPlayButton(context: Context, radiusDp: Float, strokeDp: Float, icon
         removeCallbacks(waveFrame)
         if (animating || targetAmp != amplitude) {
             postInvalidateOnAnimation()
-        } else if (amplitude > 0f) {
+        } else if (amplitude > 0f && isShown) {
+            // entiny: no frames while scrolled off-screen; onDraw resumes the loop when visible again
             postDelayed(waveFrame, 33)
         } else {
             lastFrame = 0L
@@ -897,9 +898,9 @@ class Md3CoverImage(context: Context, noteSizeDp: Float) : BackupImageView(conte
 
     override fun onDraw(canvas: Canvas) {
         if (!imageReceiver.hasBitmapImage()) {
-            rect.set(0f, 0f, width.toFloat(), height.toFloat())
+            rect.set(0f, 0f, getWidth().toFloat(), getHeight().toFloat())
             canvas.drawRoundRect(rect, radius.toFloat(), radius.toFloat(), placeholderPaint)
-            note.setBounds(0, 0, width, height)
+            note.setBounds(0, 0, getWidth(), getHeight())
             note.draw(canvas)
         }
         super.onDraw(canvas)

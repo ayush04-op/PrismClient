@@ -93,6 +93,14 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
                 InuConfig.REMEMBER_SELECTED_FOLDER.value
             )
         )
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_FOLDERS_INFINITE_SWIPE,
+                R.string.InuFoldersInfiniteSwipe,
+                R.string.InuFoldersInfiniteSwipeInfo,
+                InuConfig.FOLDERS_INFINITE_SWIPE.value
+            )
+        )
 
         items.add(
             UItem.asCheck(
@@ -100,19 +108,25 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
                 LocaleController.getString(R.string.InuFoldersAtBottom),
             ).setChecked(InuConfig.FOLDERS_AT_BOTTOM.value)
         )
-
-        items.add(
-            mkSubPageButton(
-                BUTTON_SYSTEM_FOLDERS,
-                LocaleController.getString(R.string.InuSystemFolders),
-            )
-        )
-
+        
         items.add(
             UItem.asCheck(
                 TOGGLE_HIDE_ARCHIVE,
                 LocaleController.getString(R.string.InuHideArchive),
             ).setChecked(InuConfig.HIDE_ARCHIVE_FROM_CHAT_LIST.value)
+        )
+
+        items.add(
+            UItem.asCheck(
+                TOGGLE_UNREAD_CHATS_FIRST,
+                LocaleController.getString(R.string.InuUnreadChatsFirst),
+            ).setChecked(InuConfig.UNREAD_CHATS_FIRST.value)
+        )
+        items.add(
+            UItem.asCheck(
+                TOGGLE_UNREAD_CHATS_FIRST_PINNED,
+                LocaleController.getString(R.string.InuUnreadChatsFirstPinned),
+            ).setChecked(InuConfig.UNREAD_CHATS_FIRST_PINNED.value)
         )
 
         items.add(UItem.asShadow(null))
@@ -195,6 +209,14 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
                 InuConfig.ALWAYS_SHOW_DOWNLOADS.value
             )
         )
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_HIDE_DOWNLOADS_BUTTON,
+                R.string.InuHideDownloadsButton,
+                R.string.InuHideDownloadsButtonInfo,
+                InuConfig.HIDE_DOWNLOADS_BUTTON.value
+            )
+        )
         items.add(UItem.asShadow(null))
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuBottomTabs)))
@@ -259,10 +281,17 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
             }
             items.add(
                 mkTwoLineCheckItem(
-                    TOGGLE_HIDE_TOP_SEARCH,
-                    R.string.InuBottomTabsHideTopSearch,
-                    R.string.InuBottomTabsHideTopSearchInfo,
-                    InuConfig.BOTTOM_TABS_HIDE_TOP_SEARCH.value
+                    TOGGLE_BOTTOM_TABS_HIDE_ON_SCROLL,
+                    R.string.InuBottomTabsHideOnScroll,
+                    R.string.InuBottomTabsHideOnScrollInfo,
+                    InuConfig.BOTTOM_TABS_HIDE_ON_SCROLL.value
+                )
+            )
+            items.add(
+                UItem.asButton(
+                    BUTTON_START_TAB,
+                    LocaleController.getString(R.string.InuStartTab),
+                    startTabLabel(),
                 )
             )
             items.add(
@@ -273,6 +302,14 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
                 )
             )
         }
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_HIDE_TOP_SEARCH,
+                R.string.InuBottomTabsHideTopSearch,
+                R.string.InuBottomTabsHideTopSearchInfo,
+                InuConfig.BOTTOM_TABS_HIDE_TOP_SEARCH.value
+            )
+        )
         items.add(UItem.asShadow(null))
 
         items.add(
@@ -392,6 +429,11 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
                 (view as? NotificationsCheckCell)?.isChecked = new
             }
 
+            TOGGLE_FOLDERS_INFINITE_SWIPE -> {
+                val new = InuConfig.FOLDERS_INFINITE_SWIPE.toggle()
+                (view as? NotificationsCheckCell)?.isChecked = new
+            }
+
             TOGGLE_HIDE_ALL_CHATS_TAB -> {
                 val new = InuConfig.HIDE_ALL_CHATS_TAB.toggle()
                 (view as? NotificationsCheckCell)?.isChecked = new
@@ -405,12 +447,22 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
                 showRestartBulletin()
             }
 
-            BUTTON_SYSTEM_FOLDERS -> presentFragment(SystemFoldersSettingsActivity())
-
             TOGGLE_HIDE_ARCHIVE -> {
                 val new = InuConfig.HIDE_ARCHIVE_FROM_CHAT_LIST.toggle()
                 (view as? TextCheckCell)?.isChecked = new
                 softRebuild()
+            }
+
+            TOGGLE_UNREAD_CHATS_FIRST -> {
+                val new = InuConfig.UNREAD_CHATS_FIRST.toggle()
+                (view as? TextCheckCell)?.isChecked = new
+                desu.inugram.helpers.dialogs.UnreadFirstHelper.refresh()
+            }
+
+            TOGGLE_UNREAD_CHATS_FIRST_PINNED -> {
+                val new = InuConfig.UNREAD_CHATS_FIRST_PINNED.toggle()
+                (view as? TextCheckCell)?.isChecked = new
+                desu.inugram.helpers.dialogs.UnreadFirstHelper.refresh()
             }
 
             TOGGLE_BOT_WEBVIEW_BUTTON -> {
@@ -427,6 +479,8 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
 
 
             BUTTON_PULL_DOWN_ACTION -> showPullDownActionSelector()
+
+            BUTTON_START_TAB -> showStartTabSelector()
 
             TOGGLE_DISABLE_SWIPE_TO_UNARCHIVE -> {
                 val new = InuConfig.DISABLE_SWIPE_TO_UNARCHIVE.toggle()
@@ -453,6 +507,11 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
                 (view as? NotificationsCheckCell)?.isChecked = new
             }
 
+            TOGGLE_HIDE_DOWNLOADS_BUTTON -> {
+                val new = InuConfig.HIDE_DOWNLOADS_BUTTON.toggle()
+                (view as? NotificationsCheckCell)?.isChecked = new
+            }
+
             TOGGLE_BOTTOM_TABS_HIDE -> {
                 val new = InuConfig.BOTTOM_TABS_HIDE.toggle()
                 (view as? NotificationsCheckCell)?.isChecked = new
@@ -474,6 +533,12 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
                 (view as? TextCheckCell)?.isChecked = new
                 mainTabsPreview?.let { refreshMainTabsPreview(it) }
                 showRestartBulletin()
+            }
+
+            TOGGLE_BOTTOM_TABS_HIDE_ON_SCROLL -> {
+                val new = InuConfig.BOTTOM_TABS_HIDE_ON_SCROLL.toggle()
+                (view as? NotificationsCheckCell)?.isChecked = new
+                (view as? TextCheckCell)?.isChecked = new
             }
 
             TOGGLE_HIDE_TOP_SEARCH -> {
@@ -505,7 +570,7 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
                     LocaleController.getString(R.string.AppName),
                     LocaleController.getString(R.string.Username),
                     LocaleController.getString(R.string.FirstNameSmall),
-                    LocaleController.getString(R.string.InuChats),
+                    LocaleController.getString(R.string.FilterChats),
                     LocaleController.getString(R.string.InuTitleTextFolder),
                     LocaleController.getString(R.string.InuTitleTextCustom),
                 ),
@@ -669,6 +734,31 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
         )
     }
 
+    private fun startTabItems() = mainTabsEntries
+        .filter { it.item != MainTabsMenuConfig.Item.SEARCH && (it.enabled || it.item == MainTabsMenuConfig.Item.CHATS) }
+        .map { it.item }
+
+    private fun startTabLabel(): String {
+        val items = startTabItems()
+        val current = items.firstOrNull { it.index == InuConfig.START_TAB.value } ?: MainTabsMenuConfig.Item.CHATS
+        return LocaleController.getString(current.labelRes)
+    }
+
+    private fun showStartTabSelector() {
+        val context = context ?: return
+        val items = startTabItems()
+        val current = items.indexOfFirst { it.index == InuConfig.START_TAB.value }.coerceAtLeast(0)
+        showDialog(
+            RadioDialogBuilder(context, getResourceProvider())
+                .setTitle(LocaleController.getString(R.string.InuStartTab))
+                .setItems(items.map { RadioDialogBuilder.Item(LocaleController.getString(it.labelRes)) }, current) { _, which ->
+                    InuConfig.START_TAB.value = items[which].index
+                    listView.adapter.update(true)
+                    showRestartBulletin()
+                }.create()
+        )
+    }
+
     private fun showPullDownActionSelector() {
         val context = context ?: return
         val values = intArrayOf(
@@ -719,11 +809,13 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
         private val TOGGLE_TAB_INDICATOR_STROKE = InuUtils.generateId()
         private val BUTTON_FOLDERS_UNREAD_COUNTER_MODE = InuUtils.generateId()
         private val TOGGLE_FOLDERS_AT_BOTTOM = InuUtils.generateId()
-        private val BUTTON_SYSTEM_FOLDERS = InuUtils.generateId()
         private val TOGGLE_HIDE_ARCHIVE = InuUtils.generateId()
+        private val TOGGLE_UNREAD_CHATS_FIRST = InuUtils.generateId()
+        private val TOGGLE_UNREAD_CHATS_FIRST_PINNED = InuUtils.generateId()
         private val TOGGLE_BOT_WEBVIEW_BUTTON = InuUtils.generateId()
         private val TOGGLE_OLD_MENTION_INDICATOR = InuUtils.generateId()
         private val BUTTON_PULL_DOWN_ACTION = InuUtils.generateId()
+        private val BUTTON_START_TAB = InuUtils.generateId()
         private val TOGGLE_DISABLE_SWIPE_TO_UNARCHIVE = InuUtils.generateId()
         private val TOGGLE_DISABLE_SWIPE_TO_HIDE_GENERAL_TOPIC = InuUtils.generateId()
         private val TOGGLE_BOTTOM_TABS_HIDE = InuUtils.generateId()
@@ -731,6 +823,7 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
         private val TOGGLE_SHOW_TAB_TITLES = InuUtils.generateId()
         private val TOGGLE_HIDE_TOP_SEARCH = InuUtils.generateId()
         private val TOGGLE_SEPARATE_SEARCH_TAB = InuUtils.generateId()
+        private val TOGGLE_BOTTOM_TABS_HIDE_ON_SCROLL = InuUtils.generateId()
         private val BUTTON_RESET_BOTTOM_TABS = InuUtils.generateId()
         private val BUTTON_FAB_MAIN_ACTION = InuUtils.generateId()
         private val BUTTON_FAB_SECONDARY_ACTION = InuUtils.generateId()
@@ -742,8 +835,10 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
         private val TOGGLE_INTERACTIVE_CHAT_PREVIEW = InuUtils.generateId()
         private val TOGGLE_DIALOG_AVATAR_OPENS_PROFILE = InuUtils.generateId()
         private val TOGGLE_ALWAYS_SHOW_DOWNLOADS = InuUtils.generateId()
+        private val TOGGLE_HIDE_DOWNLOADS_BUTTON = InuUtils.generateId()
         private val TOGGLE_HIDE_ALL_CHATS_TAB = InuUtils.generateId()
         private val TOGGLE_REMEMBER_SELECTED_FOLDER = InuUtils.generateId()
+        private val TOGGLE_FOLDERS_INFINITE_SWIPE = InuUtils.generateId()
         private val BUTTON_COMMUNITY_DISPLAY_MODE = InuUtils.generateId()
         private val BUTTON_TITLE_TEXT = InuUtils.generateId()
         private val TOGGLE_TITLE_TEXT_OVERRIDE_ARCHIVE = InuUtils.generateId()
@@ -751,7 +846,7 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
         private fun titleTextLabel(value: Int): String = when (value) {
             InuConfig.DialogsTitleTextItem.USERNAME -> LocaleController.getString(R.string.Username)
             InuConfig.DialogsTitleTextItem.FIRST_NAME -> LocaleController.getString(R.string.FirstNameSmall)
-            InuConfig.DialogsTitleTextItem.CHATS -> LocaleController.getString(R.string.InuChats)
+            InuConfig.DialogsTitleTextItem.CHATS -> LocaleController.getString(R.string.FilterChats)
             InuConfig.DialogsTitleTextItem.FOLDER -> LocaleController.getString(R.string.InuTitleTextFolder)
             InuConfig.DialogsTitleTextItem.CUSTOM -> InuConfig.DIALOGS_TITLE_TEXT_CUSTOM_TEXT.value.ifBlank {
                 LocaleController.getString(R.string.InuTitleTextCustom)
@@ -786,25 +881,30 @@ open class DialogsSettingsActivity : SettingsPageActivity() {
                 SearchRegistry.Entry("folders-unread-counter", R.string.InuFoldersUnreadCounter, BUTTON_FOLDERS_UNREAD_COUNTER_MODE),
                 SearchRegistry.Entry("hide-all-chats-tab", R.string.InuHideAllChatsTab, TOGGLE_HIDE_ALL_CHATS_TAB),
                 SearchRegistry.Entry("remember-selected-folder", R.string.InuRememberSelectedFolder, TOGGLE_REMEMBER_SELECTED_FOLDER),
+                SearchRegistry.Entry("folders-infinite-swipe", R.string.InuFoldersInfiniteSwipe, TOGGLE_FOLDERS_INFINITE_SWIPE),
                 SearchRegistry.Entry("folders-at-bottom", R.string.InuFoldersAtBottom, TOGGLE_FOLDERS_AT_BOTTOM),
-                SearchRegistry.Entry("system-folders", R.string.InuSystemFolders, BUTTON_SYSTEM_FOLDERS),
                 SearchRegistry.Entry("hide-archive", R.string.InuHideArchive, TOGGLE_HIDE_ARCHIVE),
+                SearchRegistry.Entry("unread-chats-first", R.string.InuUnreadChatsFirst, TOGGLE_UNREAD_CHATS_FIRST),
+                SearchRegistry.Entry("unread-chats-first-pinned", R.string.InuUnreadChatsFirstPinned, TOGGLE_UNREAD_CHATS_FIRST_PINNED),
                 SearchRegistry.Entry("title-text", R.string.InuTitleText, BUTTON_TITLE_TEXT),
                 SearchRegistry.Entry("title-text-override-archive", R.string.InuTitleTextOverrideArchive, TOGGLE_TITLE_TEXT_OVERRIDE_ARCHIVE),
                 SearchRegistry.Entry("old-mention-indicator", R.string.InuOldMentionIndicator, TOGGLE_OLD_MENTION_INDICATOR),
                 SearchRegistry.Entry("pull-down-action", R.string.InuPullDownAction, BUTTON_PULL_DOWN_ACTION),
+                SearchRegistry.Entry("start-tab", R.string.InuStartTab, BUTTON_START_TAB),
                 SearchRegistry.Entry("disable-swipe-to-unarchive", R.string.InuDisableSwipeToUnarchive, TOGGLE_DISABLE_SWIPE_TO_UNARCHIVE),
                 SearchRegistry.Entry("disable-swipe-to-hide-general-topic", R.string.InuDisableSwipeToHideGeneralTopic, TOGGLE_DISABLE_SWIPE_TO_HIDE_GENERAL_TOPIC),
                 SearchRegistry.Entry("hide-bot-webview-dialogs", R.string.InuHideBotWebView, TOGGLE_BOT_WEBVIEW_BUTTON),
                 SearchRegistry.Entry("disable-chat-preview-expand", R.string.InuDisableChatPreviewExpand, TOGGLE_INTERACTIVE_CHAT_PREVIEW),
                 SearchRegistry.Entry("dialog-avatar-opens-profile", R.string.InuDialogAvatarOpensProfile, TOGGLE_DIALOG_AVATAR_OPENS_PROFILE),
                 SearchRegistry.Entry("always-show-downloads", R.string.InuAlwaysShowDownloads, TOGGLE_ALWAYS_SHOW_DOWNLOADS),
+                SearchRegistry.Entry("hide-downloads-button", R.string.InuHideDownloadsButton, TOGGLE_HIDE_DOWNLOADS_BUTTON),
                 SearchRegistry.Entry("community-display-mode", R.string.InuCommunityDisplayMode, BUTTON_COMMUNITY_DISPLAY_MODE),
                 SearchRegistry.Entry("bottom-tabs-hide", R.string.InuBottomTabsHide, TOGGLE_BOTTOM_TABS_HIDE),
                 SearchRegistry.Entry("compact-mode", R.string.InuCompactMode, TOGGLE_COMPACT_MODE),
                 SearchRegistry.Entry("show-tab-titles", R.string.InuShowTabTitles, TOGGLE_SHOW_TAB_TITLES),
-                SearchRegistry.Entry("hide-top-search-with-bottom-tab", R.string.InuBottomTabsHideTopSearch, TOGGLE_HIDE_TOP_SEARCH),
+                // entiny: intentionally not registered here — the row is only rendered when bottom tabs are visible, so static search entry would be a phantom; auto-collect adds it when present
                 SearchRegistry.Entry("separate-search-tab", R.string.InuBottomTabsSeparateSearch, TOGGLE_SEPARATE_SEARCH_TAB),
+                SearchRegistry.Entry("bottom-tabs-hide-on-scroll", R.string.InuBottomTabsHideOnScroll, TOGGLE_BOTTOM_TABS_HIDE_ON_SCROLL),
                 SearchRegistry.Entry("customize-bottom-tabs", R.string.InuMainTabsCustomizeReset, BUTTON_RESET_BOTTOM_TABS),
                 SearchRegistry.Entry("dialogs-fab-main-action", R.string.InuDialogsFabMainAction, BUTTON_FAB_MAIN_ACTION),
                 SearchRegistry.Entry("dialogs-fab-secondary-action", R.string.InuDialogsFabSecondaryAction, BUTTON_FAB_SECONDARY_ACTION),

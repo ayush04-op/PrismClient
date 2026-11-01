@@ -22,6 +22,7 @@ import org.telegram.tgnet.RequestDelegateTimestamp
 import org.telegram.tgnet.TLObject
 import org.telegram.tgnet.TLRPC
 import org.telegram.tgnet.tl.TL_account
+import org.telegram.tgnet.tl.TL_phone
 import org.telegram.tgnet.tl.TL_stories
 import org.telegram.ui.ActionBar.AlertDialog
 import org.telegram.ui.ActionBar.BaseFragment
@@ -31,6 +32,7 @@ import org.telegram.ui.ChatActivity
 import org.telegram.ui.Components.BulletinFactory
 import org.telegram.ui.Components.ColoredImageSpan
 import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 
 enum class SuppressKind {
@@ -44,7 +46,18 @@ enum class SuppressKind {
 object GhostHelper {
 
     private val temporarilyAllowedDialogs: MutableSet<Long> = Collections.newSetFromMap(ConcurrentHashMap())
-    private val offlineRunnables: ConcurrentHashMap<Int, Runnable> = ConcurrentHashMap()
+    private val allowedRequests: MutableSet<TLObject> = Collections.synchronizedSet(Collections.newSetFromMap(IdentityHashMap()))
+    private val pendingOffline: MutableSet<Int> = ConcurrentHashMap.newKeySet()
+    private val allowedReadContents = ConcurrentHashMap<Int, Long>()
+
+    // entiny: one-time photo/video view reports are read receipts, not "played" voice markers
+    @JvmStatic
+    fun allowReadContents(mid: Int) {
+        if (mid == 0) return
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (allowedReadContents.size > 32) allowedReadContents.entries.removeAll { now - it.value > 60_000L }
+        allowedReadContents[mid] = now
+    }
 
     @JvmStatic
     // Prism: ghost features (hidden read receipts, typing, online status) break Telegram's API terms and are disabled
@@ -184,6 +197,8 @@ object GhostHelper {
     @JvmStatic
     fun isGhostActiveForDialog(dialogId: Long): Boolean {
         if (true) return false
+        // entiny: Saved Messages is your own dialog -- there is no one to hide from, so no badge
+        if (dialogId != 0L && dialogId == UserConfig.getInstance(UserConfig.selectedAccount).clientUserId) return false
         val o = getChatOverride(dialogId)
         if (o.read == OVERRIDE_ALWAYS || o.typing == OVERRIDE_ALWAYS) return true
         if (!isGhostActive() || !isInGlobalScope(dialogId)) return false
@@ -237,14 +252,13 @@ object GhostHelper {
             SuppressKind.VOICE_READ -> InuConfig.GHOST_HIDE_VOICE_READ.value || InuConfig.GHOST_HIDE_READ.value
             SuppressKind.STORY_READ -> InuConfig.GHOST_HIDE_STORY_READ.value
         }
-        if (suppress) {
-            if (org.telegram.messenger.BuildVars.LOGS_ENABLED) {
-                val dump = "suppress dialogId=$dialogId kind=$kind override=${o.read}/${o.typing} read=${InuConfig.GHOST_HIDE_READ.value} " +
+        if (suppress && org.telegram.messenger.BuildVars.LOGS_ENABLED) {
+            android.util.Log.d(
+                "GhostMode",
+                "suppress dialogId=$dialogId kind=$kind override=${o.read}/${o.typing} read=${InuConfig.GHOST_HIDE_READ.value} " +
                     "voiceRead=${InuConfig.GHOST_HIDE_VOICE_READ.value} storyRead=${InuConfig.GHOST_HIDE_STORY_READ.value} " +
                     "typing=${InuConfig.GHOST_HIDE_TYPING.value} presence=${InuConfig.GHOST_PRESENCE_MODE.value}"
-                android.util.Log.d("GhostMode", dump)
-                org.telegram.messenger.FileLog.d("GhostMode: $dump")
-            }
+            )
         }
         return suppress
     }
@@ -331,6 +345,7 @@ object GhostHelper {
         onComplete: RequestDelegate?,
         onCompleteTimestamp: RequestDelegateTimestamp?,
     ): Boolean {
+        if (allowedRequests.remove(request)) return false
         val dialogId = extractDialogId(request)
 
         return when (request) {
@@ -354,7 +369,20 @@ object GhostHelper {
             }
             is TLRPC.TL_messages_readMessageContents,
             is TLRPC.TL_channels_readMessageContents -> {
-                shouldSuppress(dialogId, SuppressKind.VOICE_READ)
+                val ids = when (request) {
+                    is TLRPC.TL_messages_readMessageContents -> request.id
+                    else -> (request as TLRPC.TL_channels_readMessageContents).id
+                }
+                val now = android.os.SystemClock.elapsedRealtime()
+                val mediaView = ids.isNotEmpty() && ids.all { id ->
+                    val allowedAt = allowedReadContents.remove(id)
+                    allowedAt != null && now - allowedAt < 60_000L
+                }
+                if (mediaView) {
+                    false
+                } else {
+                    shouldSuppress(dialogId, SuppressKind.VOICE_READ)
+                }
             }
             is TL_stories.TL_stories_readStories,
             is TL_stories.TL_stories_incrementStoryViews -> {
@@ -363,9 +391,6 @@ object GhostHelper {
             is TL_account.updateStatus -> {
                 if (shouldSuppress(0L, SuppressKind.ONLINE)) {
                     request.offline = true
-                }
-                if (autoOfflineEnabled() && !request.offline) {
-                    scheduleOffline(account)
                 }
                 false
             }
@@ -382,14 +407,55 @@ object GhostHelper {
                         markDialogAsRead(account, dialogId)
                     }
                 }
-                // entiny: server flips account online upon sending messages; skipped where typing is never hidden
-                if (autoOfflineEnabled() && getChatOverride(dialogId).typing != OVERRIDE_NEVER) {
-                    scheduleOffline(account)
-                }
                 false
             }
             else -> false
         }
+    }
+
+    // entiny: server flips the account online after these; offline goes out once the server has confirmed them
+    @JvmStatic
+    fun onResponse(request: TLObject, account: Int, error: TLRPC.TL_error?) {
+        if (error != null || !InuConfig.GHOST_MODE_ENABLED.value) return
+        val mode = presenceMode()
+        if (mode == InuConfig.GhostPresenceModeItem.NORMAL) return
+        if (request is TL_account.updateStatus) {
+            if (!request.offline && mode == InuConfig.GhostPresenceModeItem.DELAYED) scheduleOffline(account)
+            return
+        }
+        if (!isActivityRequest(request)) return
+        val dialogId = extractDialogId(request)
+        if (dialogId != 0L && getChatOverride(dialogId).typing == OVERRIDE_NEVER) return
+        scheduleOffline(account)
+    }
+
+    private fun isActivityRequest(request: TLObject): Boolean = when (request) {
+        is TLRPC.TL_messages_sendMessage,
+        is TLRPC.TL_messages_sendMedia,
+        is TLRPC.TL_messages_sendMultiMedia,
+        is TLRPC.TL_messages_sendInlineBotResult,
+        is TLRPC.TL_messages_sendReaction,
+        is TLRPC.TL_messages_sendPaidReaction,
+        is TLRPC.TL_messages_forwardMessages,
+        is TLRPC.TL_messages_sendVote,
+        is TLRPC.TL_messages_sendQuickReplyMessages,
+        is TLRPC.TL_messages_sendScreenshotNotification,
+        is TLRPC.TL_messages_sendEncrypted,
+        is TLRPC.TL_messages_sendEncryptedFile,
+        is TLRPC.TL_messages_sendEncryptedService,
+        is TLRPC.TL_messages_readHistory,
+        is TLRPC.TL_channels_readHistory,
+        is TLRPC.TL_messages_readDiscussion,
+        is TLRPC.TL_messages_readEncryptedHistory,
+        is TLRPC.TL_messages_updatePinnedMessage,
+        is TLRPC.TL_messages_createChat,
+        is TLRPC.TL_channels_createChannel,
+        is TL_phone.requestCall,
+        is TL_phone.acceptCall,
+        is TL_stories.TL_stories_sendStory,
+        is TL_stories.TL_stories_sendReaction,
+        is TL_stories.TL_stories_readStories -> true
+        else -> false
     }
 
     private fun extractDialogId(request: TLObject): Long {
@@ -411,6 +477,9 @@ object GhostHelper {
             is TLRPC.TL_messages_sendMultiMedia -> request.peer?.let { DialogObject.getPeerDialogId(it) } ?: 0L
             is TLRPC.TL_messages_sendInlineBotResult -> request.peer?.let { DialogObject.getPeerDialogId(it) } ?: 0L
             is TLRPC.TL_messages_sendReaction -> request.peer?.let { DialogObject.getPeerDialogId(it) } ?: 0L
+            is TLRPC.TL_messages_sendPaidReaction -> request.peer?.let { DialogObject.getPeerDialogId(it) } ?: 0L
+            is TLRPC.TL_messages_sendScreenshotNotification -> request.peer?.let { DialogObject.getPeerDialogId(it) } ?: 0L
+            is TLRPC.TL_messages_updatePinnedMessage -> request.peer?.let { DialogObject.getPeerDialogId(it) } ?: 0L
             is TLRPC.TL_messages_forwardMessages -> request.to_peer?.let { DialogObject.getPeerDialogId(it) } ?: 0L
             is TLRPC.TL_messages_sendVote -> request.peer?.let { DialogObject.getPeerDialogId(it) } ?: 0L
             is TLRPC.TL_messages_sendQuickReplyMessages -> request.peer?.let { DialogObject.getPeerDialogId(it) } ?: 0L
@@ -418,6 +487,39 @@ object GhostHelper {
             is TL_stories.TL_stories_incrementStoryViews -> request.peer?.let { DialogObject.getPeerDialogId(it) } ?: 0L
             else -> 0L
         }
+    }
+
+    @JvmStatic
+    fun effectiveMentions(unread: Int, mentions: Int): Int {
+        if (mentions <= 0 || !InuConfig.GHOST_HIDE_SEEN_MENTIONS.value || !InuConfig.GHOST_MODE_ENABLED.value) return mentions
+        return if (unread <= 0) 0 else minOf(mentions, unread)
+    }
+
+    @JvmStatic
+    fun effectiveMentions(dialog: TLRPC.Dialog?): Int =
+        if (dialog == null) 0 else effectiveMentions(dialog.unread_count, dialog.unread_mentions_count)
+
+    @JvmStatic
+    fun effectiveMentions(topic: TLRPC.TL_forumTopic?): Int =
+        if (topic == null) 0 else effectiveMentions(topic.unread_count, topic.unread_mentions_count)
+
+    @JvmStatic
+    fun onLocalRead(account: Int, dialog: TLRPC.Dialog) {
+        if (dialog.unread_mentions_count > 0 && effectiveMentions(dialog) == 0) {
+            NotificationCenter.getInstance(account).postNotificationName(NotificationCenter.updateMentionsCount, dialog.id, 0L, 0)
+        }
+    }
+
+    @JvmStatic
+    fun areMentionsSeen(account: Int, dialogId: Long, topicId: Long): Boolean {
+        if (!InuConfig.GHOST_HIDE_SEEN_MENTIONS.value || !InuConfig.GHOST_MODE_ENABLED.value) return false
+        val controller = MessagesController.getInstance(account)
+        val unread = if (topicId != 0L) {
+            controller.topicsController.findTopic(-dialogId, topicId)?.unread_count
+        } else {
+            controller.dialogs_dict.get(dialogId)?.unread_count
+        } ?: return false
+        return unread <= 0
     }
 
     @JvmStatic
@@ -443,21 +545,22 @@ object GhostHelper {
             }
         }
 
-        temporarilyAllowedDialogs.add(dialogId)
+        allowedRequests.add(req)
         try {
             ConnectionsManager.getInstance(account).sendRequest(req) { _, error ->
-                try {
-                    if (error == null) {
-                        AndroidUtilities.runOnUIThread {
+                if (error == null) {
+                    AndroidUtilities.runOnUIThread {
+                        temporarilyAllowedDialogs.add(dialogId)
+                        try {
                             controller.markDialogAsRead(dialogId, effectiveMaxId, 0, 0, false, 0, 0, true, 0)
+                        } finally {
+                            temporarilyAllowedDialogs.remove(dialogId)
                         }
                     }
-                } finally {
-                    temporarilyAllowedDialogs.remove(dialogId)
                 }
             }
         } catch (_: Exception) {
-            temporarilyAllowedDialogs.remove(dialogId)
+            allowedRequests.remove(req)
         }
     }
 
@@ -465,9 +568,8 @@ object GhostHelper {
     @JvmStatic
     fun syncPresence(account: Int) {
         if (true) return
-        if (!InuConfig.GHOST_MODE_ENABLED.value) return
-        val hide = InuConfig.GHOST_PRESENCE_MODE.value != InuConfig.GhostPresenceModeItem.NORMAL
-        sendStatus(account, offline = hide)
+        if (!InuConfig.GHOST_MODE_ENABLED.value || presenceMode() == InuConfig.GhostPresenceModeItem.NORMAL) return
+        sendStatus(account, offline = true)
     }
 
     @JvmStatic
@@ -481,17 +583,20 @@ object GhostHelper {
     }
 
     private fun autoOfflineEnabled(): Boolean = false
+    private fun presenceMode(): Int {
+        if (InuConfig.GHOST_AUTO_OFFLINE.value) InuConfig.migrateGhostAutoOffline()
+        return InuConfig.GHOST_PRESENCE_MODE.value
+    }
 
+    // entiny: an already pending offline is never pushed back, so a burst of actions cannot keep the account online
     private fun scheduleOffline(account: Int) {
-        offlineRunnables.remove(account)?.let { Utilities.stageQueue.cancelRunnable(it) }
-        val runnable = Runnable {
-            offlineRunnables.remove(account)
-            if (autoOfflineEnabled()) {
+        if (!pendingOffline.add(account)) return
+        Utilities.stageQueue.postRunnable({
+            pendingOffline.remove(account)
+            if (InuConfig.GHOST_MODE_ENABLED.value && presenceMode() != InuConfig.GhostPresenceModeItem.NORMAL) {
                 sendStatus(account, offline = true)
             }
-        }
-        offlineRunnables[account] = runnable
-        Utilities.stageQueue.postRunnable(runnable, OFFLINE_REASSERT_DELAY_MS)
+        }, OFFLINE_REASSERT_DELAY_MS)
     }
 
     private const val OFFLINE_REASSERT_DELAY_MS = 2500L

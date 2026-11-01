@@ -1,6 +1,6 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Oleksii Kulinich <entaytion@gmail.com>
-Date: Thu, 15 Oct 2026 21:07:59 +0300
+Date: Wed, 21 Oct 2026 12:30:41 +0300
 Subject: [+] send photo as sticker
 
 ---
@@ -13,14 +13,14 @@ diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelp
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
 +++ b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
-@@ -10886,6 +10886,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
-         if (media.isEmpty()) {
+@@ -10920,6 +10920,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
+             prepareSendingVideo(accountInstance, info.path, info.videoEditedInfo, info.coverPath, info.coverPhoto, dialogId, replyToMsg, replyToTopMsg, storyItem, quote, info.entities, info.ttl, editingMessageObject, notify, scheduleDate, scheduleRepeatPeriod, forceDocument, info.hasMediaSpoilers, info.caption, sendMessageChatArguments, effectId, info.stars, monoForumPeerId, suggestionParams, invertMedia);
              return;
          }
 +        desu.inugram.helpers.chat.StickerSendHelper.applyIfArmed(media);
-         if (media.size() == 1 && media.get(0).videoEditedInfo != null && media.get(0).videoEditedInfo.roundVideo) {
-             // The grouped/document dispatch below (and prepareSendingPhoto's video branch) never
-             // preserve VideoEditedInfo.roundVideo, so a video sent this way always lands as a
+         for (int a = 0, N = media.size(); a < N; a++) {
+             if (media.get(a).ttl > 0) {
+                 groupMedia = false;
 diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAttachAlert.java
@@ -48,7 +48,7 @@ diff --git a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java b/TMes
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
 +++ b/TMessagesProj/src/main/java/org/telegram/ui/PhotoViewer.java
-@@ -7511,6 +7511,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
+@@ -7516,6 +7516,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
              final ItemOptions options = ItemOptions.makeOptions(containerView, new DarkThemeResourceProvider(), view)
                  .addIf(showSendAsFile, R.drawable.msg_sendfile, getString(multipleSelected ? R.string.SendAsFiles : R.string.SendAsFile), () -> sendPressed(true, 0, 0, false, true, false))
                  .addIf(showSendAsRound, R.drawable.inu_tabler_circle, getString(R.string.InuSendAsRoundVideo), this::inu_sendAsRoundVideoPressed)

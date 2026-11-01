@@ -146,16 +146,6 @@ object ProfileHelper {
         } else btnColor
 
     @JvmStatic
-    fun blendChipBackgroundForExpand(backgroundColor: Int, whiteColor: Int, expandProgress: Float): Int =
-        if (useProfilePhotoGradientFade() && expandProgress > 0f) {
-            ColorUtils.blendARGB(backgroundColor, whiteColor, expandProgress)
-        } else backgroundColor
-
-    @JvmStatic
-    fun forceChipShadowForExpand(expandProgress: Float): Boolean =
-        useProfilePhotoGradientFade() && expandProgress > 0f
-
-    @JvmStatic
     fun drawProfilePhotoGradientFade(
         canvas: Canvas,
         blurView: ProfileGalleryBlurView,
@@ -555,9 +545,16 @@ object ProfileHelper {
     }
 
     @JvmStatic
+    fun getIdSubtitle(user: TLRPC.User?, chat: TLRPC.Chat?): String {
+        val base = LocaleController.getString(R.string.InuProfileId)
+        val dc = getDc(user, chat)
+        return if (dc != 0) "$base • DC: $dc" else base
+    }
+
+    @JvmStatic
     fun onIdRowClick(
         fragment: BaseFragment,
-        clipBackground: Drawable,
+        clipBackground: Drawable?,
         view: View,
         userId: Long,
         chatId: Long,
@@ -697,6 +694,9 @@ object ProfileHelper {
         if (chat?.photo is TLRPC.TL_chatPhoto) {
             return (chat.photo as TLRPC.TL_chatPhoto).dc_id
         }
+        if (user != null && user.id == UserConfig.getInstance(UserConfig.selectedAccount).clientUserId) {
+            return ConnectionsManager.getInstance(UserConfig.selectedAccount).currentDatacenterId
+        }
         return 0
     }
 
@@ -768,7 +768,7 @@ object ProfileHelper {
     @JvmStatic
     fun onRegDateRowClick(
         fragment: BaseFragment,
-        clipBackground: Drawable,
+        clipBackground: Drawable?,
         view: View,
         userId: Long,
         chatId: Long,

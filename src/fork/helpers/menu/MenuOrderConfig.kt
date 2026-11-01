@@ -175,6 +175,10 @@ class ChatMenuConfig(key: String) : MenuOrderConfig<ChatMenuConfig.Item>(key, It
         EDITED_MESSAGES("edited_messages", listOf(ChatActionsHelper.ACTION_EDITED_MESSAGES), R.string.InuEditedArchive, R.drawable.msg_edit),
         GHOST_MODE("ghost_mode", listOf(ChatActionsHelper.ACTION_GHOST_MODE), R.string.InuGhostMode, R.drawable.inu_ghost),
         CHAT_EXPORT("chat_export", listOf(ChatActionsHelper.ACTION_CHAT_EXPORT), R.string.InuChatExport, R.drawable.msg_share_solar),
+        SHOW_HIDDEN("show_hidden", listOf(ChatActionsHelper.ACTION_SHOW_HIDDEN), R.string.InuRestoreHiddenMessages, R.drawable.inu_tabler_eye),
+        CHAT_PROXY("chat_proxy", listOf(ChatActionsHelper.ACTION_CHAT_PROXY), R.string.ProxySettings, R.drawable.outline_shield_check),
+        SILENT_BROADCAST("silent_broadcast", listOf(ChatActionsHelper.ACTION_SILENT_BROADCAST), R.string.InuSilentBroadcast, R.drawable.input_notify_on),
+        BUSINESS_BOT("business_bot", listOf(ChatActionsHelper.ACTION_BUSINESS_BOT), R.string.InuBusinessBot, R.drawable.msg_bot),
         CHAT_LOCAL_NAME("chat_local_name", listOf(ChatActionsHelper.ACTION_CHAT_LOCAL_NAME), R.string.InuLocalName, R.drawable.msg_edit),
         CHAT_MARK_READ("chat_mark_read", listOf(ChatActionsHelper.ACTION_CHAT_MARK_READ), R.string.InuMarkChatAsRead, R.drawable.msg_markread),
         CHAT_DELETE_MY_MESSAGES("chat_delete_my_messages", listOf(ChatActionsHelper.ACTION_CHAT_DELETE_MY_MESSAGES), R.string.InuDeleteMyMessages, R.drawable.msg_delete),
@@ -201,7 +205,7 @@ class ChatMenuConfig(key: String) : MenuOrderConfig<ChatMenuConfig.Item>(key, It
             Item.RECENT_ACTIONS, Item.GO_TO_BEGINNING, Item.GO_TO_MESSAGE,
             Item.STATISTICS, Item.ADMINISTRATORS, Item.PERMISSIONS, Item.INVITE_LINKS,
             Item.LINKED_CHAT, Item.HIDE_TITLE, Item.CLEAR_DELETED,
-            Item.CHAT_EXPORT, Item.CHAT_LOCAL_NAME, Item.CHAT_MARK_READ, Item.CHAT_DELETE_MY_MESSAGES,
+            Item.CHAT_EXPORT, Item.CHAT_LOCAL_NAME, Item.CHAT_MARK_READ, Item.CHAT_DELETE_MY_MESSAGES, Item.CHAT_PROXY, Item.SHOW_HIDDEN,
         )
     }
 }
@@ -324,6 +328,7 @@ class DialogsMenuConfig(key: String) : MenuOrderConfig<DialogsMenuConfig.Item>(k
         MY_PROFILE("my_profile", R.string.MyProfile, R.drawable.left_status_profile),
         CONTACTS("contacts", R.string.Contacts, R.drawable.msg_contacts),
         ARCHIVE("archive", R.string.ArchivedChats, R.drawable.msg_archive),
+        PROXY("proxy", R.string.ProxySettings, R.drawable.outline_shield_check),
         GHOST_MODE("ghost_mode", R.string.InuGhostMode, R.drawable.inu_ghost),
         PARANOIA("paranoia", R.string.InuParanoiaMode, R.drawable.inu_tabler_spy),
         RESTART_APP("restart_app", R.string.InuRestartApp, R.drawable.msg_retry),
@@ -391,7 +396,8 @@ class MessageMenuConfig(key: String) : MenuOrderConfig<MessageMenuConfig.Item>(k
             R.string.InuAddToStickersGifs,
             R.drawable.msg_sticker
         ),
-        COPY("copy", listOf(ChatActivity.OPTION_COPY, ChatHelper.OPTION_COPY_MEDIA), R.string.Copy, R.drawable.msg_copy),
+        COPY("copy", listOf(ChatActivity.OPTION_COPY), R.string.Copy, R.drawable.msg_copy),
+        COPY_PHOTO("copy_photo", listOf(ChatHelper.OPTION_COPY_MEDIA), R.string.InuCopyPhoto, R.drawable.msg_copy),
         COPY_LINK("copy_link", listOf(ChatActivity.OPTION_COPY_LINK), R.string.CopyLink, R.drawable.msg_link),
         SAVE_TO_GALLERY(
             "save_to_gallery",
@@ -482,6 +488,7 @@ class DrawerMenuConfig(key: String) : MenuOrderConfig<DrawerMenuConfig.Item>(key
         GHOST_MODE("ghost_mode", R.string.InuGhostMode, R.drawable.inu_ghost),
         SETTINGS("settings", R.string.Settings, R.drawable.msg_settings),
         ENTINY_SETTINGS("entiny_settings", R.string.InuSettings, R.drawable.icon_settings_inu),
+        PLUGIN_SETTINGS("plugin_settings", R.string.InuPlugins, R.drawable.msg_customize),
         RESTART_APP("restart_app", R.string.InuRestartApp, R.drawable.msg_retry),
         DIVIDER_2("divider_2", R.string.InuMenuDivider, R.drawable.msg_list),
         DIVIDER_3("divider_3", R.string.InuMenuDivider, R.drawable.msg_list),
@@ -517,6 +524,7 @@ class DrawerMenuConfig(key: String) : MenuOrderConfig<DrawerMenuConfig.Item>(key
         private val OFF_BY_DEFAULT = setOf(
             Item.RECENT_CHATS,
             Item.ENTINY_SETTINGS,
+            Item.PLUGIN_SETTINGS,
             Item.RESTART_APP,
             Item.DIVIDER_2,
             Item.DIVIDER_3,

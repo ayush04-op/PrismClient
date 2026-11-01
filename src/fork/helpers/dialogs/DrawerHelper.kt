@@ -19,6 +19,7 @@ import desu.inugram.helpers.plugins.ui.ActionRow
 import desu.inugram.helpers.plugins.ui.ActionSurface
 import desu.inugram.helpers.plugins.ui.PluginActions
 import desu.inugram.helpers.plugins.ui.PluginIcons
+import desu.inugram.ui.settings.PluginsActivity
 // #endif
 import desu.inugram.helpers.dialogs.DrawerHelper.setupMainFragment
 import desu.inugram.helpers.menu.DialogsMenuConfig
@@ -34,7 +35,9 @@ import desu.inugram.ui.drawer.DrawerUserCell
 import desu.inugram.ui.drawer.SideMenultItemAnimator
 import desu.inugram.ui.settings.InuSettingsActivity
 import desu.inugram.ui.settings.ParanoiaActivity
-import desu.inugram.ui.settings.TosSettingsActivity
+// #if PLUGINS
+// #endif
+import desu.inugram.ui.settings.GhostModeSettingsActivity
 import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.AndroidUtilities.dp
 import org.telegram.messenger.ApplicationLoader
@@ -103,17 +106,8 @@ object DrawerHelper {
 
     @JvmStatic
     fun setupMainFragment(activity: LaunchActivity, layout: INavigationLayout, dlc: DrawerLayoutContainer) {
-        layout.addFragmentToStack(createMainFragment())
+        layout.addFragmentToStack(MainTabsActivity())
         if (InuConfig.NAVIGATION_DRAWER.value) setup(activity, dlc, layout)
-    }
-
-    @JvmStatic
-    fun addMainFragmentToStack(layout: INavigationLayout, searchQuery: String?) {
-        val main = createMainFragment()
-        val dialogs = if (main is MainTabsActivity) main.prepareDialogsActivity(null) else main as DialogsActivity
-        if (searchQuery != null) dialogs.setInitialSearchString(searchQuery)
-        layout.addFragmentToStack(main, INavigationLayout.FORCE_NOT_ATTACH_VIEW)
-        ensureSetup(layout)
     }
 
     @JvmStatic
@@ -127,6 +121,19 @@ object DrawerHelper {
             rebindPerAccountObservers()
             refreshUpdateState()
         }
+    }
+
+    @JvmStatic
+    fun teardown(layout: INavigationLayout?) {
+        val dlc = layout?.drawerLayoutContainer ?: return
+        val controller = dlc.inu_drawer ?: return
+        controller.detach()
+        dlc.inu_drawer = null
+        adapter = null
+        sideMenu = null
+        sideMenuContainer = null
+        updateLayout = null
+        menuDrawableRef = null
     }
 
     fun refreshUpdateState() {
@@ -658,9 +665,16 @@ object DrawerHelper {
                 close()
             }
 
+            // #if PLUGINS
+            DrawerLayoutAdapter.ITEM_PLUGIN_SETTINGS -> {
+                nav.presentFragment(PluginsActivity())
+                close()
+            }
+            // #endif
+
             DrawerLayoutAdapter.ITEM_RESTART_APP -> {
                 close()
-                LaunchActivity.instance?.let { confirmRestartApp(it, null) }
+                LaunchActivity.instance?.let { desu.inugram.helpers.InuUtils.restartApp(it) }
             }
 
             ITEM_PROXY -> {
@@ -669,7 +683,7 @@ object DrawerHelper {
             }
 
             ITEM_GHOST -> {
-                nav.presentFragment(TosSettingsActivity())
+                nav.presentFragment(GhostModeSettingsActivity())
                 close()
             }
 
@@ -810,7 +824,7 @@ object DrawerHelper {
                     instance.presentFragment(ParanoiaActivity())
                 }
                 DialogsMenuConfig.Item.RESTART_APP -> io.add(R.drawable.msg_retry, getString(R.string.InuRestartApp)) {
-                    instance.parentActivity?.let { confirmRestartApp(it, instance.getResourceProvider()) }
+                    instance.parentActivity?.let { desu.inugram.helpers.InuUtils.restartApp(it) }
                 }
                 DialogsMenuConfig.Item.SETTINGS -> if (bottomTabsHidden) io.add(R.drawable.msg_settings_old, getString(R.string.Settings)) {
                     instance.presentFragment(SettingsActivity())
@@ -854,17 +868,6 @@ object DrawerHelper {
     }
     // #endif
 
-    private fun confirmRestartApp(activity: Activity, resourceProvider: Theme.ResourcesProvider?) {
-        AlertDialog.Builder(activity, resourceProvider)
-            .setTitle(getString(R.string.InuRestartApp))
-            .setMessage(getString(R.string.InuRestartAppAlert))
-            .setPositiveButton(getString(R.string.InuRestartApp)) { _, _ ->
-                desu.inugram.helpers.InuUtils.restartApp(activity)
-            }
-            .setNegativeButton(getString(R.string.Cancel), null)
-            .show()
-    }
-
     private fun showClearCacheOptions(instance: DialogsActivity) {
         ItemOptions.makeOptions(instance, instance.getActionBar())
             .add(R.drawable.msg_filled_storageusage, getString(R.string.StorageUsage)) {
@@ -883,7 +886,7 @@ object DrawerHelper {
             .setMessage(getString(R.string.InuClearDeletedCacheAlert))
             .setPositiveButton(getString(R.string.ClearButton).uppercase()) { _, _ ->
                 val account = instance.currentAccount
-                desu.inugram.helpers.chat.SavedMessagesHelper.clearCache(account, null) {
+                desu.inugram.helpers.archive.ArchiveCache.clearCache(account, null) {
                     BulletinFactory.of(instance)
                         .createSimpleBulletin(R.raw.ic_delete, getString(R.string.InuClearDeletedCacheDone))
                         .show()

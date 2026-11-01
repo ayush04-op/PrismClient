@@ -35,7 +35,6 @@ object InuConfig {
         migrateGhostAutoOffline()
         migrateSelfDestructCategories()
         migrateFeedEnabled(context)
-        desu.inugram.helpers.vibration.HapticFeedbackConstants.sync()
     }
 
     // entiny: the feed became opt-in; anyone who ever touched it keeps it on
@@ -50,12 +49,13 @@ object InuConfig {
         FEED_ENABLED.value = touched
     }
 
-    private fun migrateGhostAutoOffline() {
-        if (GHOST_AUTO_OFFLINE_MIGRATED.value) return
-        GHOST_AUTO_OFFLINE_MIGRATED.value = true
-        if (GHOST_PRESENCE_MODE.value == GhostPresenceModeItem.DELAYED) {
-            GHOST_AUTO_OFFLINE.value = true
+    // entiny: auto-offline folded into presence mode; re-runs whenever an old backup import brings it back
+    fun migrateGhostAutoOffline() {
+        if (!GHOST_AUTO_OFFLINE.value) return
+        if (GHOST_PRESENCE_MODE.value == GhostPresenceModeItem.NORMAL) {
+            GHOST_PRESENCE_MODE.value = GhostPresenceModeItem.DELAYED
         }
+        GHOST_AUTO_OFFLINE.value = false
     }
 
     // entiny: ghost mode migrated from single master flag to independent sub-toggles; old master flag lost on update since sub-toggles default to false
@@ -64,7 +64,7 @@ object InuConfig {
             // entiny: legacy ghost_mode key resurfaced after migration -- drop it without affecting sub-toggles
             if (prefs.contains("ghost_mode")) {
                 logGhostMigration("skipped (already migrated), dropping resurfaced legacy ghost_mode key")
-                prefs.edit(commit = true) { remove("ghost_mode") }
+                prefs.edit(commit = false) { remove("ghost_mode") }
             }
             return
         }
@@ -79,15 +79,19 @@ object InuConfig {
         } else {
             logGhostMigration("skipped: no legacy ghost_mode=true (contains=${prefs.contains("ghost_mode")})")
         }
-        // entiny: record migration run first, then clear legacy key; prevents double-stomp if process dies
-        GHOST_MASTER_FLAG_MIGRATED.value = true
-        if (prefs.contains("ghost_mode")) prefs.edit(commit = true) { remove("ghost_mode") }
+        // entiny: record migration run and clear legacy key in one async batch; keeps start-up fsync-free
+        prefs.edit(commit = false) {
+            GHOST_MASTER_FLAG_MIGRATED.unsafeSet(true, this)
+            remove("ghost_mode")
+        }
     }
 
     // entiny: ghost mode enabled default depends on whether any sub-toggles were already active
     private fun migrateGhostModeEnabledDefault() {
         if (GHOST_MODE_ENABLED_MIGRATED.value) return
         GHOST_MODE_ENABLED_MIGRATED.value = true
+        // entiny: a replace-import wipes the run-record; an explicit master value from the backup must survive
+        if (prefs.contains(GHOST_MODE_ENABLED.key)) return
         val hadActiveSubToggle = GHOST_HIDE_READ.value || GHOST_HIDE_VOICE_READ.value ||
             GHOST_HIDE_STORY_READ.value || GHOST_HIDE_TYPING.value ||
             GHOST_PRESENCE_MODE.value != GhostPresenceModeItem.NORMAL
@@ -112,7 +116,7 @@ object InuConfig {
             SAVE_VIEW_ONCE_MEDIA.value = true
             SAVE_TIMED_MESSAGES.value = true
         }
-        prefs.edit(commit = true) {
+        prefs.edit(commit = false) {
             remove("save_self_destruct")
             remove("save_secret_chat_content")
         }
@@ -206,10 +210,11 @@ object InuConfig {
         }
     }
 
-    class StringItem(key: String, default: String, exportable: Boolean = true) :
+    class StringItem(key: String, default: String, exportable: Boolean = true, private val allowed: Set<String>? = null) :
         Item<String>(key, default, exportable) {
         override val prefType = PrefType.STRING
-        override fun read(prefs: SharedPreferences): String = prefs.getString(key, default) ?: default
+        override fun read(prefs: SharedPreferences): String =
+            prefs.getString(key, default)?.takeIf { allowed == null || it in allowed } ?: default
         override fun SharedPreferences.Editor.write() {
             putString(key, value)
         }
@@ -259,6 +264,9 @@ object InuConfig {
     val MATERIAL3_SLIDERS = BoolItem("material3_sliders", true)
 
     @JvmField
+    val MATERIAL3_DIALOGS = BoolItem("material3_dialogs", false)
+
+    @JvmField
     val MATERIAL3_FABS = BoolItem("material3_fabs", true)
 
     @JvmField
@@ -290,15 +298,6 @@ object InuConfig {
     val M3_BOTTOM_TABS = BoolItem("m3_bottom_tabs", false)
 
     @JvmField
-    val RETRO_PROFILE = BoolItem("retro_profile", false)
-
-    @JvmField
-    val RETRO_LISTS = BoolItem("retro_lists", false)
-
-    @JvmField
-    val RETRO_SETTINGS = BoolItem("retro_settings", false)
-
-    @JvmField
     val PLUGINS_ENABLED = BoolItem("plugins_enabled", false)
 
     // json: ordered [{id, file, enabled}] — install id + source file + middleware order + per-plugin
@@ -309,6 +308,14 @@ object InuConfig {
 
     @JvmField
     val PLUGINS_COMPACT_LIST = BoolItem("plugins_compact_list", false)
+
+    // json: [{channel, username, title}]
+    @JvmField
+    val PLUGIN_REPOS = StringItem("plugin_repos", "")
+
+    // 0 newest first, 1 by name, 2 by author
+    @JvmField
+    val PLUGIN_REPO_SORT = IntItem("plugin_repo_sort", 0)
 
     // the "only install plugins you trust" warning was read and accepted: consent, not a
     // preference, so it is never carried over by an import
@@ -324,13 +331,16 @@ object InuConfig {
     @JvmField
     val MONET_PREV = StringItem("monet_prev", "", exportable = false)
 
+    @JvmField
+    val MONET_STYLE = IntItem("monet_style", 0)
+
     class PredictiveBackModeItem : IntItem("predictive_back_mode", OFF) {
         // entiny: predictive back mode migrated from boolean to 3-way; old disable flag maps to OFF
         override fun read(prefs: SharedPreferences): Int {
             if (prefs.contains(key)) return prefs.getInt(key, default)
             if (!prefs.contains("disable_predictive_back")) return default
             val migrated = if (prefs.getBoolean("disable_predictive_back", true)) OFF else STOCK
-            prefs.edit(commit = true) {
+            prefs.edit(commit = false) {
                 putInt(key, migrated)
                 remove("disable_predictive_back")
             }
@@ -362,7 +372,7 @@ object InuConfig {
     val SHOW_SPOILERS_DIRECTLY = BoolItem("show_spoilers_directly", false)
 
     @JvmField
-    val HDR_IMAGES = BoolItem("hdr_images", true, exportable = false)
+    val HDR_IMAGES = BoolItem("hdr_images", false, exportable = false)
 
     class TextSpoilerModeItem : IntItem("text_spoiler_mode", SIMPLE) {
         companion object {
@@ -414,6 +424,9 @@ object InuConfig {
     @JvmField
     val BLOCKED_MESSAGES_MODE = BlockedMessagesModeItem()
 
+    @JvmField
+    val BLOCKED_MESSAGES_HIDE_REPLIES = BoolItem("blocked_messages_hide_replies", false)
+
     class AttachCameraModeItem : IntItem("attach_camera_mode", INSTANT) {
         override fun read(prefs: SharedPreferences): Int {
             if (prefs.contains(key)) return prefs.getInt(key, default)
@@ -456,7 +469,7 @@ object InuConfig {
     val ATTACH_CAMERA_SQUARE = BoolItem("attach_camera_square", true)
 
     @JvmField
-    val DOWNLOAD_DIRECTORY = StringItem("download_directory", "Prism")
+    val DOWNLOAD_DIRECTORY = StringItem("download_directory", "Prism", allowed = setOf("Prism", "Telegram"))
     @JvmField
     val CAPTION_ABOVE_DEFAULT = BoolItem("prism_caption_above", false)
     @JvmField
@@ -526,6 +539,9 @@ object InuConfig {
     val SHOW_DRAWER_ACCOUNTS = BoolItem("show_drawer_accounts", true)
 
     @JvmField
+    val DRAWER_SHOW_BADGE = BoolItem("drawer_show_badge", false)
+
+    @JvmField
     val DRAWER_MENU_ITEMS = DrawerMenuConfig("drawer_menu_items")
 
     @JvmField
@@ -537,6 +553,8 @@ object InuConfig {
     @JvmField
     val BOTTOM_TABS_LIFT = IntItem("bottom_tabs_lift", 0)
 
+    val START_TAB = IntItem("start_tab", 0)
+
     @JvmField
     val BOTTOM_TABS_ORDER = MainTabsMenuConfig("bottom_tabs_order")
 
@@ -544,6 +562,7 @@ object InuConfig {
     val BOTTOM_TABS_SHOW_TITLES = BoolItem("bottom_tabs_show_titles", true)
     @JvmField val BOTTOM_TABS_HIDE_TOP_SEARCH = BoolItem("bottom_tabs_hide_top_search", false)
     @JvmField val BOTTOM_TABS_SEARCH_SEPARATE = BoolItem("bottom_tabs_search_separate", false)
+    @JvmField val BOTTOM_TABS_HIDE_ON_SCROLL = BoolItem("bottom_tabs_hide_on_scroll", false)
 
     @JvmField
     val DIALOGS_FAB_MAIN_ACTION = IntItem("dialogs_fab_main_action", 1)
@@ -902,6 +921,9 @@ object InuConfig {
     val PROFILE_PREFER_MEDIA_TAB = BoolItem("profile_prefer_media_tab", true)
 
     @JvmField
+    val SHOW_PROFILE_GIFT_BUTTON = BoolItem("show_profile_gift_button", false)
+
+    @JvmField
     val DISABLE_MOTION_PHOTOS = BoolItem("disable_motion_photos", true)
 
     @JvmField
@@ -918,6 +940,9 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
 
     @JvmField
     val HIDE_CHANNEL_SHARE_BUTTON = BoolItem("hide_channel_share_button", false)
+
+    @JvmField
+    val SIDE_BUTTON_ACTION = IntItem("side_button_action", 0)
 
     @JvmField
     val HIDE_PROFILE_STORY_BUTTON = BoolItem("hide_profile_story_button", false)
@@ -968,6 +993,9 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val DISABLE_NEXT_VOICE_AUTOPLAY = BoolItem("disable_next_voice_autoplay", false)
 
     @JvmField
+    val DISABLE_ANIMATED_AVATARS = BoolItem("disable_animated_avatars", false)
+
+    @JvmField
     val HIDE_REACTIONS_ENTRY = BoolItem("hide_reactions_entry", false)
 
     @JvmField
@@ -990,6 +1018,9 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
 
     @JvmField
     val HIDE_PROXY_SPONSOR_CHAT = BoolItem("hide_proxy_sponsor_chat", false)
+
+    @JvmField
+    val HIDE_BUSINESS_BOT_BANNER = BoolItem("hide_business_bot_banner", false)
 
     @JvmField
     val HIDE_PSA_PROMO_CHAT = BoolItem("hide_psa_promo_chat", false)
@@ -1060,6 +1091,9 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val REMEMBER_SELECTED_FOLDER = BoolItem("remember_selected_folder", false)
 
     @JvmField
+    val FOLDERS_INFINITE_SWIPE = BoolItem("folders_infinite_swipe", false)
+
+    @JvmField
     val TAB_INDICATOR_STROKE = BoolItem("tab_indicator_stroke", false)
 
     @JvmField
@@ -1067,6 +1101,12 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
 
     @JvmField
     val HIDE_ARCHIVE_FROM_CHAT_LIST = BoolItem("hide_archive_from_chat_list", false)
+
+    @JvmField
+    val UNREAD_CHATS_FIRST = BoolItem("unread_chats_first", false)
+
+    @JvmField
+    val UNREAD_CHATS_FIRST_PINNED = BoolItem("unread_chats_first_pinned", false)
 
     @JvmField
     val PRESENCE_COLOR_DOTS = BoolItem("presence_color_dots", false)
@@ -1129,6 +1169,9 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
 
     @JvmField
     val CALL_ROTATION = BoolItem("call_rotation", false)
+
+    @JvmField
+    val DISABLE_CALL_PROXIMITY = BoolItem("disable_call_proximity", false)
 
     @JvmField
     val FORCE_RELAY_CALLS = BoolItem("force_relay_calls", false)
@@ -1197,10 +1240,16 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val WEB_PREVIEW_REPLACEMENTS = StringItem("web_preview_replacements", "")
 
     @JvmField
+    val WEB_PREVIEW_REPLACE_ON_PASTE = BoolItem("web_preview_replace_on_paste", false)
+
+    @JvmField
     val STRIP_TRACKING_PARAMS_ON_OPEN = BoolItem("strip_tracking_params", true)
 
     @JvmField
     val STRIP_TRACKING_PARAMS_ON_PASTE = BoolItem("strip_tracking_params_on_paste", true)
+
+    @JvmField
+    val RESOLVE_TRACKABLE_REDIRECTS = BoolItem("resolve_trackable_redirects", false)
 
     @JvmField
     val DISABLE_INTRO_STICKER = BoolItem("disable_intro_sticker", true)
@@ -1298,9 +1347,6 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val LIQUID_GLASS_TINT = IntItem("liquid_glass_tint", 100)
 
     @JvmField
-    val NICHE_SETTINGS_UNLOCKED = BoolItem("niche_settings_unlocked", false)
-
-    @JvmField
     val HIDE_DONATE_CARD = BoolItem("hide_donate_card", false, exportable = false)
 
     @JvmField
@@ -1356,6 +1402,9 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
 
     @JvmField
     val COMPACT_INPUT_SIZE = BoolItem("compact_input_size", false)
+
+    @JvmField
+    val IOS_INPUT_COMMANDS_NEAR_STICKERS = BoolItem("ios_input_commands_near_stickers", false)
 
     @JvmField
     val ACTION_BUTTON_STYLE = IntItem("action_button_style", 0)
@@ -1424,6 +1473,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val FORWARD_PRO_SILENT = BoolItem("forward_pro_silent", false)
     val FORWARD_PRO_HIDE_CAPTION = BoolItem("forward_pro_hide_caption", false)
     val FORWARD_PRO_SHOW_SENDER = BoolItem("forward_pro_show_sender", true)
+    val FORWARD_PRO_COMMENT_AFTER = BoolItem("forward_pro_comment_after", false)
 
     @JvmField
     val BUBBLE_TAILS = BoolItem("bubble_tails", true)
@@ -1459,6 +1509,9 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
 
     @JvmField
     val MESSAGE_MENU_QUICK_ACTIONS_TOP = BoolItem("message_menu_quick_actions_top", false)
+
+    @JvmField
+    val GROUP_ENTINY_MENU = BoolItem("group_entiny_menu", false)
 
     @JvmField
     val CHAT_MENU_ITEMS = ChatMenuConfig("chat_menu_items")
@@ -1517,17 +1570,11 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     @JvmField
     val ANIMATION_SPEED = FloatItem("animation_speed", 1.25f)
 
-    class IconReplacementItem : IntItem("icon_replacement", VKUI) {
-        companion object {
-            const val OFF = 0
-            const val SOLAR = 1
-            const val VKUI = 2
-            const val PHOSPHOR = 3
-        }
-    }
+    @JvmField
+    val ICON_PACKS = StringItem("icon_packs", "")
 
     @JvmField
-    val ICON_REPLACEMENT = IconReplacementItem()
+    val ICON_PACKS_ORDER = StringItem("icon_packs_order", "")
 
     @JvmField
     val CENTER_TITLE_MAIN = BoolItem("center_title_main", false)
@@ -1551,13 +1598,25 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val ALWAYS_SHOW_DOWNLOADS = BoolItem("always_show_downloads", false)
 
     @JvmField
+    val HIDE_DOWNLOADS_BUTTON = BoolItem("hide_downloads_button", false)
+
+    @JvmField
     val IOS_CHAT_HEADER = BoolItem("ios_chat_header", false)
+
+    @JvmField
+    val IOS_CHAT_LIST = BoolItem("ios_chat_list", false)
+
+    @JvmField
+    val IOS_MESSAGE_MENU = BoolItem("ios_message_menu", false)
 
     @JvmField
     val HIDE_CHAT_AVATAR = BoolItem("hide_chat_avatar", false)
 
     @JvmField
     val IOS_CHAT_HEADER_AVATAR_SLOT = BoolItem("ios_chat_header_avatar_slot", false)
+
+    @JvmField
+    val IOS_CHAT_HEADER_AVATAR_SWAP = BoolItem("ios_chat_header_avatar_swap", false)
 
     @JvmField
     val IOS_CHAT_HEADER_AVATAR_STATIC = BoolItem("ios_chat_header_avatar_static", false)
@@ -1596,17 +1655,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val VIEW_ONCE_SHOW_NORMAL = BoolItem("view_once_show_normal", false)
 
     @JvmField
-    val BURN_TIMED_MEDIA = BoolItem("burn_timed_media", false)
-
-    @JvmField
-    val TIMED_MEDIA_AFTER_VIEW = TimedMediaAfterViewItem()
-
-    class TimedMediaAfterViewItem : IntItem("timed_media_after_view", BURN) {
-        companion object {
-            const val BURN = 0
-            const val KEEP = 1
-        }
-    }
+    val ONE_TIME_PEEK = BoolItem("one_time_peek", false)
 
     @JvmField
     val AUTO_SAVE_ONE_TIME = BoolItem("auto_save_one_time", false)
@@ -1649,9 +1698,6 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val SAVE_DELETED_OWN = BoolItem("save_deleted_own", false)
 
     @JvmField
-    val PROMPT_KEEP_LOCAL_ON_DELETE = BoolItem("prompt_keep_local_on_delete", false)
-
-    @JvmField
     val ARCHIVE_MEDIA_PUBLIC = BoolItem("archive_media_public", false)
 
     @JvmField
@@ -1659,14 +1705,6 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
 
     @JvmField
     val ALLOW_SCREENSHOTS = BoolItem("allow_screenshots", false)
-    val FORCE_NO_VIBRATION = object : BoolItem("force_no_vibration", false) {
-        override var value: Boolean
-            get() = super.value
-            set(v) {
-                super.value = v
-                desu.inugram.helpers.vibration.HapticFeedbackConstants.sync()
-            }
-    }
 
     @JvmField
     val SUPPRESS_SCREENSHOT_NOTIFICATION = BoolItem("suppress_screenshot_notification", false)
@@ -1676,6 +1714,42 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
 
     @JvmField
     val SAVE_EDITED_MESSAGES = BoolItem("save_edited_messages", false)
+
+    @JvmField
+    val ARCHIVE_SCOPE_MODE = IntItem("archive_scope_mode", 0)
+
+    @JvmField
+    val ARCHIVE_SCOPE_NEVER = StringItem("archive_scope_never", "")
+
+    @JvmField
+    val ARCHIVE_SCOPE_ONLY = StringItem("archive_scope_only", "")
+
+    @JvmField
+    val ARCHIVE_SCOPE_MIGRATED = BoolItem("archive_scope_migrated", false)
+
+    @JvmField
+    val ARCHIVE_SCOPE_KINDS_MIGRATED = BoolItem("archive_scope_kinds_migrated", false)
+
+    @JvmField
+    val ARCHIVE_SCOPE_DELETED = StringItem("archive_scope_deleted", "")
+
+    @JvmField
+    val ARCHIVE_SCOPE_EDITED = StringItem("archive_scope_edited", "")
+
+    @JvmField
+    val ARCHIVE_SCOPE_MEDIA = StringItem("archive_scope_media", "")
+
+    @JvmField
+    val ARCHIVE_MEDIA_ENABLED = BoolItem("archive_media_enabled", true)
+
+    @JvmField
+    val ARCHIVE_MEDIA_LIMIT_WIFI = IntItem("archive_media_limit_wifi", 0)
+
+    @JvmField
+    val ARCHIVE_MEDIA_LIMIT_MOBILE = IntItem("archive_media_limit_mobile", 0)
+
+    @JvmField
+    val SHOW_EDIT_HISTORY_DIFF = BoolItem("show_edit_history_diff", true)
 
     // #if PLUGINS
     @JvmField
@@ -1690,12 +1764,6 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
 
     @JvmField
     val SAVE_LAST_SEEN = BoolItem("save_last_seen", false)
-
-    @JvmField
-    val SHOW_EDIT_HISTORY_DIFF = BoolItem("show_edit_history_diff", false)
-
-    @JvmField
-    val EDIT_HISTORY_COMPACT = BoolItem("edit_history_compact", false)
 
     @JvmField
     val SHOW_MUTUAL_CONTACT_ICON = BoolItem("show_mutual_contact_icon", true)
@@ -1906,6 +1974,13 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val INPUT_TRANSLATE = BoolItem("input_translate", false)
 
     @JvmField
+    val TRANSLATE_ON_SEND = BoolItem("translate_on_send", false)
+
+    // empty: the same language as incoming translations
+    @JvmField
+    val INPUT_TRANSLATE_LANGUAGE = StringItem("input_translate_language", "")
+
+    @JvmField
     val TRANSLATE_IN_SEND_PREVIEW = BoolItem("translate_in_send_preview", false)
 
     @JvmField
@@ -1913,6 +1988,9 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
 
     @JvmField
     val TRANSLATE_AUTO_FALLBACK = BoolItem("translate_auto_fallback", true)
+
+    @JvmField
+    val TRANSLATE_NEW_GOOGLE = BoolItem("translate_new_google", false)
 
     // entiny: skip stock 6-message detection sample threshold so translate banner shows on first detected foreign message
     @JvmField
@@ -1951,10 +2029,6 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     @JvmField
     val TRANSLATION_PROVIDER = StringItem("translation_provider", "", exportable = false)
 
-    // entiny: where the marketplace looks; kept so a test catalog can stand in for the real one
-    @JvmField
-    val MARKET_INDEX_URL = StringItem("market_index_url", "", exportable = false)
-
     @JvmField
     val ACCOUNT_ORDER = StringItem("account_order", "", exportable = false)
 
@@ -1986,7 +2060,22 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val CHAT_EXPORT = BoolItem("chat_export", false)
 
     @JvmField
+    val NOTIFY_BELL_IN_MENU = BoolItem("notify_bell_in_menu", false)
+
+    @JvmField
+    val CHAT_EXPORT_HTML = BoolItem("chat_export_html", true)
+
+    @JvmField
+    val CHAT_EXPORT_MEDIA = IntItem("chat_export_media", 0x7F)
+
+    @JvmField
+    val CHAT_EXPORT_SIZE_LIMIT = IntItem("chat_export_size_limit", 100)
+
+    @JvmField
     val FASTER_DOWNLOADS = BoolItem("faster_downloads", true)
+
+    @JvmField
+    val ALWAYS_SEND_VIDEOS_HD = BoolItem("always_send_videos_hd", false)
 
     @JvmField
     val FASTER_UPLOADS = BoolItem("faster_uploads", true)
@@ -2041,6 +2130,9 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     val GHOST_MARK_READ_LOCALLY = BoolItem("ghost_mark_read_locally", true)
 
     @JvmField
+    val GHOST_HIDE_SEEN_MENTIONS = BoolItem("ghost_hide_seen_mentions", false)
+
+    @JvmField
     val GHOST_HIDE_VOICE_READ = BoolItem("ghost_hide_voice_read", false)
 
     @JvmField
@@ -2054,7 +2146,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
             if (prefs.contains(key)) return prefs.getInt(key, default)
             if (!prefs.contains("ghost_hide_online")) return default
             val migrated = if (prefs.getBoolean("ghost_hide_online", true)) HIDDEN else NORMAL
-            prefs.edit(commit = true) {
+            prefs.edit(commit = false) {
                 putInt(key, migrated)
                 remove("ghost_hide_online")
             }
@@ -2071,12 +2163,9 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
     @JvmField
     val GHOST_PRESENCE_MODE = GhostPresenceModeItem()
 
-    // entiny: auto-offline re-asserts offline after live actions because server flips account online implicitly
+    // entiny: legacy, folded into GHOST_PRESENCE_MODE; kept so old backups still import
     @JvmField
     val GHOST_AUTO_OFFLINE = BoolItem("ghost_auto_offline", false)
-
-    @JvmField
-    val GHOST_AUTO_OFFLINE_MIGRATED = BoolItem("ghost_auto_offline_migrated", false, exportable = false)
 
     @JvmField
     val GHOST_HIDE_APP_BAR_ICON = BoolItem("ghost_hide_app_bar_icon", false)
@@ -2121,6 +2210,7 @@ val MEMORY_TRIM = BoolItem("memory_trim", true)
             const val CROSS = 2
             const val EYE_CROSSED = 3
             const val TRASH_BIN_OUTLINE = 4
+            const val TEXT = 5
         }
     }
 

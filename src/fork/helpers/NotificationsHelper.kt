@@ -32,11 +32,7 @@ object NotificationsHelper {
     fun keepAliveForeground(): Boolean = InuConfig.UNIFIED_PUSH.value || InuConfig.FOREGROUND_PUSH_SERVICE.value
 
     @JvmStatic
-    fun smallIconRes(): Int = when (InuConfig.NOTIFICATION_ICON.value) {
-        InuConfig.NotificationIconItem.TELEGRAM -> R.drawable.notification
-        InuConfig.NotificationIconItem.OLD_ENTINYGRAM -> R.drawable.icon_notification_old_inu
-        else -> R.drawable.icon_notification_inu
-    }
+    fun smallIconRes(): Int = R.drawable.prism_notification
 
     @JvmStatic
     fun shouldSuppressNotifications(account: Int): Boolean =

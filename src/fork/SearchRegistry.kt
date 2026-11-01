@@ -20,9 +20,7 @@ import desu.inugram.ui.settings.ChatHeaderSettingsActivity
 import desu.inugram.ui.settings.DatacenterStatusActivity
 import desu.inugram.helpers.feed.FeedHelper
 import desu.inugram.ui.settings.FeedExcludedChannelsSettingsActivity
-import desu.inugram.ui.settings.NicheSettingsActivity
 import desu.inugram.ui.settings.GhostModeSettingsActivity
-import desu.inugram.ui.settings.IconPacksSettingsActivity
 import desu.inugram.ui.settings.InuSettingsActivity
 import desu.inugram.ui.settings.IosStyleSettingsActivity
 import desu.inugram.ui.settings.Material3SettingsActivity
@@ -37,7 +35,6 @@ import desu.inugram.ui.settings.RecentChatsSettingsActivity
 import desu.inugram.ui.settings.ParanoiaActivity
 import desu.inugram.ui.settings.PrivacySecurityActivity
 import desu.inugram.ui.settings.RegexFilterSettingsActivity
-import desu.inugram.ui.settings.RetroSettingsActivity
 import desu.inugram.ui.settings.SettingsPageActivity
 import desu.inugram.ui.settings.StalkerPackSettingsActivity
 import desu.inugram.ui.settings.TosSettingsActivity
@@ -48,12 +45,13 @@ import desu.inugram.ui.settings.fonts.FontsSettingsActivity
 import org.telegram.messenger.LocaleController
 import org.telegram.messenger.R
 import org.telegram.ui.ActionBar.BaseFragment
+import org.telegram.ui.Components.UItem
 import org.telegram.ui.LaunchActivity
 import org.telegram.ui.ProfileActivity
 
 object SearchRegistry {
     // entiny: aliases are retired slugs that still resolve to this target, so old tg://entinySettings links keep working
-    data class Entry(val slug: String, val titleRes: Int, val itemId: Int = -1, val aliases: List<String> = emptyList())
+    data class Entry(val slug: String, val titleRes: Int = 0, val itemId: Int = -1, val aliases: List<String> = emptyList(), val titleText: CharSequence? = null)
 
     data class Page(
         val slug: String,
@@ -62,6 +60,7 @@ object SearchRegistry {
         val factory: () -> SettingsPageActivity,
         val entries: List<Entry> = emptyList(),
         val aliases: List<String> = emptyList(),
+        val autoCollect: Boolean = true,
     )
 
     private val pages: List<Page> by lazy {
@@ -74,12 +73,10 @@ object SearchRegistry {
             ChatHeaderSettingsActivity.PAGE,
             IosStyleSettingsActivity.PAGE,
             Material3SettingsActivity.PAGE,
-            RetroSettingsActivity.PAGE,
             MessageDesignSettingsActivity.PAGE,
             DrawerSettingsActivity.PAGE,
             DrawerMenuOrderActivity.PAGE,
             MenusSettingsActivity.PAGE,
-            IconPacksSettingsActivity.PAGE,
             FontsSettingsActivity.PAGE,
             FontStackActivity.PAGE,
             CategoryChatsSettingsActivity.PAGE,
@@ -107,7 +104,6 @@ object SearchRegistry {
             DatacenterStatusActivity.PAGE,
             BackupSettingsActivity.PAGE,
             FeedExcludedChannelsSettingsActivity.PAGE,
-            NicheSettingsActivity.PAGE,
         )
     }
 
@@ -137,8 +133,12 @@ object SearchRegistry {
         }
     }
 
+    // entiny: collected (auto-discovered) targets, populated lazily during settings search
+    private val collectedTargets: MutableMap<String, Target> = mutableMapOf()
+    private val collectedItemIdToSlug: MutableMap<Int, String> = mutableMapOf()
+
     fun deepLinkForItemId(itemId: Int): String? =
-        slugByItemId[itemId]?.let { "tg://entinySettings/$it" }
+        (slugByItemId[itemId] ?: collectedItemIdToSlug[itemId])?.let { "tg://entinySettings/$it" }
 
     @JvmStatic
     fun extendSearchArray(
@@ -149,7 +149,6 @@ object SearchRegistry {
         val extra = ArrayList<ProfileActivity.SearchAdapter.SearchResult>()
         for (page in pages) {
             if (page === FeedExcludedChannelsSettingsActivity.PAGE && !FeedHelper.isEnabled()) continue
-            if (page === NicheSettingsActivity.PAGE && !InuConfig.NICHE_SETTINGS_UNLOCKED.value) continue
             val pageTitle = LocaleController.getString(page.titleRes)
             val parent = "${LocaleController.getString(R.string.InuSettings)} → $pageTitle"
             extra.add(
@@ -161,7 +160,7 @@ object SearchRegistry {
                 ) { f.presentFragment(page.factory()) }.withLink("tg://entinySettings/${page.slug}")
             )
             for (entry in page.entries) {
-                val title = LocaleController.getString(entry.titleRes)
+                val title = entry.titleText?.toString() ?: LocaleController.getString(entry.titleRes)
                 extra.add(
                     ProfileActivity.SearchAdapter.SearchResult(
                         guidFor(entry.slug),
@@ -172,6 +171,35 @@ object SearchRegistry {
                         f.presentFragment(page.factory().withHighlight(entry.itemId))
                     }.withLink("tg://entinySettings/${entry.slug}")
                 )
+            }
+            if (page.autoCollect) {
+                val collected = try {
+                    (page.factory() as? SettingsPageActivity)?.collectSearchEntries() ?: emptyList()
+                } catch (t: Throwable) {
+                    emptyList<UItem>()
+                }
+                val existingIds = page.entries.map { it.itemId }.toSet()
+                for (item in collected) {
+                    val id = item.id
+                    if (id <= 0 || id in existingIds) continue
+                    val text = item.text?.toString()?.trim().orEmpty()
+                    if (text.isEmpty()) continue
+                    val slug = "${page.slug}--$id"
+                    if (targetBySlug.containsKey(slug) || collectedTargets.containsKey(slug)) continue
+                    val synthetic = Entry(slug, titleText = text, itemId = id)
+                    collectedTargets[slug] = Target(page, synthetic)
+                    collectedItemIdToSlug[id] = slug
+                    extra.add(
+                        ProfileActivity.SearchAdapter.SearchResult(
+                            guidFor(slug),
+                            text,
+                            parent,
+                            page.iconRes,
+                        ) {
+                            f.presentFragment(page.factory().withHighlight(id))
+                        }.withLink("tg://entinySettings/$slug")
+                    )
+                }
             }
         }
         return stock + extra.toTypedArray()
@@ -200,8 +228,7 @@ object SearchRegistry {
             2 -> if (!segs[0].equals("inu", ignoreCase = true) && !segs[0].equals("entiny", ignoreCase = true)) return false
             else -> return false
         }
-        val target = targetBySlug[segs.last()] ?: return false
-        if (target.page === NicheSettingsActivity.PAGE && !InuConfig.NICHE_SETTINGS_UNLOCKED.value) return false
+        val target = targetBySlug[segs.last()] ?: collectedTargets[segs.last()] ?: return false
         val fragment = target.page.factory()
         target.entry?.let { fragment.withHighlight(it.itemId) }
         activity.actionBarLayout.presentFragment(fragment)

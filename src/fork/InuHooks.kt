@@ -7,6 +7,7 @@ import desu.inugram.helpers.CrashReporter
 import desu.inugram.helpers.LoginHelper
 import desu.inugram.helpers.ProxyVpnHelper
 import desu.inugram.helpers.ShortcutHelper
+import desu.inugram.helpers.SplashScreenHelper
 import desu.inugram.helpers.UrlCleanerHelper
 import desu.inugram.helpers.cloud.CloudSettingsHelper
 import desu.inugram.helpers.dialogs.DrawerHelper
@@ -104,6 +105,7 @@ object InuHooks {
         syncDoubleTapDelay()
         syncAnimationSpeed()
         syncChatInputRowHeight()
+        desu.inugram.helpers.archive.ArchiveScope.init()
         desu.inugram.helpers.media.DownloadKeepAliveHelper.startPolling()
         (context.applicationContext as? android.app.Application)?.let { desu.inugram.helpers.MemoryTrimHelper.init(it) }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -168,7 +170,7 @@ object InuHooks {
         desu.inugram.helpers.security.PresenceHelper.load(account)
         desu.inugram.helpers.security.GhostHelper.syncPresence(account)
         desu.inugram.helpers.badges.BadgeRegistry.init(account)
-        desu.inugram.helpers.chat.SavedMessagesHelper.schedulePrune(account)
+        desu.inugram.helpers.archive.ArchiveCache.schedulePrune(account)
         desu.inugram.helpers.security.PresenceHelper.pruneIfNeeded(account)
         AndroidUtilities.runOnUIThread {
             val nc = NotificationCenter.getInstance(account)
@@ -210,6 +212,7 @@ object InuHooks {
     fun onUpdate(update: TLObject?, account: Int) {
         if (update is TL_update.TL_updateUserStatus) {
             desu.inugram.helpers.security.PresenceHelper.onStatusUpdate(update, account)
+            desu.inugram.helpers.security.LastSeenHelper.onUserStatus(account, update.user_id, update.status)
         }
         LoginHelper.onUpdate(update, account)
     }
@@ -256,10 +259,10 @@ object InuHooks {
 
     @JvmStatic
     fun onResume(launchActivity: LaunchActivity) {
+        SplashScreenHelper.sync(launchActivity)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             MonetHelper.refreshMonetThemeIfChanged()
         }
-        desu.inugram.helpers.SplashThemeHelper.apply(launchActivity)
         val bg = Theme.getColor(Theme.key_windowBackgroundWhite)
         launchActivity.window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(bg))
         CrashReporter.maybeShowReportSheet(launchActivity)
@@ -270,6 +273,7 @@ object InuHooks {
         desu.inugram.helpers.security.GhostHelper.syncPresence(org.telegram.messenger.UserConfig.selectedAccount)
         // #if PLUGINS
         PluginManager.onAppInteractive()
+        desu.inugram.helpers.plugins.PluginCrashDialog.maybeShow(launchActivity)
         // #endif
     }
 

@@ -11,7 +11,6 @@ import android.graphics.PorterDuffColorFilter
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.TextPaint
-import android.text.style.URLSpan
 import android.text.style.ClickableSpan
 import android.view.Gravity
 import android.view.View
@@ -19,23 +18,30 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import desu.inugram.InuConfig
 import desu.inugram.core.plugins.GrantCatalog
 import desu.inugram.core.plugins.GrantTier
 import desu.inugram.core.plugins.ObfuscationDetector
+import desu.inugram.core.plugins.PluginAsset
+import desu.inugram.core.plugins.PluginAssetsParser
 import desu.inugram.core.plugins.PluginManifest
 import desu.inugram.core.plugins.PluginPermissions
 import desu.inugram.core.plugins.SourceObfuscation
 import desu.inugram.helpers.InuUtils
+import desu.inugram.helpers.plugins.EngineDispatch
 import desu.inugram.helpers.plugins.Plugin
 import desu.inugram.helpers.plugins.PluginFailure
 import desu.inugram.helpers.plugins.PluginManager
 import desu.inugram.helpers.plugins.ui.PluginManifestIcons
 import desu.inugram.helpers.plugins.ui.PluginUi
 import desu.inugram.helpers.theme.M3SectionsHelper
+import org.json.JSONObject
 import org.telegram.messenger.AndroidUtilities
+import org.telegram.messenger.MediaDataController
 import org.telegram.messenger.MessageObject
 import org.telegram.messenger.LocaleController
 import org.telegram.messenger.R
+import org.telegram.messenger.UserConfig
 import org.telegram.ui.ActionBar.Theme
 import org.telegram.ui.Cells.TextCheckCell
 import org.telegram.ui.Components.BackupImageView
@@ -46,6 +52,7 @@ import org.telegram.ui.Components.LayoutHelper
 import org.telegram.ui.Components.LinkSpanDrawable
 import org.telegram.ui.Components.UItem
 import org.telegram.ui.Components.UniversalAdapter
+import org.telegram.ui.Components.URLSpanReplacement
 import org.telegram.ui.SettingsActivity
 
 class PluginInfoActivity(private val plugin: Plugin) : SettingsPageActivity() {
@@ -54,6 +61,8 @@ class PluginInfoActivity(private val plugin: Plugin) : SettingsPageActivity() {
     private val grantRows = HashMap<Int, GrantRowView>()
     private var analyzedSource: String? = null
     private var obfuscation: SourceObfuscation? = null
+    private var assets: List<PluginAsset> = emptyList()
+    private var memoryUsage: String? = null
 
     override fun getTitle(): CharSequence = plugin.manifest.name
 
@@ -62,14 +71,36 @@ class PluginInfoActivity(private val plugin: Plugin) : SettingsPageActivity() {
         listView?.adapter?.update(true)
     }
 
+    private val pollMemoryUsage = object : Runnable {
+        override fun run() {
+            val session = plugin.session
+            if (session != null && InuConfig.PLUGINS_DEV_MODE.value) {
+                EngineDispatch.onEngine(session) {
+                    val usage = session.engine.memoryUsage()?.let(::JSONObject) ?: return@onEngine
+                    val text = AndroidUtilities.formatFileSize(usage.getLong("heapBytes")) + " / " +
+                        AndroidUtilities.formatFileSize(usage.getLong("heapLimitBytes"))
+                    AndroidUtilities.runOnUIThread {
+                        if (memoryUsage == text) return@runOnUIThread
+                        memoryUsage = text
+                        listView?.adapter?.update(true)
+                    }
+                }
+            }
+            AndroidUtilities.runOnUIThread(this, MEMORY_POLL_MS)
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         PluginManager.addOnChangedListener(onPluginChanged)
+        onPluginChanged()
+        pollMemoryUsage.run()
     }
 
     override fun onPause() {
         super.onPause()
         PluginManager.removeOnChangedListener(onPluginChanged)
+        AndroidUtilities.cancelRunOnUIThread(pollMemoryUsage)
     }
 
     override fun createView(context: Context): View {
@@ -79,13 +110,12 @@ class PluginInfoActivity(private val plugin: Plugin) : SettingsPageActivity() {
         return super.createView(context)
     }
 
-    private fun detectObfuscation(): SourceObfuscation? {
+    private fun analyzeSource() {
         val source = plugin.source
-        if (analyzedSource !== source) {
-            obfuscation = ObfuscationDetector.detect(source)
-            analyzedSource = source
-        }
-        return obfuscation
+        if (analyzedSource === source) return
+        obfuscation = ObfuscationDetector.detect(source.substring(0, PluginAssetsParser.findFooter(source)))
+        assets = runCatching { PluginAssetsParser.parse(source) }.getOrDefault(emptyList())
+        analyzedSource = source
     }
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
@@ -96,7 +126,7 @@ class PluginInfoActivity(private val plugin: Plugin) : SettingsPageActivity() {
         headerView.bind(plugin.manifest, plugin.failure)
         items.add(UItem.asCustom(HEADER, headerView))
         val description = plugin.manifest.description(LocaleController.getInstance().currentLocaleInfo?.langCode)
-        items.add(UItem.asShadow(description))
+        items.add(UItem.asShadow(description?.let { formatPluginDescription(it) { username -> messagesController.openByUserName(username, this, 0) } }))
 
         items.add(
             UItem.asRippleCheck(TOGGLE_ENABLED, LocaleController.getString(R.string.InuPluginsEnabled))
@@ -104,7 +134,8 @@ class PluginInfoActivity(private val plugin: Plugin) : SettingsPageActivity() {
         )
         items.add(UItem.asShadow(null))
 
-        detectObfuscation()?.let { kind ->
+        analyzeSource()
+        obfuscation?.let { kind ->
             val banner = obfuscationBanner ?: WarningBanner(context).also { obfuscationBanner = it }
             banner.setObfuscation(kind)
             items.add(UItem.asCustomShadow(OBFUSCATION_BANNER, banner))
@@ -123,8 +154,16 @@ class PluginInfoActivity(private val plugin: Plugin) : SettingsPageActivity() {
             items.add(UItem.asShadow(null))
         }
 
+        if (InuConfig.PLUGINS_DEV_MODE.value && plugin.session != null) {
+            items.add(UItem.asButton(MEMORY_USAGE, LocaleController.getString(R.string.InuPluginsMemoryUsage), memoryUsage ?: "…"))
+            items.add(UItem.asShadow(null))
+        }
+
         if (plugin.settingsPageId != null) {
             items.add(UItem.asButton(BUTTON_SETTINGS, R.drawable.msg_settings, LocaleController.getString(R.string.Settings)))
+        }
+        if (assets.isNotEmpty()) {
+            items.add(UItem.asButton(BUTTON_ASSETS, R.drawable.msg_media, LocaleController.getString(R.string.InuPluginAssets), PluginAssetsSheet.describeAssets(assets)))
         }
         items.add(UItem.asButton(BUTTON_SOURCE, R.drawable.inu_tabler_code, LocaleController.getString(R.string.InuPluginsViewSource)))
         items.add(UItem.asButton(BUTTON_SHARE, R.drawable.msg_share, LocaleController.getString(R.string.ShareFile)))
@@ -143,6 +182,7 @@ class PluginInfoActivity(private val plugin: Plugin) : SettingsPageActivity() {
                 (view as? TextCheckCell)?.isChecked = plugin.enabled
             }
             BUTTON_SETTINGS -> PluginUi.openRegisteredSettings(plugin)
+            BUTTON_ASSETS -> PluginAssetsSheet(context, plugin.source, assets).show()
             BUTTON_SOURCE -> showDialog(PluginSourceSheet(context, plugin.manifest.name, plugin.source))
             BUTTON_SHARE -> sharePlugin(this, plugin)
             BUTTON_RELOAD -> PluginManager.reload(plugin)
@@ -161,11 +201,14 @@ class PluginInfoActivity(private val plugin: Plugin) : SettingsPageActivity() {
         private val TOGGLE_ENABLED = InuUtils.generateId()
         private val OBFUSCATION_BANNER = InuUtils.generateId()
         private val BUTTON_SETTINGS = InuUtils.generateId()
+        private val BUTTON_ASSETS = InuUtils.generateId()
         private val BUTTON_SOURCE = InuUtils.generateId()
         private val BUTTON_SHARE = InuUtils.generateId()
         private val BUTTON_RELOAD = InuUtils.generateId()
         private val BUTTON_REMOVE = InuUtils.generateId()
+        private val MEMORY_USAGE = InuUtils.generateId()
         private const val GRANT_BASE = 20000
+        private const val MEMORY_POLL_MS = 2000L
     }
 }
 
@@ -544,7 +587,7 @@ class PluginInfoHeaderView(context: Context) : LinearLayout(context) {
         manifest.author?.let { author ->
             if (metaText.isNotEmpty()) metaText.append(" · ")
             val formatted = LocaleController.formatString(R.string.InuPluginsByAuthor, author)
-            metaText.append(linkPluginUsernames(formatted) { username -> onAuthorClick?.invoke(username) })
+            metaText.append(InuUtils.linkUsernames(formatted) { username -> onAuthorClick?.invoke(username) })
         }
 
         meta.text = metaText
@@ -554,28 +597,19 @@ class PluginInfoHeaderView(context: Context) : LinearLayout(context) {
     }
 }
 
-internal fun linkPluginUsernames(text: String, onClick: (String) -> Unit): CharSequence {
-    val result = SpannableStringBuilder(text)
-    MessageObject.addUrlsByPattern(false, result, false, 0, 0, false)
-    for (span in result.getSpans(0, result.length, URLSpan::class.java)) {
-        val start = result.getSpanStart(span)
-        val end = result.getSpanEnd(span)
-        result.removeSpan(span)
-        if (!span.url.startsWith("@")) continue
-        result.setSpan(
-            object : ClickableSpan() {
-                override fun onClick(widget: View) {
-                    onClick(span.url.substring(1))
-                }
+private val MARKDOWN_LINK = Regex("""\[(.+?)]\((.+?)\)""")
 
-                override fun updateDrawState(ds: TextPaint) {
-                    ds.color = ds.linkColor
-                }
-            },
-            start,
-            end,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-        )
+internal fun formatPluginDescription(text: String, onUsernameClick: (String) -> Unit): CharSequence {
+    val withLinks = SpannableStringBuilder(text)
+    for (match in MARKDOWN_LINK.findAll(text).toList().asReversed()) {
+        val (label, url) = match.destructured
+        val start = match.range.first
+        withLinks.replace(start, match.range.last + 1, label)
+        withLinks.setSpan(URLSpanReplacement(url), start, start + label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
-    return result
+    val message = arrayOf<CharSequence>(withLinks)
+    val entities = MediaDataController.getInstance(UserConfig.selectedAccount).getEntities(message, true)
+    val styled = SpannableStringBuilder(message[0].toString())
+    MessageObject.addEntitiesToText(styled, entities, false, false, false, false)
+    return InuUtils.linkUsernames(styled, onUsernameClick)
 }

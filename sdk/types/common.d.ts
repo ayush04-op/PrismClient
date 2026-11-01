@@ -32,6 +32,17 @@ declare type MismatchedRpcReturns<M extends tl.TypeRpcMethod['_'], All extends t
 declare type SharedRpcReturn<M extends tl.TypeRpcMethod['_']>
   = [MismatchedRpcReturns<M>] extends [never] ? tl.RpcCallReturn[M] : never
 
+declare interface InvokeRpcOptions {
+  /**
+   * Apply the result to the app, as if the app had sent the request: new messages, edits, deletions
+   * and the update state. Covers an `Updates` result, and the `messages.affectedMessages` of deleting
+   * messages and reading their contents. Update handlers of every plugin see them, like any other
+   * update. Without it, or for other results, the app only learns about the changes from its next
+   * sync. Defaults to `true`.
+   */
+  processUpdates?: boolean
+}
+
 declare interface InterceptRpcOptions {
   /** Fail the app's RPC when the middleware returns an invalid TL value. The default logs and skips that middleware. */
   strict?: boolean
@@ -96,6 +107,7 @@ declare namespace inu {
      * - `timed-out`: Your operation has timed out
      * - `aborted`: You operation was aborted
      * - `network`: Some network-related issue happened
+     * - `sqlite`: SQLite refused a statement, see {@link errcode}
      * - `internal`: An internal plugin engine error happened, please report this
      */
     code:
@@ -109,6 +121,7 @@ declare namespace inu {
       | 'timed-out'
       | 'aborted'
       | 'network'
+      | 'sqlite'
       | 'internal'
       | (string & {})
 
@@ -118,6 +131,10 @@ declare namespace inu {
     usage?: number
     /** If `code == `quota-exceeded'`, the current quota limit */
     quota?: number
+    /** If `code == 'sqlite'`, SQLite's extended result code, e.g. `2067` for `SQLITE_CONSTRAINT_UNIQUE` */
+    errcode?: number
+    /** If `code == 'sqlite'`, SQLite's description of {@link errcode} */
+    errstr?: string
   }
 
   /** Get information about the current environment */
@@ -903,7 +920,7 @@ declare namespace inu {
      *
      * @needs-grant invokeRpc
      */
-    invokeRpc<T extends tl.TypeRpcMethod>(params: T): Promise<tl.RpcCallReturn[T['_']] | null>
+    invokeRpc<T extends tl.TypeRpcMethod>(params: T, options?: InvokeRpcOptions): Promise<tl.RpcCallReturn[T['_']] | null>
 
     /**
      * invoke a raw mtproto rpc method, given its TL serialization,
@@ -913,7 +930,7 @@ declare namespace inu {
      * for cases where you want to call a method that is not yet supported by the current
      * app's layer. beware that can cause the app to crash or otherwise misbehave,
      * due to the server "bumping" the layer. in almost all cases, you should use
-     * {@link invokeRpc} instead.
+     * {@link invokeRpc} instead. the response is never applied to the app.
      *
      * @needs-grant unsafe.invokeRaw
      */
@@ -1681,7 +1698,7 @@ declare namespace inu {
    *
    * @needs-grant invokeRpc
    */
-  function invokeRpc<T extends tl.TypeRpcMethod>(params: T): Promise<tl.RpcCallReturn[T['_']] | null>
+  function invokeRpc<T extends tl.TypeRpcMethod>(params: T, options?: InvokeRpcOptions): Promise<tl.RpcCallReturn[T['_']] | null>
 
   /**
    * invoke a raw mtproto rpc method via the currently active account,
@@ -1691,7 +1708,7 @@ declare namespace inu {
    * for cases where you want to call a method that is not yet supported by the current
    * app's layer. beware that can cause the app to crash or otherwise misbehave,
    * due to the server "bumping" the layer. in almost all cases, you should use
-   * {@link invokeRpc} instead.
+   * {@link invokeRpc} instead. the response is never applied to the app.
    *
    * @needs-grant unsafe.invokeRaw
    */
@@ -2111,4 +2128,96 @@ declare namespace inu {
     filter: SendMessageFilter,
     middleware: (context: SendMessageContext) => MaybePromise<'send' | 'drop'>,
   ): Disposer
+
+  /**
+   * Files bundled into the plugin. `@inugram/cli` bundles imported binary files
+   * (`import frame from './frame.png'`) and compiles the import to {@link assets.get}.
+   */
+  namespace assets {
+    /**
+     * A {@link File} over the asset, read from disk only when its content is read.
+     * Disposing it releases only this handle.
+     *
+     * @throws `not-found` {@link PluginError} when the plugin bundles no asset named `name`
+     */
+    function get(name: string): File
+  }
+}
+
+/** binary imports, bundled by `@inugram/cli` as {@link inu.assets} */
+declare module '*.png' {
+  const file: File
+  export default file
+}
+declare module '*.jpg' {
+  const file: File
+  export default file
+}
+declare module '*.jpeg' {
+  const file: File
+  export default file
+}
+declare module '*.gif' {
+  const file: File
+  export default file
+}
+declare module '*.webp' {
+  const file: File
+  export default file
+}
+declare module '*.tgs' {
+  const file: File
+  export default file
+}
+declare module '*.mp4' {
+  const file: File
+  export default file
+}
+declare module '*.webm' {
+  const file: File
+  export default file
+}
+declare module '*.mp3' {
+  const file: File
+  export default file
+}
+declare module '*.ogg' {
+  const file: File
+  export default file
+}
+declare module '*.opus' {
+  const file: File
+  export default file
+}
+declare module '*.wav' {
+  const file: File
+  export default file
+}
+declare module '*.m4a' {
+  const file: File
+  export default file
+}
+declare module '*.ttf' {
+  const file: File
+  export default file
+}
+declare module '*.otf' {
+  const file: File
+  export default file
+}
+declare module '*.woff' {
+  const file: File
+  export default file
+}
+declare module '*.woff2' {
+  const file: File
+  export default file
+}
+declare module '*.bin' {
+  const file: File
+  export default file
+}
+declare module '*.dex' {
+  const file: File
+  export default file
 }

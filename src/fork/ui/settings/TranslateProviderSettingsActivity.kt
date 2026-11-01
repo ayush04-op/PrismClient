@@ -4,15 +4,18 @@ import android.text.InputType
 import android.view.View
 import desu.inugram.InuConfig
 import desu.inugram.helpers.InuUtils
+import desu.inugram.helpers.ai.AiComposeHelper
+import desu.inugram.helpers.ai.AiModelsHelper
 import desu.inugram.helpers.translate.engine.EntinyTranslate
 import desu.inugram.helpers.translate.engine.TranslationProviders
+import desu.inugram.ui.showInputDialog
 import org.telegram.messenger.LocaleController
 import org.telegram.messenger.MessagesController
 import org.telegram.messenger.R
 import org.telegram.messenger.UserConfig
+import org.telegram.ui.Components.BulletinFactory
 import org.telegram.ui.Components.UItem
 import org.telegram.ui.Components.UniversalAdapter
-import kotlin.reflect.KMutableProperty0
 
 class TranslateProviderSettingsActivity : SettingsPageActivity() {
 
@@ -36,19 +39,19 @@ class TranslateProviderSettingsActivity : SettingsPageActivity() {
         items.add(UItem.asShadow(LocaleController.getString(R.string.InuTranslateProviderInfo)))
 
         when (provider) {
-            TranslationProviders.PROVIDER_DEEPL -> keyField(
-                items,
-                ::deeplKeyField,
-                LocaleController.getString(R.string.InuTranslateDeepLApiKey),
-                InuConfig.TRANSLATE_DEEPL_KEY.value,
-                InputType.TYPE_TEXT_VARIATION_PASSWORD,
-            ) { InuConfig.TRANSLATE_DEEPL_KEY.value = it }
+            TranslationProviders.PROVIDER_DEEPL -> {
+                fieldRow(items, deeplKey)
+                items.add(UItem.asShadow(null))
+            }
 
             TranslationProviders.PROVIDER_LLM -> {
-                keyField(items, ::llmUrlField, LocaleController.getString(R.string.InuTranslateLlmEndpointUrl), InuConfig.TRANSLATE_LLM_URL.value, InputType.TYPE_TEXT_VARIATION_URI) { InuConfig.TRANSLATE_LLM_URL.value = it }
-                keyField(items, ::llmKeyField, LocaleController.getString(R.string.InuTranslateLlmApiKey), InuConfig.TRANSLATE_LLM_KEY.value, InputType.TYPE_TEXT_VARIATION_PASSWORD) { InuConfig.TRANSLATE_LLM_KEY.value = it }
-                keyField(items, ::llmModelField, LocaleController.getString(R.string.InuTranslateLlmModel), InuConfig.TRANSLATE_LLM_MODEL.value) { InuConfig.TRANSLATE_LLM_MODEL.value = it }
-                keyField(items, ::llmPromptField, LocaleController.getString(R.string.InuTranslateLlmPrompt), InuConfig.TRANSLATE_LLM_PROMPT.value) { InuConfig.TRANSLATE_LLM_PROMPT.value = it }
+                fieldRow(items, llmUrl)
+                items.add(UItem.asButton(BUTTON_DETECT_LLM, LocaleController.getString(R.string.InuAiProviderDetect)))
+                fieldRow(items, llmKey)
+                fieldRow(items, llmModel)
+                items.add(UItem.asButton(BUTTON_PICK_MODEL, LocaleController.getString(R.string.InuAiModelPickerTitle)))
+                fieldRow(items, llmPrompt)
+                items.add(UItem.asShadow(null))
 
                 // entiny: keep slider instances as fields so rebuilding items does not reset thumb mid-drag
                 if (contextSlider == null) contextSlider = SliderCell(
@@ -81,8 +84,9 @@ class TranslateProviderSettingsActivity : SettingsPageActivity() {
             }
 
             TranslationProviders.PROVIDER_MICROSOFT -> {
-                keyField(items, ::microsoftKeyField, LocaleController.getString(R.string.InuTranslateMicrosoftApiKey), InuConfig.TRANSLATE_MICROSOFT_KEY.value, InputType.TYPE_TEXT_VARIATION_PASSWORD) { InuConfig.TRANSLATE_MICROSOFT_KEY.value = it }
-                keyField(items, ::microsoftRegionField, LocaleController.getString(R.string.InuTranslateMicrosoftRegion), InuConfig.TRANSLATE_MICROSOFT_REGION.value) { InuConfig.TRANSLATE_MICROSOFT_REGION.value = it }
+                fieldRow(items, microsoftKey)
+                fieldRow(items, microsoftRegion)
+                items.add(UItem.asShadow(null))
             }
         }
     }
@@ -90,30 +94,68 @@ class TranslateProviderSettingsActivity : SettingsPageActivity() {
     private var contextSlider: SliderCell? = null
     private var temperatureSlider: SliderCell? = null
 
-    private var deeplKeyField: FieldSlot? = null
-    private var llmUrlField: FieldSlot? = null
-    private var llmKeyField: FieldSlot? = null
-    private var llmModelField: FieldSlot? = null
-    private var llmPromptField: FieldSlot? = null
-    private var microsoftKeyField: FieldSlot? = null
-    private var microsoftRegionField: FieldSlot? = null
+    private val BUTTON_DETECT_LLM = InuUtils.generateId()
+    private val BUTTON_PICK_MODEL = InuUtils.generateId()
 
-    private class FieldSlot(val id: Int, val cell: AiServiceFieldCell)
+    // entiny: a value is edited in a dialog, not inline, so the keyboard never covers a field in the middle of the list
+    private class Field(
+        val titleRes: Int,
+        val config: InuConfig.StringItem,
+        val icon: Int,
+        val secret: Boolean = false,
+        val inputType: Int = InputType.TYPE_CLASS_TEXT,
+        val multiline: Boolean = false,
+    ) {
+        val id: Int = InuUtils.generateId()
+    }
 
-    // entiny: keep one AiServiceFieldCell instance per field across fillItems() rebuilds - it used
-    // to allocate a fresh id + cell every time (e.g. on every provider radio tap), which meant the
-    // key/URL/model/prompt fields lost cursor position and IME focus on every rebuild. The sliders
-    // right above already got this treatment; the text fields never did.
-    private fun keyField(items: ArrayList<UItem>, slot: KMutableProperty0<FieldSlot?>, title: String, value: String, type: Int = InputType.TYPE_CLASS_TEXT, onChanged: (String) -> Unit) {
-        var s = slot.get()
-        if (s == null) {
-            s = FieldSlot(InuUtils.generateId(), AiServiceFieldCell(context!!, title, value, type, onChanged = onChanged))
-            slot.set(s)
+    private val deeplKey = Field(R.string.InuTranslateDeepLApiKey, InuConfig.TRANSLATE_DEEPL_KEY, R.drawable.msg_secret, secret = true, inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
+    private val llmUrl = Field(R.string.InuTranslateLlmEndpointUrl, InuConfig.TRANSLATE_LLM_URL, R.drawable.inu_tabler_world, inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
+    private val llmKey = Field(R.string.InuTranslateLlmApiKey, InuConfig.TRANSLATE_LLM_KEY, R.drawable.msg_secret, secret = true, inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
+    private val llmModel = Field(R.string.InuTranslateLlmModel, InuConfig.TRANSLATE_LLM_MODEL, R.drawable.inu_tabler_sparkles)
+    private val llmPrompt = Field(R.string.InuTranslateLlmPrompt, InuConfig.TRANSLATE_LLM_PROMPT, R.drawable.inu_tabler_code, multiline = true)
+    private val microsoftKey = Field(R.string.InuTranslateMicrosoftApiKey, InuConfig.TRANSLATE_MICROSOFT_KEY, R.drawable.msg_secret, secret = true, inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
+    private val microsoftRegion = Field(R.string.InuTranslateMicrosoftRegion, InuConfig.TRANSLATE_MICROSOFT_REGION, R.drawable.inu_tabler_world)
+    private val fields = listOf(deeplKey, llmUrl, llmKey, llmModel, llmPrompt, microsoftKey, microsoftRegion)
+
+    private fun fieldRow(items: ArrayList<UItem>, field: Field) {
+        val value = field.config.value
+        val shown = when {
+            value.isEmpty() -> LocaleController.getString(R.string.None)
+            field.secret -> "••••" + value.takeLast(4)
+            else -> value
         }
-        items.add(UItem.asCustom(s.id, s.cell))
+        items.add(mkTwoLineEntry(field.id, field.icon, LocaleController.getString(field.titleRes), shown))
+    }
+
+    private fun editField(field: Field) {
+        showInputDialog(
+            this,
+            LocaleController.getString(field.titleRes),
+            initialText = field.config.value,
+            selectAll = true,
+            inputType = field.inputType,
+            multiline = field.multiline,
+        ) { input ->
+            field.config.value = input.trim()
+            listView?.adapter?.update(true)
+            true
+        }
     }
 
     override fun onClick(item: UItem, view: View, position: Int, x: Float, y: Float) {
+        fields.firstOrNull { it.id == item.id }?.let {
+            editField(it)
+            return
+        }
+        if (item.id == BUTTON_DETECT_LLM) {
+            detectLlmEndpoint()
+            return
+        }
+        if (item.id == BUTTON_PICK_MODEL) {
+            pickLlmModel()
+            return
+        }
         if (item.id in PROVIDER_BASE..(PROVIDER_BASE + 10)) {
             val newProvider = item.id - PROVIDER_BASE
             // entiny: a built-in provider hands Telegram's own translation requests back to the app's engine
@@ -133,6 +175,47 @@ class TranslateProviderSettingsActivity : SettingsPageActivity() {
                 unlockStockTranslateButton()
             }
             listView.adapter.update(true)
+        }
+    }
+
+    private fun detectLlmEndpoint() {
+        val url = InuConfig.TRANSLATE_LLM_URL.value.trim()
+        val key = InuConfig.TRANSLATE_LLM_KEY.value.trim()
+        if (url.isBlank()) {
+            BulletinFactory.of(this).createErrorBulletin(LocaleController.getString(R.string.InuTranslateLlmEndpointUrl)).show()
+            return
+        }
+        AiModelsHelper.detectEndpoint(url, key) { result ->
+            result.onSuccess { base ->
+                InuConfig.TRANSLATE_LLM_URL.value = base
+                listView?.adapter?.update(true)
+                BulletinFactory.of(this).createSimpleBulletin(R.raw.info, LocaleController.formatString(R.string.InuAiProviderDetected, base)).show()
+            }.onFailure {
+                BulletinFactory.of(this).createErrorBulletin(LocaleController.getString(R.string.InuAiProviderDetectFailed)).show()
+            }
+        }
+    }
+
+    private fun pickLlmModel() {
+        val url = AiComposeHelper.normalizeBase(InuConfig.TRANSLATE_LLM_URL.value.trim())
+        val key = InuConfig.TRANSLATE_LLM_KEY.value.trim()
+        if (url.isBlank()) {
+            BulletinFactory.of(this).createErrorBulletin(LocaleController.getString(R.string.InuTranslateLlmEndpointUrl)).show()
+            return
+        }
+        AiModelsHelper.fetchOpenAiCompatModels(url, key) { result ->
+            val models = result.getOrNull().orEmpty()
+            if (models.isEmpty()) {
+                BulletinFactory.of(this).createErrorBulletin(result.exceptionOrNull()?.message ?: LocaleController.getString(R.string.InuAiTranscribeFetchModelsFailed)).show()
+                return@fetchOpenAiCompatModels
+            }
+            val builder = android.app.AlertDialog.Builder(parentActivity)
+            builder.setTitle(LocaleController.getString(R.string.InuAiModelPickerTitle))
+            builder.setItems(models.toTypedArray()) { _, which ->
+                InuConfig.TRANSLATE_LLM_MODEL.value = models[which]
+                listView?.adapter?.update(true)
+            }
+            builder.show()
         }
     }
 

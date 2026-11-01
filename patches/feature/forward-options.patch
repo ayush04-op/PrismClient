@@ -12,7 +12,7 @@ diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMe
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
 +++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
-@@ -15359,6 +15359,7 @@ public class ChatActivity extends BaseFragment implements
+@@ -15468,6 +15468,7 @@ public class ChatActivity extends BaseFragment implements
                      messagePreviewParams.attach(forwardingPreviewView);
                  }
                  messagePreviewParams.updateForward(messageObjectsToForward, dialog_id);
@@ -20,7 +20,7 @@ index 0000000..0000000 100644
                  if (messagePreviewParams.isEmpty() && editingMessageObject == null) {
                      messagePreviewParams = null;
                  }
-@@ -31351,7 +31352,7 @@ public class ChatActivity extends BaseFragment implements
+@@ -31536,7 +31537,7 @@ public class ChatActivity extends BaseFragment implements
              final boolean showSponsorInfo = !suggestEdit && !isEphemeral && selectedObject != null && selectedObject.isSponsored() && (selectedObject.sponsoredInfo != null || selectedObject.sponsoredAdditionalInfo != null || selectedObject.sponsoredUrl != null && !selectedObject.sponsoredUrl.startsWith("https://" + getMessagesController().linkPrefix));
              final boolean isReactionsAvailableFinal = !suggestEdit && isReactionsAvailable;
  
@@ -29,7 +29,7 @@ index 0000000..0000000 100644
              if (isReactionsViewAvailable || showMessageSeen || showSponsorInfo) {
                  flags |= ActionBarPopupWindow.ActionBarPopupWindowLayout.FLAG_USE_SWIPEBACK;
              }
-@@ -33656,6 +33657,7 @@ public class ChatActivity extends BaseFragment implements
+@@ -33841,6 +33842,7 @@ public class ChatActivity extends BaseFragment implements
                  break;
              }
              case OPTION_FORWARD: {
@@ -37,7 +37,7 @@ index 0000000..0000000 100644
                  if (getMessagesController().isFrozen()) {
                      AccountFrozenAlert.show(currentAccount);
                      selectedObject = null;
-@@ -34770,8 +34772,9 @@ public class ChatActivity extends BaseFragment implements
+@@ -34955,8 +34957,9 @@ public class ChatActivity extends BaseFragment implements
                          params.suggestionParams = messageSuggestionParams;
                          getSendMessagesHelper().sendMessage(params);
                      }
@@ -52,14 +52,14 @@ diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
 +++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
-@@ -12074,6 +12074,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
-         final boolean onlyMyselfFinal = onlyMyself;
+@@ -12109,6 +12109,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+         final boolean multipleMedia = sharedMediaEntries != null && sharedMediaEntries.size() > 1;
  
          ItemOptions.makeOptions(this, view)
 +            .addIf(!isQuote && delegate instanceof ChatActivity, R.drawable.msg_forward_noquote, LocaleController.getString(R.string.InuForwardNoQuote), () -> {
 +                desu.inugram.helpers.chat.ChatHelper.pendingHideAuthor = true;
 +                view.callOnClick();
 +            })
-             .add(R.drawable.input_notify_off, getString(R.string.SendWithoutSound), () -> {
-                 this.notify = false;
+             .addIf(canSendDocs, R.drawable.msg_sendfile, LocaleController.getString(multipleMedia ? R.string.SendAsFiles : R.string.SendAsFile), () -> {
+                 this.forceDocument = true;
                  if (delegate == null || selectedDialogs.isEmpty()) {

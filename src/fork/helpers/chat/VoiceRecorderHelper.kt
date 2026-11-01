@@ -6,7 +6,7 @@ import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Drawable
-import desu.inugram.helpers.vibration.HapticFeedbackConstants
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -23,6 +23,7 @@ import org.telegram.ui.Components.ChatActivityEnterViewAnimatedIconView
 import org.telegram.ui.Components.ChatAttachAlert
 import org.telegram.ui.Components.ItemOptions
 import org.telegram.ui.Components.LayoutHelper
+import org.telegram.utils.recorder.round.RoundVideoSession
 
 object VoiceRecorderHelper {
     private const val RECORD_DELAY_MS = 150L
@@ -44,7 +45,11 @@ object VoiceRecorderHelper {
     // entiny: shift attach layout right into sendButton slot when voice button is moved to attach
     @JvmStatic
     fun attachTranslationXOffset(): Float =
-        if (isMovedToAttach()) AndroidUtilities.dp(48f).toFloat() else 0f
+        if (isMovedToAttach() && !IosInputHelper.isAppearance()) AndroidUtilities.dp(48f).toFloat() else 0f
+
+    @JvmStatic
+    fun initialRoundFacing(): RoundVideoSession.CameraFacing =
+        if (nextCameraFront) RoundVideoSession.CameraFacing.FRONT else RoundVideoSession.CameraFacing.BACK
 
     @JvmStatic
     fun interceptForCameraChoice(enterView: ChatActivityEnterView): Boolean {

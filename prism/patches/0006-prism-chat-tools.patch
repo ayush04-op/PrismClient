@@ -1,8 +1,8 @@
 diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
-index fadc7d7b..8ae9e834 100644
+index 1a580583e..cde0f53ab 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
 +++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
-@@ -4039,6 +4039,22 @@ public class ChatActivity extends BaseFragment implements
+@@ -4040,6 +4040,22 @@ public class ChatActivity extends BaseFragment implements
                      } else {
                          getNotificationCenter().postNotificationName(NotificationCenter.openBoostForUsersDialog, dialog_id);
                      }
@@ -25,7 +25,7 @@ index fadc7d7b..8ae9e834 100644
                  } else if (id == report) {
                      ReportBottomSheet.openChat(ChatActivity.this);
                  } else if (id == star) {
-@@ -4631,6 +4647,9 @@ public class ChatActivity extends BaseFragment implements
+@@ -4616,6 +4632,9 @@ public class ChatActivity extends BaseFragment implements
              if (themeDelegate.isThemeChangeAvailable(true)) {
                  headerItem.lazilyAddSubItem(change_colors, R.drawable.msg_background, LocaleController.getString(R.string.SetWallpapers));
              }
@@ -35,11 +35,11 @@ index fadc7d7b..8ae9e834 100644
              if (currentUser != null && currentUser.self && getDialogId() != UserObject.VERIFY) {
                  headerItem.lazilyAddSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
              }
-@@ -30641,6 +30660,7 @@ public class ChatActivity extends BaseFragment implements
+@@ -30789,6 +30808,7 @@ public class ChatActivity extends BaseFragment implements
      @Override
      public void onResume() {
          super.onResume();
 +        desu.inugram.helpers.PrismChatTools.guard(this, dialog_id);
          checkShowBlur(false);
-         inu_updateMenuSlotAvatar();
          desu.inugram.helpers.chat.AttachMinimizeHelper.syncBadge(this);
+         inu_updateMenuSlotAvatar();

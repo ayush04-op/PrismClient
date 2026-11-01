@@ -23,8 +23,14 @@ class ExpandableBoolGroup(
     )
 
     var expanded = false
+    var enabled = true
 
-    fun addTo(items: ArrayList<UItem>, onChange: (options: List<Option>) -> Unit) {
+    fun expandIfContains(id: Int) {
+        if (options.any { it.id == id }) expanded = true
+    }
+
+    /** [info] is a row of its own shown first while the group is open, for a note that belongs to the group */
+    fun addTo(items: ArrayList<UItem>, info: UItem? = null, onChange: (options: List<Option>) -> Unit) {
         for (o in options) if (o.locked && !o.config.value) o.config.value = true
         val shown = options.filter { !it.locked }
         val checkedCount = shown.count { it.config.value }
@@ -35,6 +41,7 @@ class ExpandableBoolGroup(
                 .setChecked(isChecked)
                 .setCollapsed(!expanded)
                 .setClickCallback {
+                    if (!enabled) return@setClickCallback
                     val enable = !isChecked
                     val changed = arrayListOf<Option>()
                     for (opt in options) {
@@ -46,6 +53,7 @@ class ExpandableBoolGroup(
                     onChange(changed)
                 }
                 .onBind(Utilities.Callback { view ->
+                    view.alpha = if (enabled) 1f else 0.5f
                     val cell = view as? TextCheckCell2 ?: return@Callback
                     cell.checkBox.also {
                         it.setDrawIconType(0)
@@ -59,11 +67,14 @@ class ExpandableBoolGroup(
                 })
         )
         if (expanded) {
+            info?.let { items.add(it) }
             for (opt in shown) {
                 items.add(
                     UItem.asRoundCheckbox(opt.id, LocaleController.getString(opt.labelRes))
                         .setChecked(opt.config.value)
                         .setPad(1)
+                        .setEnabled(enabled)
+                        .onBind(Utilities.Callback { it.alpha = if (enabled) 1f else 0.5f })
                 )
             }
         }
@@ -77,6 +88,7 @@ class ExpandableBoolGroup(
         }
         val opt = options.firstOrNull { it.id == item.id } ?: return false
         if (opt.locked) return true // always on
+        if (!enabled) return true
         val new = opt.config.toggle()
         (view as? CheckBoxCell)?.setChecked(new, true)
         onChange(opt)

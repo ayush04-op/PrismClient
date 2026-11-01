@@ -78,6 +78,7 @@ object FontLibrary {
                 if (pick.variable && pick.wghtMin != pick.wghtMax) {
                     val w = targetWeight.coerceIn(pick.wghtMin, pick.wghtMax)
                     builder.setFontVariationSettings("'wght' $w")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) builder.setWeight(w)
                 }
                 builder.build()
             } catch (e: Throwable) {
@@ -92,7 +93,9 @@ object FontLibrary {
                 (!pick.variable && pick.weight != targetWeight)
             // entiny: Telegram's bold is 500; fake-bold via style API when emphasis weight cannot be satisfied
             val fakeBold = !pick.variable && targetWeight >= 500 && pick.weight < targetWeight
-            val finalTf = if (needSynth && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val finalTf = if (fakeBold && !FontConfig.FONT_SYNTHETIC_BOLD.value) {
+                base
+            } else if (needSynth && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 try {
                     if (fakeBold) Typeface.create(base, if (targetItalic) Typeface.BOLD_ITALIC else Typeface.BOLD)
                     else Typeface.create(base, targetWeight, targetItalic)
@@ -118,6 +121,7 @@ object FontLibrary {
             return when {
                 targetWeight in 400..500 ->
                     sorted.firstOrNull { it.weight in targetWeight..500 }
+                        ?: sorted.firstOrNull { targetWeight == 500 && it.weight in 501..700 }
                         ?: sorted.lastOrNull { it.weight < targetWeight }
                         ?: sorted.firstOrNull { it.weight > 500 }
 

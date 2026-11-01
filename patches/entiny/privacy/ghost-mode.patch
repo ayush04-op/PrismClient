@@ -7,12 +7,12 @@ Subject: Add ghost mode (invisible mode) for read receipts, typing and online st
  .../java/org/telegram/messenger/ContactsController.java    | 1 +
  .../main/java/org/telegram/messenger/LocaleController.java | 6 ++++++
  .../java/org/telegram/messenger/MessagesController.java    | 3 +++
- .../main/java/org/telegram/tgnet/ConnectionsManager.java   | 3 +++
+ .../main/java/org/telegram/tgnet/ConnectionsManager.java   | 4 ++++
  .../src/main/java/org/telegram/ui/Cells/DialogCell.java    | 1 +
  .../org/telegram/ui/Components/ChatAvatarContainer.java    | 7 ++++++-
  .../src/main/java/org/telegram/ui/DialogsActivity.java     | 3 +++
  .../src/main/java/org/telegram/ui/ProfileActivity.java     | 6 +++++-
- 8 files changed, 28 insertions(+), 2 deletions(-)
+ 8 files changed, 29 insertions(+), 2 deletions(-)
 
 diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/ContactsController.java b/TMessagesProj/src/main/java/org/telegram/messenger/ContactsController.java
 index 0000000..0000000 100644
@@ -47,7 +47,7 @@ diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesControll
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
 +++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
-@@ -14867,6 +14867,9 @@ public class MessagesController extends BaseController implements NotificationCe
+@@ -14833,6 +14833,9 @@ public class MessagesController extends BaseController implements NotificationCe
      }
  
      public void markDialogAsRead(long dialogId, int maxPositiveId, int maxNegativeId, int maxDate, boolean popup, long threadId, int countDiff, boolean readNow, int scheduledCount) {
@@ -71,6 +71,14 @@ index 0000000..0000000 100644
          try {
              NativeByteBuffer buffer = new NativeByteBuffer(object.getObjectSize());
              object.serializeToStream(buffer);
+@@ -461,6 +464,7 @@ public class ConnectionsManager extends BaseController {
+                     final TLObject finalResponse = resp;
+                     final TLRPC.TL_error finalError = error;
+                     Utilities.stageQueue.postRunnable(() -> {
++                        desu.inugram.helpers.security.GhostHelper.onResponse(object, currentAccount, finalError);
+                         if (onComplete != null) {
+                             onComplete.run(finalResponse, finalError);
+                         } else if (onCompleteTimestamp != null) {
 diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java
@@ -105,7 +113,7 @@ diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
 +++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
-@@ -2948,6 +2948,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+@@ -2949,6 +2949,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
              currentConnectionState = getConnectionsManager().getConnectionState();
  
              observersGroup.addGlobal(NotificationCenter.emojiLoaded);
@@ -113,7 +121,7 @@ index 0000000..0000000 100644
              if (!onlySelect) {
                  observersGroup.addGlobal(NotificationCenter.closeSearchByActiveAction);
                  observersGroup.addGlobal(NotificationCenter.proxySettingsChanged);
-@@ -10893,6 +10894,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+@@ -10899,6 +10900,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
              }
          } else if (id == NotificationCenter.proxySettingsChanged) {
              updateProxyButton(false, false);
@@ -126,7 +134,7 @@ diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java b/
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
 +++ b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
-@@ -11560,7 +11560,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
+@@ -11616,7 +11616,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                      if (userInfo != null && userInfo.stars_rating != null && userInfo.stars_rating.stars < 0) {
                          newString2 = getString(R.string.StarRatingLevelNegative).toLowerCase(Locale.ROOT);
                      } else {

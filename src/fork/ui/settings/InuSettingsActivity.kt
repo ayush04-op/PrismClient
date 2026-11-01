@@ -3,7 +3,6 @@ package desu.inugram.ui.settings
 import android.content.Context
 import android.view.View
 import android.widget.EditText
-import desu.inugram.InuConfig
 import desu.inugram.SearchRegistry
 import desu.inugram.helpers.InuUtils
 import desu.inugram.prism.PrismSafe
@@ -14,7 +13,6 @@ import org.telegram.messenger.LocaleController
 import org.telegram.messenger.browser.Browser
 import org.telegram.messenger.R
 import org.telegram.ui.ActionBar.ActionBarMenuItem
-import org.telegram.ui.Components.BulletinFactory
 import org.telegram.ui.Components.UItem
 import org.telegram.ui.Components.UniversalAdapter
 import org.telegram.ui.ProfileActivity
@@ -25,8 +23,6 @@ class InuSettingsActivity : SettingsPageActivity() {
 
     private var searchAdapter: ProfileActivity.SearchAdapter? = null
     private var isSearchOpen = false
-    private var headerTapCount = 0
-    private var lastHeaderTapAt = 0L
 
     override fun createView(context: Context): View {
         return super.createView(context).also {
@@ -241,9 +237,6 @@ class InuSettingsActivity : SettingsPageActivity() {
         private val BUTTON_TOS = InuUtils.generateId()
         private val BUTTON_PLUGINS = InuUtils.generateId()
         private val CAT_SYSTEM = InuUtils.generateId()
-        private val CAT_NICHE = InuUtils.generateId()
-        private const val HEADER_TAP_COUNT = 5
-        private const val HEADER_TAP_WINDOW_MS = 2000L
         private val BUTTON_CHANNEL_LINK = InuUtils.generateId()
         private val BUTTON_GITHUB = InuUtils.generateId()
         private val BUTTON_CREDITS = InuUtils.generateId()

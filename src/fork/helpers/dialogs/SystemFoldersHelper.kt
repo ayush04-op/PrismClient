@@ -4,9 +4,11 @@ import desu.inugram.InuConfig
 import org.telegram.messenger.ChatObject
 import org.telegram.messenger.LocaleController
 import org.telegram.messenger.MessagesController
+import org.telegram.messenger.MessagesStorage
 import org.telegram.messenger.NotificationCenter
 import org.telegram.messenger.R
 import org.telegram.messenger.UserConfig
+import org.telegram.tgnet.TLRPC
 
 // entiny: virtual folders live only in memory + InuConfig state; ids >= LOCAL_FILTER_ID_BASE keep them out of every server order request
 object SystemFoldersHelper {
@@ -58,11 +60,6 @@ object SystemFoldersHelper {
             if (list.isEmpty()) EMPTY_MARK else list.joinToString(",") { "${it.type.name}:${if (it.enabled) 1 else 0}:${it.pos}" }
     }
 
-    fun missingTypes(): List<Type> {
-        val present = entries().map { it.type }
-        return Type.entries.filter { it !in present }
-    }
-
     fun setEnabled(type: Type, enabled: Boolean) {
         val list = entries()
         val entry = list.firstOrNull { it.type == type } ?: return
@@ -78,12 +75,37 @@ object SystemFoldersHelper {
         syncAll()
     }
 
-    fun addRecommended() {
-        val list = entries()
-        for (type in missingTypes()) list.add(Entry(type, false, -1))
-        list.sortBy { it.type.ordinal }
+    @JvmStatic
+    fun enableFromRecommended(filterId: Int) {
+        val type = Type.entries.firstOrNull { it.id == filterId } ?: return
+        val list = entries().toMutableList()
+        val entry = list.firstOrNull { it.type == type }
+        if (entry != null) {
+            entry.enabled = true
+            entry.pos = -1
+        } else {
+            list.add(Entry(type, true, -1))
+        }
         save(list)
         syncAll()
+    }
+
+    @JvmStatic
+    fun injectRecommended(controller: MessagesController) {
+        controller.suggestedFilters.removeAll { it.filter != null && isSystem(it.filter.id) }
+        val activeIds = controller.dialogFilters.map { it.id }.toSet()
+        for (type in Type.entries) {
+            if (type.id in activeIds) continue
+            val suggested = TLRPC.TL_dialogFilterSuggested()
+            val filter = TLRPC.TL_dialogFilter()
+            filter.id = type.id
+            filter.title = TLRPC.TL_textWithEntities()
+            filter.title.text = LocaleController.getString(type.titleRes)
+            filter.flags = type.flags
+            suggested.filter = filter
+            suggested.description = ""
+            controller.suggestedFilters.add(suggested)
+        }
     }
 
     @JvmStatic
@@ -133,6 +155,8 @@ object SystemFoldersHelper {
             filter.id = entry.type.id
             filter.name = LocaleController.getString(entry.type.titleRes)
             filter.flags = entry.type.flags
+            filter.pendingUnreadCount = -1
+            filter.unreadCount = -1
             val filters = controller.dialogFilters
             filter.order = (filters.maxOfOrNull { it.order } ?: 0) + 1
             val minIndex = if (filters.firstOrNull()?.isDefault == true) 1 else 0
@@ -141,8 +165,32 @@ object SystemFoldersHelper {
             controller.dialogFiltersById.put(filter.id, filter)
             changed = true
         }
+        var repointed = false
+        for (i in controller.selectedDialogFilter.indices) {
+            val current = controller.selectedDialogFilter[i] ?: continue
+            if (!isSystem(current.id)) continue
+            val fresh = controller.dialogFiltersById.get(current.id) ?: continue
+            if (fresh !== current) {
+                controller.selectedDialogFilter[i] = fresh
+                repointed = true
+            }
+        }
+        if (repointed) controller.sortDialogs(null)
         if (changed) {
             NotificationCenter.getInstance(account).postNotificationName(NotificationCenter.dialogFiltersUpdated)
+            MessagesStorage.getInstance(account).inu_recalcUnread()
         }
+    }
+
+    @JvmStatic
+    fun withSystem(account: Int, base: List<MessagesController.DialogFilter>): ArrayList<MessagesController.DialogFilter> {
+        val result = ArrayList(base)
+        try {
+            for (filter in ArrayList(MessagesController.getInstance(account).dialogFilters)) {
+                if (isSystem(filter.id) && result.none { it.id == filter.id }) result.add(filter)
+            }
+        } catch (_: Exception) {
+        }
+        return result
     }
 }

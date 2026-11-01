@@ -109,6 +109,12 @@ class FontsSettingsActivity : SettingsPageActivity(), NotificationCenter.Notific
                 listView.adapter.update(true)
             }
 
+            BUTTON_SYNTHETIC_BOLD -> {
+                FontConfig.FONT_SYNTHETIC_BOLD.toggle()
+                showRestartBulletin()
+                listView.adapter.update(true)
+            }
+
             BUTTON_INCLUDE_SYSTEM -> {
                 if (FontConfig.FONT_INCLUDE_SYSTEM.toggle()) FontLibrary.ensureSystemFontsLoaded()
                 FontLibrary.invalidateEditorRoster()
@@ -289,6 +295,7 @@ class FontsSettingsActivity : SettingsPageActivity(), NotificationCenter.Notific
 
         private val BUTTON_APP_FONT = InuUtils.generateId()
         private val BUTTON_INCLUDE_SYSTEM = InuUtils.generateId()
+        private val BUTTON_SYNTHETIC_BOLD = InuUtils.generateId()
         private val BUTTON_ADD = InuUtils.generateId()
         private val BUTTON_RESET = InuUtils.generateId()
         private val BUTTON_IMPORT_PROGRESS = InuUtils.generateId()

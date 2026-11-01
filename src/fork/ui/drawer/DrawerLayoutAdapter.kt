@@ -298,6 +298,11 @@ class DrawerLayoutAdapter(
                     items.add(Item(8, LocaleController.getString(R.string.Settings), R.drawable.msg_settings))
                 DrawerMenuConfig.Item.ENTINY_SETTINGS ->
                     items.add(Item(ITEM_ENTINY_SETTINGS, LocaleController.getString(R.string.InuSettings), R.drawable.icon_settings_inu))
+                DrawerMenuConfig.Item.PLUGIN_SETTINGS -> {
+                    // #if PLUGINS
+                    items.add(Item(ITEM_PLUGIN_SETTINGS, LocaleController.getString(R.string.InuPlugins), R.drawable.msg_customize))
+                    // #endif
+                }
                 DrawerMenuConfig.Item.RESTART_APP ->
                     items.add(Item(ITEM_RESTART_APP, LocaleController.getString(R.string.InuRestartApp), R.drawable.msg_retry))
             }
@@ -305,13 +310,17 @@ class DrawerLayoutAdapter(
         // #if PLUGINS
         val pluginRows = DrawerHelper.globalActionRows
         if (pluginRows.isNotEmpty()) {
-            items.add(null)
+            addDivider()
             for (row in pluginRows) {
                 items.add(Item(PluginActions.optionIdFor(row.key), row.text, R.drawable.msg_settings))
             }
         }
         // #endif
         while (items.isNotEmpty() && items[items.size - 1] == null) items.removeAt(items.size - 1)
+    }
+
+    private fun addDivider() {
+        if (items.isNotEmpty() && items.last() != null) items.add(null)
     }
 
     companion object {
@@ -323,6 +332,7 @@ class DrawerLayoutAdapter(
         const val ITEM_ENTINY_SETTINGS = 23
         const val ITEM_RESTART_APP = 24
         const val ITEM_BOOKMARKS = 25
+        const val ITEM_PLUGIN_SETTINGS = 26
     }
 
     class Item private constructor(

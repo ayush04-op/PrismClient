@@ -1,5 +1,7 @@
 package desu.inugram.helpers.chat
 
+import desu.inugram.helpers.archive.DeletedMessagesHelper
+import desu.inugram.helpers.archive.EditHistoryHelper
 import android.Manifest
 import android.content.ClipData
 import android.content.Context
@@ -14,11 +16,12 @@ import android.text.Layout
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.Spanned
+import android.text.style.ClickableSpan
 import android.text.StaticLayout
 import android.text.style.ForegroundColorSpan
 import android.text.TextUtils
 import android.view.Gravity
-import desu.inugram.helpers.vibration.HapticFeedbackConstants
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.View.MeasureSpec
 import android.widget.FrameLayout
@@ -50,11 +53,14 @@ import desu.inugram.helpers.ai.AiSummaryHelper
 import desu.inugram.helpers.WebAppHelper
 import desu.inugram.helpers.cloud.SettingsBackupHelper
 import desu.inugram.helpers.font.FontImportHelper
+import desu.inugram.helpers.menu.MenuOrderEntry
+import desu.inugram.helpers.icons.IconPackHelper
 import desu.inugram.helpers.menu.MessageMenuConfig
 import desu.inugram.helpers.menu.reorderByMenu
 import desu.inugram.helpers.security.GhostHelper
 import desu.inugram.helpers.security.SelfDestructHelper
 import desu.inugram.helpers.menu.reorderByKeys
+import desu.inugram.helpers.restrictions.RestrictedFeaturesHelper
 import desu.inugram.helpers.translate.TranslateHelper
 import desu.inugram.ui.showInputDialog
 import java.io.File
@@ -66,17 +72,13 @@ import org.telegram.messenger.ApplicationLoader
 import org.telegram.messenger.BuildVars
 import org.telegram.messenger.ChatObject
 import org.telegram.messenger.DialogObject
-import org.telegram.messenger.DispatchQueue
 import org.telegram.messenger.FileLoader
-import org.telegram.messenger.ImageLocation
 import org.telegram.messenger.LocaleController
 import org.telegram.messenger.MediaController
 import org.telegram.messenger.MessageObject
 import org.telegram.messenger.MessagePreviewParams
 import org.telegram.messenger.MessageSuggestionParams
-import org.telegram.messenger.MessagesController
 import org.telegram.messenger.MessagesStorage
-import org.telegram.messenger.NotificationCenter
 import org.telegram.messenger.SendMessageChatArguments
 import org.telegram.messenger.R
 import org.telegram.messenger.SendMessagesHelper
@@ -116,8 +118,7 @@ import org.telegram.ui.Components.URLSpanUserMention
 import org.telegram.ui.DialogsActivity
 import org.telegram.ui.LaunchActivity
 import java.util.UUID
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
+import java.util.WeakHashMap
 import kotlin.math.ceil
 
 object ChatHelper {
@@ -132,10 +133,6 @@ object ChatHelper {
 
     private const val COMPACT_FORWARD_ICON_SIZE = 12f
     private const val COMPACT_FORWARD_MIN_NAME_WIDTH = 56f
-
-    private const val RESTRICTED_FORWARD_TIMEOUT_MS = 10 * 60 * 1000L
-
-    private val restrictedForwardQueue by lazy { DispatchQueue("inuRestrictedForward") }
 
     // NOTE: update PluginChatHistory's LOCAL_MESSAGE_OPTIONS and REAL_MESSAGE_OPTIONS as needed.
     const val OPTION_SAVE = 501
@@ -157,7 +154,7 @@ object ChatHelper {
     const val OPTION_MARK_AS_READ = 522
     const val OPTION_AI_SUMMARIZE = 523
     const val OPTION_ADD_FILTER = 524
-    const val OPTION_BURN_ONE_TIME = 526
+    const val OPTION_MARK_VIEWED = 526
     const val OPTION_SAVE_ONE_TIME = 527
     const val OPTION_FORWARD_PRO = 528
     const val OPTION_SHARE_ONE_TIME = 529
@@ -169,6 +166,9 @@ object ChatHelper {
     const val OPTION_LOCAL_EDIT_RESET = 535
     const val OPTION_SAVE_VOICE_TO_DOWNLOADS = 536
     const val OPTION_BOOKMARK = 537
+    const val OPTION_ENTINY_GROUP = 538
+
+    val groupedMenuEntries = ArrayList<Triple<CharSequence, Int, Int>>()
 
     private fun getForwardsCount(msg: MessageObject?): Int {
         if (msg == null || !InuConfig.SHOW_FORWARDS_COUNT.value) return 0
@@ -182,7 +182,7 @@ object ChatHelper {
     }
 
     private fun isBookmarked(msg: MessageObject?): Boolean =
-        msg != null && msg.id > 0 && isMenuItemEnabled(MessageMenuConfig.Item.BOOKMARK) &&
+        msg != null && msg.id > 0 && isBookmarkMenuEnabled() &&
             BookmarksHelper.isBookmarked(msg.currentAccount, msg.getDialogId(), msg.id)
 
     @JvmStatic
@@ -196,7 +196,7 @@ object ChatHelper {
         if (BlockedMessagesHelper.shouldSpoil(msg)) {
             hash = hash * 31 + 2
         }
-        if (isDeletedOrPreserved(msg)) {
+        if (DeletedMessagesHelper.isKept(msg)) {
             hash = hash * 31 + 3
             hash = hash * 31 + InuConfig.DELETED_MARK_COLOR.value
             hash = hash * 31 + InuConfig.DELETED_MARK_STYLE.value
@@ -223,10 +223,11 @@ object ChatHelper {
         if (BlockedMessagesHelper.shouldSpoil(msg)) {
             width += AndroidUtilities.dp(11f)
         }
-        val isDeleted = isDeletedOrPreserved(msg)
+        val isDeleted = DeletedMessagesHelper.isKept(msg)
         if (isDeleted) {
-            if (InuConfig.DELETED_MARK_STYLE.value != InuConfig.DeletedMarkStyleItem.NOTHING) {
-                width += AndroidUtilities.dp(deletedMarkSizeDp()) + ceil(Theme.chat_timePaint.measureText(" ")).toInt()
+            when (InuConfig.DELETED_MARK_STYLE.value) {
+                InuConfig.DeletedMarkStyleItem.NOTHING, InuConfig.DeletedMarkStyleItem.TEXT -> {}
+                else -> width += AndroidUtilities.dp(deletedMarkSizeDp()) + ceil(Theme.chat_timePaint.measureText(" ")).toInt()
             }
         } else if (edited && InuConfig.COMPACT_EDITED.value) {
             width += AndroidUtilities.dp(11f)
@@ -239,25 +240,33 @@ object ChatHelper {
         return width
     }
 
+    private class CachedTimePrefix(val key: Int, val text: CharSequence)
+
+    private val timePrefixCache = WeakHashMap<MessageObject, CachedTimePrefix>()
+
     @JvmStatic
     fun timePrefix(msg: MessageObject?, time: CharSequence?, edited: Boolean = false): CharSequence? {
         if (time == null || msg == null) return time
+        val key = 31 * (31 * time.hashCode() + timeAdditionsHash(msg)) + (if (edited) 1 else 0)
+        timePrefixCache[msg]?.let { if (it.key == key) return it.text }
         val sb = SpannableStringBuilder()
-        SavedMessagesHelper.historyTimeLabel(msg)?.let { sb.append(it) }
         TranslateHelper.appendTimePrefix(sb, msg)
         if (BlockedMessagesHelper.shouldSpoil(msg)) {
             appendTimeIcon(sb, R.drawable.msg_block, sizeDp = 11f, translateYDp = 1f)
             sb.append(" ")
         }
-        val isDeleted = isDeletedOrPreserved(msg)
+        val isDeleted = DeletedMessagesHelper.isKept(msg)
         if (isDeleted) {
-            if (InuConfig.DELETED_MARK_STYLE.value != InuConfig.DeletedMarkStyleItem.NOTHING) {
-                val markColor = InuConfig.DELETED_MARK_COLOR.value
-                appendTimeIcon(sb, deletedMarkIconRes(), sizeDp = deletedMarkSizeDp(), overrideColor = markColor)
-                sb.append(" ")
-            } else {
-                appendDeletedMarkText(sb)
-                sb.append(" ")
+            when (InuConfig.DELETED_MARK_STYLE.value) {
+                InuConfig.DeletedMarkStyleItem.NOTHING -> {}
+                InuConfig.DeletedMarkStyleItem.TEXT -> {
+                    appendDeletedMarkText(sb)
+                    sb.append(" ")
+                }
+                else -> {
+                    appendTimeIcon(sb, deletedMarkIconRes(), sizeDp = deletedMarkSizeDp(), overrideColor = InuConfig.DELETED_MARK_COLOR.value)
+                    sb.append(" ")
+                }
             }
         } else if (edited && InuConfig.COMPACT_EDITED.value) {
             appendTimeIcon(sb, R.drawable.group_edit, sizeDp = 11f)
@@ -271,7 +280,9 @@ object ChatHelper {
             sb.append(LocaleController.formatString(R.string.InuReadAt, LocaleController.formatDateTime(it.toLong(), true)))
             sb.append(" ")
         }
-        return if (sb.isEmpty()) time else sb.append(time)
+        val result = if (sb.isEmpty()) time else sb.append(time)
+        timePrefixCache[msg] = CachedTimePrefix(key, result)
+        return result
     }
 
     @JvmStatic
@@ -285,7 +296,7 @@ object ChatHelper {
     // entiny: the trash/cross/eye marks are 14dp vectors (ported from NagramXF) whose glyph fills most of the box; the 24dp tabler outline needs a larger box to look as big
     @JvmStatic
     fun deletedMarkSizeDp(): Float =
-        if (InuConfig.DELETED_MARK_STYLE.value == InuConfig.DeletedMarkStyleItem.TRASH_BIN_OUTLINE) 18f else 14f
+        if (InuConfig.DELETED_MARK_STYLE.value == InuConfig.DeletedMarkStyleItem.TRASH_BIN_OUTLINE) 13f else 14f
 
     @JvmStatic
     fun appendDeletedMarkText(sb: SpannableStringBuilder) {
@@ -300,34 +311,24 @@ object ChatHelper {
         }
     }
 
-    @JvmStatic
-    fun isDeletedOrPreserved(msg: MessageObject?): Boolean {
-        if (msg == null) return false
-        if (!InuConfig.SAVE_DELETED_MESSAGES.value) return false
-        if (SavedMessagesHelper.isHistoryPreview(msg)) return false
-        if (msg.deleted) return true
-        return SavedMessagesHelper.isMessageDeleted(msg.currentAccount, msg.getDialogId(), msg.id)
-    }
-
     // entiny: clamped in setAlpha because RecyclerView item animator resets alpha to 1 during animations
     @JvmStatic
     fun deletedAlpha(msg: MessageObject?): Float {
         if (msg == null) return 1f
         if (!InuConfig.DELETED_MESSAGES_TRANSPARENT.value) return 1f
-        return if (isDeletedOrPreserved(msg)) 0.65f else 1f
+        return if (DeletedMessagesHelper.isKept(msg)) 0.65f else 1f
     }
 
     @JvmStatic
     fun canClickTime(msg: MessageObject?): Boolean {
         if (msg == null) return false
-        if (SavedMessagesHelper.isHistoryPreview(msg)) return false
+        if (EditHistoryHelper.isHistoryPreview(msg)) return false
         val dialogId = msg.getDialogId()
         val msgId = msg.id
-        val isDeleted = SavedMessagesHelper.isMessageDeleted(msg.currentAccount, dialogId, msgId)
+        val isDeleted = DeletedMessagesHelper.isKept(msg.currentAccount, dialogId, msgId)
         if (isDeleted) return true
         if (!InuConfig.SAVE_EDITED_MESSAGES.value) return false
-        val isEdited = (msg.messageOwner != null && (msg.messageOwner.flags and TLRPC.MESSAGE_FLAG_EDITED) != 0) || (msg.messageOwner?.edit_date ?: 0) != 0
-        return isEdited || SavedMessagesHelper.hasEditHistory(msg.currentAccount, dialogId, msgId)
+        return EditHistoryHelper.isEdited(msg) || EditHistoryHelper.hasEditHistory(msg.currentAccount, dialogId, msgId)
     }
 
     @JvmStatic
@@ -338,16 +339,15 @@ object ChatHelper {
         val delegate = cell.delegate
         val parentFragment = if (delegate is ChatActivity) delegate else null
 
-        val isDeleted = SavedMessagesHelper.isMessageDeleted(msg.currentAccount, dialogId, msgId)
+        val isDeleted = DeletedMessagesHelper.isKept(msg.currentAccount, dialogId, msgId)
         if (isDeleted) {
-            SavedMessagesHelper.showDeletionTimeBulletin(cell.context, parentFragment, dialogId, msgId)
+            DeletedMessagesHelper.showDeletionTimeBulletin(cell.context, parentFragment, msg)
             return true
         }
 
         if (InuConfig.SAVE_EDITED_MESSAGES.value) {
-            val isEdited = (msg.messageOwner != null && (msg.messageOwner.flags and TLRPC.MESSAGE_FLAG_EDITED) != 0) || (msg.messageOwner?.edit_date ?: 0) != 0
-            if (isEdited || SavedMessagesHelper.hasEditHistory(msg.currentAccount, dialogId, msgId)) {
-                SavedMessagesHelper.showEditHistoryDialog(cell.context, parentFragment, msg)
+            if (EditHistoryHelper.isEdited(msg) || EditHistoryHelper.hasEditHistory(msg.currentAccount, dialogId, msgId)) {
+                EditHistoryHelper.showEditHistoryDialog(cell.context, parentFragment, msg)
                 return true
             }
         }
@@ -466,6 +466,7 @@ object ChatHelper {
         noforwards: Boolean,
         allowSendActions: Boolean
     ) {
+        groupedMenuEntries.clear()
         if (allowSendActions && !noforwards && activity.currentChat != null && !ChatObject.isChannelAndNotMegaGroup(activity.currentChat)
             // #if PLUGINS
             || PluginChatHistory.showsInChat(activity, selectedObject)
@@ -541,12 +542,13 @@ object ChatHelper {
             icons.add(R.drawable.inu_tabler_eye_off)
         }
 
-        if (options.contains(ChatActivity.OPTION_FORWARD)) {
+        // entiny: with Forward Pro on, plain Forward already opens its sheet, whose toggles cover both extra entries
+        if (options.contains(ChatActivity.OPTION_FORWARD) && !InuConfig.FORWARD_PRO.value) {
             items.add(LocaleController.getString(R.string.InuForwardNoQuote))
             options.add(OPTION_FORWARD_NO_QUOTE)
             icons.add(R.drawable.msg_forward_noquote)
 
-            // entiny: always offered — forces Forward Pro for this one share regardless of the global setting.
+            // entiny: offered while the global setting is off — opens Forward Pro for this one share.
             items.add(LocaleController.getString(R.string.InuForwardPro))
             options.add(OPTION_FORWARD_PRO)
             icons.add(R.drawable.msg_forward)
@@ -560,8 +562,16 @@ object ChatHelper {
             icons.add(R.drawable.msg_retry)
         }
 
-        val chatInfo = activity.currentChatInfo
-        if (chatInfo != null && chatInfo.can_view_stats && selectedObject.id > 0 && !selectedObject.isStory) {
+        val owner = selectedObject.messageOwner
+        val statsChat = when {
+            owner.fwd_from == null -> activity.currentChat
+            owner.fwd_from.saved_from_msg_id != 0 && selectedObject.fromChatId < 0 ->
+                activity.messagesController.getChat(-selectedObject.fromChatId)
+            else -> null
+        }
+        if ((owner.views > 0 || owner.forwards > 0) && ChatObject.hasAdminRights(statsChat) &&
+            selectedObject.id > 0 && !selectedObject.isStory
+        ) {
             items.add(LocaleController.getString(R.string.Statistics))
             options.add(ChatActivity.OPTION_STATISTICS)
             icons.add(R.drawable.msg_stats)
@@ -601,11 +611,14 @@ object ChatHelper {
             icons.add(R.drawable.msg_download)
         }
 
-        // entiny: OPTION_COPY fallback copies media URI since stock only covers text/caption
-        if (!noforwards && !options.contains(ChatActivity.OPTION_COPY) &&
-            mediaFileForCopy(activity.currentAccount, selectedObject) != null
-        ) {
-            items.add(LocaleController.getString(R.string.Copy))
+        // entiny: stock copies only text/caption; add the media copy next to it, or in place of it when there is no text
+        if (!noforwards && mediaFileForCopy(activity.currentAccount, selectedObject) != null) {
+            val label = when {
+                !options.contains(ChatActivity.OPTION_COPY) -> R.string.Copy
+                selectedObject.isPhoto -> R.string.InuCopyPhoto
+                else -> R.string.InuCopyFrame
+            }
+            items.add(LocaleController.getString(label))
             options.add(OPTION_COPY_MEDIA)
             icons.add(R.drawable.msg_copy)
         }
@@ -624,7 +637,7 @@ object ChatHelper {
             }
         }
 
-        if (InuConfig.SAVE_EDITED_MESSAGES.value && SavedMessagesHelper.hasEditHistory(activity.currentAccount, selectedObject.dialogId, selectedObject.id)) {
+        if (InuConfig.SAVE_EDITED_MESSAGES.value && EditHistoryHelper.hasEditHistory(activity.currentAccount, selectedObject.dialogId, selectedObject.id)) {
             items.add(LocaleController.getString(R.string.InuEditHistory))
             options.add(OPTION_EDIT_HISTORY)
             icons.add(R.drawable.group_edit)
@@ -659,15 +672,14 @@ object ChatHelper {
             icons.add(R.drawable.msg_share)
         }
 
-        // entiny: burn opens the secret viewer, so it cannot coexist with show-as-regular-photo
-        if (InuConfig.BURN_TIMED_MEDIA.value &&
+        if (InuConfig.ONE_TIME_PEEK.value &&
             selectedObject.isSecretMedia() &&
             !selectedObject.isOut() &&
-            !InuConfig.VIEW_ONCE_SHOW_NORMAL.value
+            SelfDestructHelper.shouldPreserveMedia(dialogId)
         ) {
-            items.add(LocaleController.getString(R.string.InuOpenTimedMedia))
-            options.add(OPTION_BURN_ONE_TIME)
-            icons.add(R.drawable.filled_fire)
+            items.add(LocaleController.getString(R.string.InuOneTimeMark))
+            options.add(OPTION_MARK_VIEWED)
+            icons.add(R.drawable.msg_seen)
         }
 
         if (GhostHelper.shouldSuppressRead(activity.dialogId)) {
@@ -697,6 +709,7 @@ object ChatHelper {
 
         reservePluginItems(items, options, icons, activity, selectedObject, selectedObjectGroup)
         // #endif
+        groupEntinyMenuItems(items, options, icons)
         applyMessageMenuOrder(items, options, icons)
     }
 
@@ -779,6 +792,10 @@ object ChatHelper {
             val menu = messageMenu ?: return
             cell.setRightIcon(R.drawable.msg_arrowright)
             if (menu.done) bindActionsCell(menu, cell) else menu.actionsCell = cell
+            return
+        }
+        if (option == OPTION_ENTINY_GROUP) {
+            cell.setRightIcon(R.drawable.msg_arrowright)
             return
         }
         if (option < PluginActions.OPTION_BASE) return
@@ -1076,9 +1093,27 @@ object ChatHelper {
                     BookmarksHelper.Result.LIMIT -> bulletins.createSimpleBulletin(R.raw.error, text)
                     BookmarksHelper.Result.ADDED -> {
                         val dialogId = selectedObject.getDialogId()
-                        bulletins.createSimpleBulletin(R.raw.saved_messages, text, LocaleController.getString(R.string.InuBookmarks)) {
-                            activity.presentFragment(desu.inugram.ui.BookmarksActivity(dialogId))
+                        val label = LocaleController.getString(R.string.InuBookmarks)
+                        val spannable = SpannableStringBuilder(text)
+                        var start = spannable.toString().indexOf(label)
+                        var length = label.length
+                        if (start < 0) {
+                            start = spannable.toString().lastIndexOf(' ') + 1
+                            length = spannable.length - start
                         }
+                        if (length > 0) {
+                            spannable.setSpan(object : ClickableSpan() {
+                                override fun onClick(widget: View) {
+                                    activity.presentFragment(desu.inugram.ui.BookmarksActivity(dialogId))
+                                }
+                                override fun updateDrawState(ds: android.text.TextPaint) {
+                                    super.updateDrawState(ds)
+                                    ds.color = Theme.getColor(Theme.key_undo_cancelColor)
+                                    ds.isUnderlineText = true
+                                }
+                            }, start, start + length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        }
+                        bulletins.createSimpleBulletin(R.raw.saved_messages, if (length > 0) spannable else text)
                     }
                     else -> bulletins.createSimpleBulletin(R.raw.saved_messages, text)
                 }
@@ -1093,10 +1128,18 @@ object ChatHelper {
             OPTION_HIDE_MESSAGE -> {
                 val messages = selectedObjectGroup?.messages ?: listOf(selectedObject)
                 BlockedMessagesHelper.hideManually(activity.chatAdapter, messages)
+                BulletinFactory.of(activity).createSimpleBulletin(
+                    R.raw.info,
+                    LocaleController.getString(R.string.InuMessageHidden),
+                    LocaleController.getString(R.string.Undo),
+                ) { BlockedMessagesHelper.unhideManually(activity.chatAdapter, messages) }.show()
             }
 
             OPTION_FORWARD_PRO -> {
-                ForwardProHelper.openEditorDialog(activity, selectedObject, selectedObjectGroup)
+                ForwardProHelper.openSheet(activity, selectedObjectGroup?.messages ?: listOf(selectedObject), forcePro = true)
+                activity.selectedObject = null
+                activity.selectedObjectToEditCaption = null
+                activity.selectedObjectGroup = null
             }
 
             OPTION_REPLY_IN -> {
@@ -1162,8 +1205,14 @@ object ChatHelper {
             }
 
             OPTION_FORWARD_NO_QUOTE -> {
-                activity.processSelectedOption(ChatActivity.OPTION_FORWARD)
-                pendingHideAuthor = true
+                if (ForwardProHelper.takeOver(activity, selectedObject, selectedObjectGroup, noQuote = true)) {
+                    activity.selectedObject = null
+                    activity.selectedObjectToEditCaption = null
+                    activity.selectedObjectGroup = null
+                } else {
+                    activity.processSelectedOption(ChatActivity.OPTION_FORWARD)
+                    pendingHideAuthor = true
+                }
             }
 
             OPTION_REPLY_IN_DMS -> {
@@ -1241,7 +1290,7 @@ object ChatHelper {
 
             OPTION_EDIT_HISTORY -> {
                 // entiny: pass real MessageObject so history screen does not synthesize stand-in without peer
-                SavedMessagesHelper.showEditHistoryDialog(activity.parentActivity, activity, selectedObject)
+                EditHistoryHelper.showEditHistoryDialog(activity.parentActivity, activity, selectedObject)
             }
 
             OPTION_SAVE_ONE_TIME -> {
@@ -1256,13 +1305,7 @@ object ChatHelper {
                 shareOneTimeMedia(activity, selectedObject)
             }
 
-            OPTION_BURN_ONE_TIME -> {
-                // entiny: keep mode copies first, the stock viewer empties the local file when it closes
-                if (InuConfig.TIMED_MEDIA_AFTER_VIEW.value == InuConfig.TimedMediaAfterViewItem.KEEP) {
-                    saveOneTimeMedia(activity, selectedObject, copyFirst = true)
-                }
-                openSecretViewer(activity, selectedObject)
-            }
+            OPTION_MARK_VIEWED -> SelfDestructHelper.markViewed(selectedObject)
 
             OPTION_SAVE_VOICE_TO_DOWNLOADS -> {
                 val parent = activity.parentActivity ?: return true
@@ -1291,20 +1334,10 @@ object ChatHelper {
     @JvmStatic
     fun autoSaveOneTime(activity: ChatActivity, message: MessageObject) {
         if (!InuConfig.AUTO_SAVE_ONE_TIME.value) return
-        saveOneTimeMedia(activity, message, copyFirst = true)
+        saveOneTimeMedia(activity, message, copyFirst = true, silent = true)
     }
 
-    private fun openSecretViewer(activity: ChatActivity, message: MessageObject) {
-        // entiny: populate messageOwner.ttl from media.ttl_seconds so stock secret viewer does not return null
-        val media = message.messageOwner.media
-        if (message.messageOwner.ttl <= 0 && media != null && media.ttl_seconds != 0) {
-            message.messageOwner.ttl = media.ttl_seconds
-        }
-        // entiny: open secret media viewer to follow normal view-once playback flow before expiring
-        activity.inu_openSecretMediaViewer(message)
-    }
-
-    private fun saveOneTimeMedia(activity: ChatActivity, message: MessageObject, copyFirst: Boolean = false) {
+    private fun saveOneTimeMedia(activity: ChatActivity, message: MessageObject, copyFirst: Boolean = false, silent: Boolean = false) {
         val parent = activity.parentActivity ?: return
         if (!StickerDownloadHelper.ensureStoragePermission(parent)) return
 
@@ -1365,14 +1398,15 @@ object ChatHelper {
             null
         }
 
-        MediaController.saveFile((scratch ?: source).absolutePath, parent, type, name, document?.mime_type) {
+        MediaController.saveFile((scratch ?: source).absolutePath, parent, type, name, document?.mime_type) { uri ->
+            android.util.Log.d("InuViewed", "one-time mid=" + message.id + " saved uri=" + uri)
             scratch?.delete()
-            BulletinFactory.of(activity).createDownloadBulletin(bulletinType, 1, activity.themeDelegate).show()
+            if (!silent) BulletinFactory.of(activity).createDownloadBulletin(bulletinType, 1, activity.themeDelegate).show()
         }
     }
 
     // entiny: size reads to remaining bytes because EncryptedFileInputStream advances keystream by requested length
-    private fun decryptOneTimeFile(source: File, keyFile: File, target: File): Boolean {
+    internal fun decryptOneTimeFile(source: File, keyFile: File, target: File): Boolean {
         return try {
             var complete = true
             EncryptedFileInputStream(source, keyFile).use { input ->
@@ -1403,9 +1437,9 @@ object ChatHelper {
 
     private fun shareOneTimeMedia(activity: ChatActivity, message: MessageObject) {
         val parent = activity.parentActivity ?: return
-        restrictedForwardQueue.postRunnable {
+        RestrictedFeaturesHelper.restrictedForwardQueue.postRunnable {
             val temporaryFiles = ArrayList<File>()
-            val source = awaitRestrictedMedia(activity.currentAccount, listOf(message), temporaryFiles)[message]
+            val source = RestrictedFeaturesHelper.awaitRestrictedMedia(activity.currentAccount, listOf(message), temporaryFiles)[message]
             val sharedFile = source?.let { stageOneTimeShare(parent.filesDir, it) }
             temporaryFiles.forEach { it.delete() }
             AndroidUtilities.runOnUIThread {
@@ -1438,7 +1472,7 @@ object ChatHelper {
         }
     }
 
-    private fun showOneTimeMediaError() {
+    internal fun showOneTimeMediaError() {
         android.widget.Toast.makeText(
             ApplicationLoader.applicationContext,
             R.string.ErrorOccurred,
@@ -1490,7 +1524,7 @@ object ChatHelper {
     }
 
     private fun canForwardRepeat(activity: ChatActivity, selected: MessageObject): Boolean {
-        val noforwards = (activity.isPeerNoForwards || selected.messageOwner?.noforwards == true) && !InuConfig.ALLOW_FORWARD_RESTRICTED.value
+        val noforwards = activity.isPeerNoForwards || RestrictedFeaturesHelper.noforwards(selected.messageOwner)
         return !noforwards && selected.canForwardMessage()
     }
 
@@ -1578,7 +1612,7 @@ object ChatHelper {
         return true
     }
 
-    private fun buildResendAction(
+    internal fun buildResendAction(
         helper: SendMessagesHelper,
         account: Int,
         target: MessageObject,
@@ -1617,7 +1651,7 @@ object ChatHelper {
         return Runnable { helper.sendMessage(params) }
     }
 
-    private fun buildResendParams(
+    internal fun buildResendParams(
         account: Int,
         target: MessageObject,
         did: Long,
@@ -1722,337 +1756,6 @@ object ChatHelper {
             FileLoader.getDirectory(FileLoader.MEDIA_DIR_CACHE),
             "${location.volume_id}_${location.local_id}.jpg",
         )
-    }
-
-    // entiny: check raw noforwards flags because isPeerNoForwards returns false when toggle is on
-    private fun isSourceNoForwards(controller: MessagesController, msg: MessageObject): Boolean {
-        if (msg.messageOwner?.noforwards == true) return true
-        val dialogId = msg.dialogId
-        if (dialogId < 0) {
-            val chat = controller.getChat(-dialogId) ?: return false
-            val migratedTo = chat.migrated_to?.let { controller.getChat(it.channel_id) }
-            return (migratedTo ?: chat).noforwards
-        }
-        val userFull = controller.getUserFull(dialogId) ?: return false
-        return userFull.noforwards_peer_enabled || userFull.noforwards_my_enabled
-    }
-
-    @JvmStatic
-    fun splitRestrictedForward(messages: MutableList<MessageObject>, controller: MessagesController): ArrayList<MessageObject>? {
-        var restricted: ArrayList<MessageObject>? = null
-        val it = messages.iterator()
-        while (it.hasNext()) {
-            val msg = it.next()
-            if (msg.id <= 0) continue
-            // entiny: cloud view-once media joins the force-forward re-upload path when the one-time gate is bypassed
-            val onceView = (msg.messageOwner?.media?.ttl_seconds ?: 0) != 0 &&
-                desu.inugram.helpers.security.SelfDestructHelper.shouldPreserveMedia(msg.dialogId) &&
-                !DialogObject.isEncryptedDialog(msg.dialogId)
-            if (!onceView) {
-                if (msg.needDrawBluredPreview()) continue
-                if ((msg.messageOwner?.media?.ttl_seconds ?: 0) != 0) continue
-                if (DialogObject.isEncryptedDialog(msg.dialogId)) continue
-                if (!isSourceNoForwards(controller, msg)) continue
-            }
-            if (restricted == null) restricted = ArrayList()
-            restricted.add(msg)
-            it.remove()
-        }
-        return restricted
-    }
-
-    @JvmStatic
-    fun sendRestrictedForward(
-        helper: SendMessagesHelper,
-        account: Int,
-        messages: List<MessageObject>,
-        did: Long,
-        notify: Boolean,
-        scheduleDate: Int,
-        scheduleRepeatPeriod: Int,
-        threadMsg: MessageObject?,
-        mono: Long,
-        suggest: MessageSuggestionParams?,
-        hideCaption: Boolean,
-        payStars: Long,
-    ) {
-        val limit = if (UserConfig.getInstance(account).isPremium) FileLoader.DEFAULT_MAX_FILE_SIZE_PREMIUM else FileLoader.DEFAULT_MAX_FILE_SIZE
-        val (tooBig, fits) = messages.partition { (it.document?.size ?: 0L) > limit }
-        // entiny: re-upload hits the account upload limit, so skip oversized files up front instead of a silent "!"
-        if (tooBig.isNotEmpty()) showForwardToast(LocaleController.formatString(R.string.InuForwardTooLarge, AndroidUtilities.formatFileSize(limit)))
-        val batch = ArrayList(fits)
-        if (batch.isEmpty()) return
-        restrictedForwardQueue.postRunnable {
-            val temporaryFiles = ArrayList<File>()
-            val files = awaitRestrictedMedia(account, batch, temporaryFiles)
-            val missingViewOnce = batch.any { isCloudViewOnce(it) && needsMediaReupload(it) && files[it] == null }
-            val actions = buildRestrictedForwardActions(
-                helper, account, batch, files, did, notify, scheduleDate, scheduleRepeatPeriod,
-                threadMsg, mono, suggest, hideCaption, payStars,
-            )
-            if (missingViewOnce) {
-                AndroidUtilities.runOnUIThread { showOneTimeMediaError() }
-            }
-            if (actions.isEmpty()) {
-                temporaryFiles.forEach { it.delete() }
-                return@postRunnable
-            }
-            watchRestrictedForwardUploads(account, temporaryFiles)
-            AndroidUtilities.runOnUIThread { actions.forEach { it.run() } }
-        }
-    }
-
-    private fun buildRestrictedForwardActions(
-        helper: SendMessagesHelper,
-        account: Int,
-        messages: List<MessageObject>,
-        files: Map<MessageObject, File>,
-        did: Long,
-        notify: Boolean,
-        scheduleDate: Int,
-        scheduleRepeatPeriod: Int,
-        threadMsg: MessageObject?,
-        mono: Long,
-        suggest: MessageSuggestionParams?,
-        hideCaption: Boolean,
-        payStars: Long,
-    ): List<Runnable> {
-        val actions = ArrayList<Runnable>()
-        var index = 0
-        while (index < messages.size) {
-            val target = messages[index]
-            val groupId = target.groupId
-            var end = index + 1
-            if (groupId != 0L) {
-                while (end < messages.size && messages[end].groupId == groupId) end++
-            }
-
-            val album = if (end - index > 1) {
-                messages.subList(index, end).mapNotNull { msg ->
-                    // entiny: exclude stickers and voice from albums to prevent replacing shared group DelayedMessage
-                    if (msg.isAnyKindOfSticker || msg.isVoice || (needsMediaReupload(msg) && files[msg] == null)) null
-                    else buildResendParams(
-                        account, msg, did, null, threadMsg, notify, scheduleDate,
-                        scheduleRepeatPeriod, hideCaption, files[msg], isCloudViewOnce(msg),
-                    )?.takeIf { it.photo != null || it.document != null }
-                }
-            } else {
-                emptyList<SendMessagesHelper.SendMessageParams>()
-            }
-
-            if (album.size > 1) {
-                val newGroupId = Utilities.random.nextLong()
-                album.forEachIndexed { i, params ->
-                    params.params = HashMap<String, String>().apply {
-                        put("groupId", newGroupId.toString())
-                        if (i == album.size - 1) put("final", "1")
-                    }
-                    params.monoForumPeer = mono
-                    params.suggestionParams = suggest
-                    // entiny: pass payStars explicitly because grouped send skips sendMessage's paid confirmation
-                    params.payStars = payStars
-                    actions.add(Runnable { helper.sendMessage(params) })
-                }
-            } else {
-                for (i in index until end) {
-                    val msg = messages[i]
-                    // entiny: by-reference send of protected media is always rejected by the server
-                    if (needsMediaReupload(msg) && files[msg] == null) continue
-                    buildResendAction(
-                        helper, account, msg, did, null, threadMsg, null, notify, scheduleDate,
-                        scheduleRepeatPeriod, mono, suggest, null, hideCaption, payStars, files[msg],
-                        isCloudViewOnce(msg),
-                    )?.let { actions.add(it) }
-                }
-            }
-            index = end
-        }
-        return actions
-    }
-
-    private fun awaitRestrictedMedia(
-        account: Int,
-        messages: List<MessageObject>,
-        temporaryFiles: MutableList<File>,
-    ): Map<MessageObject, File> {
-        val loader = FileLoader.getInstance(account)
-        val resolved = HashMap<MessageObject, File>()
-        val pending = LinkedHashMap<String, MessageObject>()
-
-        for (msg in messages) {
-            if (!needsMediaReupload(msg)) continue
-            val existing = localMediaFile(loader, msg)
-            if (existing != null) {
-                forwardableMediaFile(existing, temporaryFiles)?.let { resolved[msg] = it }
-                continue
-            }
-            val key = downloadKey(msg) ?: continue
-            pending[key] = msg
-        }
-        if (pending.isEmpty()) return resolved
-
-        val totalBytes = pending.values.sumOf { it.document?.size ?: 0L }
-        showForwardToast(LocaleController.formatString(R.string.InuForwardDownloading, AndroidUtilities.formatFileSize(totalBytes)))
-        val waiter = MediaDownloadWaiter(account, pending.keys)
-        // entiny: subscribe NotificationCenter observer on main thread before starting downloads to close race
-        AndroidUtilities.runOnUIThread {
-            waiter.subscribe()
-            for ((key, msg) in pending) {
-                if (localMediaFile(loader, msg) != null || !startMediaLoad(loader, msg)) {
-                    waiter.complete(key)
-                }
-            }
-            waiter.settle()
-        }
-        waiter.await(RESTRICTED_FORWARD_TIMEOUT_MS)
-
-        for (msg in messages) {
-            if (!needsMediaReupload(msg) || resolved.containsKey(msg)) continue
-            // entiny: path DB lags behind fileLoaded, so fall back to the file the notification delivered
-            val loaded = localMediaFile(loader, msg) ?: downloadKey(msg)?.let { waiter.loadedFile(it) }
-            loaded?.let { forwardableMediaFile(it, temporaryFiles) }?.let { resolved[msg] = it }
-        }
-        if (pending.values.any { !resolved.containsKey(it) }) showForwardToast(LocaleController.getString(R.string.InuForwardDownloadFailed))
-        return resolved
-    }
-
-    private fun showForwardToast(text: String) {
-        AndroidUtilities.runOnUIThread {
-            android.widget.Toast.makeText(ApplicationLoader.applicationContext, text, android.widget.Toast.LENGTH_LONG).show()
-        }
-    }
-
-    private fun forwardableMediaFile(source: File, temporaryFiles: MutableList<File>): File? {
-        if (!source.name.endsWith(".enc")) return source
-        val keyFile = File(FileLoader.getInternalCacheDir(), source.name + ".key")
-        if (!keyFile.exists()) return null
-        val cacheDir = File(FileLoader.getInternalCacheDir(), "inu_forward_once")
-        if (!cacheDir.exists() && !cacheDir.mkdirs()) return null
-        val extension = source.name.removeSuffix(".enc").substringAfterLast('.', "")
-        val target = File(cacheDir, "${UUID.randomUUID()}${if (extension.isEmpty()) "" else ".$extension"}")
-        if (!decryptOneTimeFile(source, keyFile, target)) {
-            target.delete()
-            return null
-        }
-        temporaryFiles.add(target)
-        return target
-    }
-
-    private fun watchRestrictedForwardUploads(account: Int, files: List<File>) {
-        if (files.isEmpty()) return
-        val pending = HashSet<String>().apply { files.forEach { add(it.absolutePath) } }
-        val center = NotificationCenter.getInstance(account)
-        lateinit var observer: NotificationCenter.NotificationCenterDelegate
-        fun finish() {
-            center.removeObserver(observer, NotificationCenter.fileUploaded)
-            center.removeObserver(observer, NotificationCenter.fileUploadFailed)
-            files.forEach { it.delete() }
-        }
-        observer = object : NotificationCenter.NotificationCenterDelegate {
-            override fun didReceivedNotification(id: Int, account: Int, vararg args: Any?) {
-                val path = args.getOrNull(0) as? String ?: return
-                if (!pending.remove(File(path).absolutePath)) return
-                if (pending.isEmpty()) finish()
-            }
-        }
-        center.addObserver(observer, NotificationCenter.fileUploaded)
-        center.addObserver(observer, NotificationCenter.fileUploadFailed)
-        Utilities.globalQueue.postRunnable({
-            AndroidUtilities.runOnUIThread { finish() }
-        }, 24 * 60 * 60 * 1000L)
-    }
-
-    private fun needsMediaReupload(message: MessageObject): Boolean {
-        if (message.isAnyKindOfSticker) return false
-        val media = message.messageOwner?.media ?: return false
-        return media.photo is TLRPC.TL_photo || media.document is TLRPC.TL_document
-    }
-
-    private fun isCloudViewOnce(message: MessageObject): Boolean {
-        val media = message.messageOwner?.media ?: return false
-        return media.ttl_seconds != 0 &&
-            SelfDestructHelper.shouldBypassOneTimeGate(message.dialogId) &&
-            !DialogObject.isEncryptedDialog(message.dialogId) &&
-            (media.photo is TLRPC.TL_photo || media.document is TLRPC.TL_document)
-    }
-
-    private fun localMediaFile(loader: FileLoader, message: MessageObject): File? {
-        val attach = message.messageOwner?.attachPath?.takeIf { it.isNotEmpty() }?.let { File(it) }
-        if (attach != null && attach.exists() && attach.length() > 0L) return attach
-        return loader.getPathToMessage(message.messageOwner)?.takeIf { it.exists() && it.length() > 0L }
-    }
-
-    private fun downloadKey(message: MessageObject): String? {
-        val media = message.messageOwner?.media ?: return null
-        (media.document as? TLRPC.TL_document)?.let { return FileLoader.getAttachFileName(it) }
-        return fullPhotoSize(media)?.let { FileLoader.getAttachFileName(it) }
-    }
-
-    // entiny: match the photo size FileLoader.getPathToMessage resolves so download and lookup paths align
-    private fun fullPhotoSize(media: TLRPC.MessageMedia): TLRPC.PhotoSize? {
-        val photo = media.photo as? TLRPC.TL_photo ?: return null
-        return FileLoader.getClosestPhotoSizeWithSize(photo.sizes, AndroidUtilities.getPhotoSize(true), false, null, true)
-    }
-
-    private fun startMediaLoad(loader: FileLoader, message: MessageObject): Boolean {
-        val media = message.messageOwner?.media ?: return false
-        val cacheType = if (message.shouldEncryptPhotoOrVideo()) 2 else 0
-        val document = media.document as? TLRPC.TL_document
-        if (document != null) {
-            loader.loadFile(document, message, FileLoader.PRIORITY_NORMAL, cacheType)
-            return true
-        }
-        val photo = media.photo as? TLRPC.TL_photo ?: return false
-        val size = fullPhotoSize(media) ?: return false
-        val location = ImageLocation.getForPhoto(size, photo) ?: return false
-        loader.loadFile(location, message, null, FileLoader.PRIORITY_NORMAL, cacheType)
-        return true
-    }
-
-    private class MediaDownloadWaiter(
-        private val account: Int,
-        keys: Collection<String>,
-    ) : NotificationCenter.NotificationCenterDelegate {
-        private val pending = HashSet(keys)
-        private val latch = CountDownLatch(1)
-        private val loaded = java.util.concurrent.ConcurrentHashMap<String, File>()
-
-        fun loadedFile(key: String): File? = loaded[key]?.takeIf { it.exists() && it.length() > 0L }
-
-        fun subscribe() {
-            val center = NotificationCenter.getInstance(account)
-            center.addObserver(this, NotificationCenter.fileLoaded)
-            center.addObserver(this, NotificationCenter.fileLoadFailed)
-        }
-
-        fun complete(key: String) {
-            pending.remove(key)
-        }
-
-        fun settle() {
-            if (pending.isNotEmpty()) return
-            unsubscribe()
-            latch.countDown()
-        }
-
-        fun await(timeoutMs: Long) {
-            latch.await(timeoutMs, TimeUnit.MILLISECONDS)
-            AndroidUtilities.runOnUIThread { unsubscribe() }
-        }
-
-        private fun unsubscribe() {
-            val center = NotificationCenter.getInstance(account)
-            center.removeObserver(this, NotificationCenter.fileLoaded)
-            center.removeObserver(this, NotificationCenter.fileLoadFailed)
-        }
-
-        // entiny: treat load failure like completion so caller falls back to by-reference send instead of stalling
-        override fun didReceivedNotification(id: Int, account: Int, vararg args: Any?) {
-            val key = args.getOrNull(0) as? String ?: return
-            (args.getOrNull(1) as? File)?.let { loaded[key] = it }
-            if (!pending.remove(key)) return
-            settle()
-        }
     }
 
     private fun getPendingReply(activity: ChatActivity): MessageObject? {
@@ -2208,6 +1911,20 @@ object ChatHelper {
     private fun isMenuItemEnabled(item: MessageMenuConfig.Item): Boolean =
         InuConfig.MESSAGE_MENU_ITEMS.value.any { it.item == item && it.enabled }
 
+    private class BookmarkMenuState(val source: List<MenuOrderEntry<MessageMenuConfig.Item>>, val enabled: Boolean)
+
+    @Volatile
+    private var bookmarkMenuState: BookmarkMenuState? = null
+
+    // entiny: config assigns a fresh list on every change, so list identity is a safe cache key
+    private fun isBookmarkMenuEnabled(): Boolean {
+        val source = InuConfig.MESSAGE_MENU_ITEMS.value
+        bookmarkMenuState?.let { if (it.source === source) return it.enabled }
+        val enabled = source.any { it.item == MessageMenuConfig.Item.BOOKMARK && it.enabled }
+        bookmarkMenuState = BookmarkMenuState(source, enabled)
+        return enabled
+    }
+
     private fun messageDocuments(message: MessageObject): List<TLRPC.Document> {
         val out = ArrayList<TLRPC.Document>(2)
         message.getDocument()?.let { out.add(it) }
@@ -2289,25 +2006,21 @@ object ChatHelper {
     @JvmStatic
     fun maybeHandleFileClick(fragment: BaseFragment, message: MessageObject): Boolean {
         val name = message.documentName ?: return false
-        val kind = when {
-            name.endsWith(SettingsBackupHelper.FILENAME_SUFFIX) || name.endsWith(".entiny-settings.json") -> FileKind.SETTINGS
-            name.endsWith(".inu.js", ignoreCase = true) -> FileKind.PLUGIN
-            FontImportHelper.isFontFileName(name) -> FileKind.FONT
-            else -> return false
-        }
-
-        val existing = existingFileForMessage(fragment, message)
-        if (existing != null) {
-            handleRecognizedFile(fragment, message, existing, name, kind)
-            return true
-        }
+        val resolve = { existingFileForMessage(fragment, message) }
+        if (maybeHandleFile(fragment, name, message.mimeType, resolve)) return true
+        if (!isRecognizedFileName(name)) return false
 
         // entiny: trigger download manually so stock does not route un-cached file to system open-with chooser
         val doc = message.getDocument() ?: return false
         FileLoader.getInstance(fragment.currentAccount).loadFile(doc, message, FileLoader.PRIORITY_NORMAL, 1)
-        pollFileDownload(fragment, message, name, kind)
+        pollFileDownload(fragment, message, name)
         return true
     }
+
+    private fun isRecognizedFileName(name: String): Boolean =
+        name.endsWith(SettingsBackupHelper.FILENAME_SUFFIX) ||
+            name.endsWith(".inu.js", ignoreCase = true) ||
+            FontImportHelper.isFontFileName(name)
 
     private fun existingFileForMessage(fragment: BaseFragment, message: MessageObject): File? {
         val attach = message.messageOwner?.attachPath?.takeIf { it.isNotEmpty() }?.let { File(it) }
@@ -2316,47 +2029,45 @@ object ChatHelper {
                 ?.takeIf { it.exists() }
     }
 
-    private fun handleRecognizedFile(
-        fragment: BaseFragment,
-        message: MessageObject,
-        file: File,
-        name: String,
-        kind: FileKind,
-    ) {
-        when (kind) {
-            FileKind.SETTINGS -> SettingsBackupHelper.startImportFromFile(fragment, file)
-            FileKind.PLUGIN -> handlePluginFile(fragment, file)
-            FileKind.FONT -> FontImportHelper.startImportFromFile(fragment, message, file, name)
-        }
+    @JvmStatic
+    fun maybeHandleRichDocumentClick(document: TLRPC.Document, file: File): Boolean {
+        val fragment = LaunchActivity.getSafeLastFragment() ?: return false
+        return maybeHandleFile(fragment, FileLoader.getDocumentFileName(document), document.mime_type) { file }
     }
 
-    private fun handlePluginFile(fragment: BaseFragment, file: File) {
-        // #if PLUGINS
-        if (PluginManager.isEngineEnabled()) {
-            PluginImportHelper.startImportFromFile(fragment, file)
-            return
+    private fun maybeHandleFile(fragment: BaseFragment, name: String, mimeType: String?, resolveFile: () -> File?): Boolean {
+        val isSettings = name.endsWith(SettingsBackupHelper.FILENAME_SUFFIX)
+        val isPlugin = !isSettings && name.endsWith(".inu.js", ignoreCase = true)
+        val isFont = !isSettings && !isPlugin && FontImportHelper.isFontFileName(name)
+        val isIconPack = !isSettings && !isPlugin && !isFont && IconPackHelper.isIconPackFileName(name)
+        if (!isSettings && !isPlugin && !isFont && !isIconPack) return false
+        val file = resolveFile()?.takeIf { it.exists() } ?: return false
+        when {
+            isSettings -> SettingsBackupHelper.startImportFromFile(fragment, file)
+            isIconPack -> IconPackHelper.startImportFromFile(fragment, file)
+            // #if PLUGINS
+            isPlugin && PluginManager.isEngineEnabled() -> PluginImportHelper.startImportFromFile(fragment, file)
+            isPlugin -> showPluginsUnavailableDialog(
+                fragment,
+                R.string.InuPluginsEngineDisabled,
+                R.string.InuPluginsOpenSettings,
+            ) { PluginsActivity().withHighlight(PluginsActivity.ENGINE_TOGGLE) }
+            // #else
+            isPlugin -> showPluginsUnavailableDialog(
+                fragment,
+                R.string.InuPluginsPluginlessBuild,
+                R.string.InuPluginsOpenSettings,
+            ) { InuSettingsActivity() }
+            // #endif
+            else -> FontImportHelper.startImportFromFile(fragment, file, name, mimeType)
         }
-        showPluginsUnavailableDialog(
-            fragment,
-            R.string.InuPluginsEngineDisabled,
-            R.string.InuPluginsOpenSettings,
-        ) { PluginsActivity().withHighlight(PluginsActivity.ENGINE_TOGGLE) }
-        // #else
-        showPluginsUnavailableDialog(
-            fragment,
-            R.string.InuPluginsPluginlessBuild,
-            R.string.InuPluginsOpenSettings,
-        ) { InuSettingsActivity() }
-        // #endif
+        return true
     }
-
-    private enum class FileKind { SETTINGS, PLUGIN, FONT }
 
     private fun pollFileDownload(
         fragment: BaseFragment,
         message: MessageObject,
         name: String,
-        kind: FileKind,
         attempts: Int = 0,
     ) {
         if (attempts > 60) return
@@ -2364,9 +2075,9 @@ object ChatHelper {
             if (fragment.parentActivity == null) return@runOnUIThread
             val file = existingFileForMessage(fragment, message)
             if (file != null) {
-                handleRecognizedFile(fragment, message, file, name, kind)
+                maybeHandleFile(fragment, name, message.mimeType) { file }
             } else {
-                pollFileDownload(fragment, message, name, kind, attempts + 1)
+                pollFileDownload(fragment, message, name, attempts + 1)
             }
         }, 500)
     }
@@ -2691,6 +2402,27 @@ object ChatHelper {
     }
 
     @JvmStatic
+    private fun groupEntinyMenuItems(items: ArrayList<CharSequence>, options: ArrayList<Int>, icons: ArrayList<Int>) {
+        if (!InuConfig.GROUP_ENTINY_MENU.value) return
+        groupedMenuEntries.clear()
+        val toGroup = ArrayList<Int>()
+        for (i in options.indices) {
+            val opt = options[i]
+            if (opt in 500..999 && opt != OPTION_ENTINY_GROUP) toGroup.add(i)
+        }
+        if (toGroup.isEmpty()) return
+        val collected = ArrayList<Triple<CharSequence, Int, Int>>()
+        for (i in toGroup.sortedDescending()) {
+            collected.add(0, Triple(items[i], options[i], icons[i]))
+            items.removeAt(i); options.removeAt(i); icons.removeAt(i)
+        }
+        groupedMenuEntries.addAll(collected)
+        items.add(LocaleController.getString(R.string.InuEntinyMenu))
+        options.add(OPTION_ENTINY_GROUP)
+        icons.add(R.drawable.msg_settings_old)
+    }
+
+    @JvmStatic
     fun onMenuOptionClick(
         activity: ChatActivity,
         popupLayout: ActionBarPopupWindow.ActionBarPopupWindowLayout,
@@ -2702,6 +2434,17 @@ object ChatHelper {
         if (message == null) return false
         if (option == OPTION_DETAILS) {
             return MessageDetailsHelper.openDetailsSubmenu(activity, popupLayout, cell, message, group)
+        }
+        if (option == OPTION_ENTINY_GROUP) {
+            if (groupedMenuEntries.isEmpty()) return true
+            return openLongTapSubmenu(activity, popupLayout, cell) { submenu ->
+                for ((label, opt, icon) in groupedMenuEntries) {
+                    submenu.add(icon, label) {
+                        processMenuOption(opt, activity, message, group)
+                        activity.closeMenu()
+                    }
+                }
+            }
         }
         // #if PLUGINS
         if (option == OPTION_PLUGIN_ACTIONS) {
@@ -2821,7 +2564,7 @@ object ChatHelper {
             }
 
             ChatActivity.OPTION_REPLY -> {
-                val noforwards = (activity.isPeerNoForwards || (message.messageOwner != null && message.messageOwner.noforwards)) && !InuConfig.ALLOW_FORWARD_RESTRICTED.value
+                val noforwards = activity.isPeerNoForwards || RestrictedFeaturesHelper.noforwards(message.messageOwner)
                 if (noforwards) return false
                 when (InuConfig.REPLY_LONG_TAP_ACTION.value) {
                     InuConfig.ReplyLongTapItem.OFF -> false
@@ -2983,7 +2726,7 @@ object ChatHelper {
             }
 
             InuConfig.DialogsTitleTextItem.FIRST_NAME -> getFirstNameOrDefault(user)
-            InuConfig.DialogsTitleTextItem.CHATS -> LocaleController.getString(R.string.InuChats)
+            InuConfig.DialogsTitleTextItem.CHATS -> LocaleController.getString(R.string.FilterChats)
             InuConfig.DialogsTitleTextItem.FOLDER -> folderTitle ?: LocaleController.getString(R.string.AppName)
             InuConfig.DialogsTitleTextItem.CUSTOM -> InuConfig.DIALOGS_TITLE_TEXT_CUSTOM_TEXT.value.ifBlank {
                 LocaleController.getString(R.string.AppName)

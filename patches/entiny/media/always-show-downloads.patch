@@ -12,12 +12,12 @@ diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/
 index 0000000..0000000 100644
 --- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
 +++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
-@@ -10580,7 +10580,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+@@ -10586,7 +10586,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                  break;
              }
          }
 -        if ((getDownloadController().hasUnviewedDownloads() || showDownloads || (downloadsItem.getVisibility() == View.VISIBLE && downloadsItem.getAlpha() == 1 && !force))) {
-+        if ((desu.inugram.InuConfig.ALWAYS_SHOW_DOWNLOADS.getValue() || getDownloadController().hasUnviewedDownloads() || showDownloads || (downloadsItem.getVisibility() == View.VISIBLE && downloadsItem.getAlpha() == 1 && !force))) {
++        if (!desu.inugram.InuConfig.HIDE_DOWNLOADS_BUTTON.getValue() && (desu.inugram.InuConfig.ALWAYS_SHOW_DOWNLOADS.getValue() || getDownloadController().hasUnviewedDownloads() || showDownloads || (downloadsItem.getVisibility() == View.VISIBLE && downloadsItem.getAlpha() == 1 && !force))) {
              downloadsItemVisible = true;
          } else {
              downloadsItemVisible = false;

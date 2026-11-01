@@ -68,6 +68,12 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
             ).setChecked(InuConfig.PROFILE_PREFER_MEDIA_TAB.value)
         )
         items.add(
+            UItem.asCheck(
+                TOGGLE_SHOW_PROFILE_GIFT_BUTTON,
+                LocaleController.getString(R.string.InuShowProfileGiftButton),
+            ).setChecked(InuConfig.SHOW_PROFILE_GIFT_BUTTON.value)
+        )
+        items.add(
             UItem.asButton(
                 BUTTON_PROFILE_ID_MODE,
                 LocaleController.getString(R.string.InuProfileIdMode),
@@ -142,6 +148,14 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
                 InuConfig.CALL_ROTATION.value,
             )
         )
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_DISABLE_CALL_PROXIMITY,
+                R.string.InuDisableCallProximity,
+                R.string.InuDisableCallProximityInfo,
+                InuConfig.DISABLE_CALL_PROXIMITY.value,
+            )
+        )
         items.add(UItem.asShadow(null))
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuFormatting)))
@@ -179,6 +193,14 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
                 experimental = true,
             )
         )
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_NOTIFY_BELL_IN_MENU,
+                R.string.InuNotifyBellInMenu,
+                R.string.InuNotifyBellInMenuInfo,
+                InuConfig.NOTIFY_BELL_IN_MENU.value,
+            )
+        )
         items.add(UItem.asShadow(null))
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuMediaSection)))
@@ -212,6 +234,9 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
         items.add(mkTwoLineCheckItem(TOGGLE_DISABLE_QUICK_SHARE, R.string.InuDisableQuickShare, R.string.InuDisableQuickShareInfo, InuConfig.DISABLE_QUICK_SHARE.value))
         items.add(mkTwoLineCheckItem(TOGGLE_MEMORY_TRIM, R.string.InuMemoryTrim, R.string.InuMemoryTrimInfo, InuConfig.MEMORY_TRIM.value))
         items.add(mkTwoLineCheckItem(TOGGLE_SAVE_SELECTED_FILES, R.string.InuSaveSelectedFiles, R.string.InuSaveSelectedFilesInfo, InuConfig.SAVE_SELECTED_FILES.value))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            items.add(mkTwoLineCheckItem(TOGGLE_HDR_IMAGES, R.string.InuHdrImages, R.string.InuHdrImagesInfo, InuConfig.HDR_IMAGES.value))
+        }
         items.add(UItem.asShadow(null))
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuLinksAndBrowser)))
@@ -242,7 +267,7 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
         items.add(UItem.asShadow(null))
 
         items.add(
-            UItem.asHeader(addExperimentalSpan(LocaleController.getString(R.string.InuDownloadsAndNetwork)))
+            UItem.asHeader(LocaleController.getString(R.string.InuDownloadsAndNetwork))
         )
         items.add(
             UItem.asCheck(
@@ -273,6 +298,14 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
                 TOGGLE_FASTER_DOWNLOADS,
                 LocaleController.getString(R.string.InuFasterDownloads),
             ).setChecked(InuConfig.FASTER_DOWNLOADS.value)
+        )
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_ALWAYS_SEND_VIDEOS_HD,
+                R.string.InuAlwaysSendVideosHd,
+                R.string.InuAlwaysSendVideosHdInfo,
+                InuConfig.ALWAYS_SEND_VIDEOS_HD.value
+            )
         )
         items.add(
             UItem.asCheck(
@@ -367,6 +400,11 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
                 (view as? TextCheckCell)?.isChecked = new
             }
 
+            TOGGLE_SHOW_PROFILE_GIFT_BUTTON -> {
+                val new = InuConfig.SHOW_PROFILE_GIFT_BUTTON.toggle()
+                (view as? TextCheckCell)?.isChecked = new
+            }
+
             BUTTON_PROFILE_ID_MODE -> RadioItemOptions.show(
                 this, view,
                 listOf(
@@ -405,6 +443,7 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
                 DOWNLOAD_DIRECTORIES.indexOf(InuConfig.DOWNLOAD_DIRECTORY.value),
             ) { which ->
                 InuConfig.DOWNLOAD_DIRECTORY.value = DOWNLOAD_DIRECTORIES[which]
+                desu.inugram.helpers.archive.ArchiveMediaHelper.moveMirror(DOWNLOAD_DIRECTORIES[which])
                 org.telegram.messenger.ImageLoader.getInstance().checkMediaPaths()
                 BulletinFactory.of(this)
                     .createSimpleBulletin(
@@ -430,6 +469,11 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
 
             TOGGLE_CALL_ROTATION -> {
                 val new = InuConfig.CALL_ROTATION.toggle()
+                (view as? NotificationsCheckCell)?.isChecked = new
+            }
+
+            TOGGLE_DISABLE_CALL_PROXIMITY -> {
+                val new = InuConfig.DISABLE_CALL_PROXIMITY.toggle()
                 (view as? NotificationsCheckCell)?.isChecked = new
             }
 
@@ -468,6 +512,11 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
                 (view as? NotificationsCheckCell)?.isChecked = new
             }
 
+            TOGGLE_NOTIFY_BELL_IN_MENU -> {
+                val new = InuConfig.NOTIFY_BELL_IN_MENU.toggle()
+                (view as? NotificationsCheckCell)?.isChecked = new
+            }
+
             TOGGLE_AUTO_DISABLE_PROXY_ON_VPN -> {
                 val new = InuConfig.AUTO_DISABLE_PROXY_ON_VPN.toggle()
                 (view as? TextCheckCell)?.isChecked = new
@@ -487,6 +536,8 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
             }
 
             TOGGLE_FASTER_DOWNLOADS -> (view as? TextCheckCell)?.isChecked = InuConfig.FASTER_DOWNLOADS.toggle()
+
+            TOGGLE_ALWAYS_SEND_VIDEOS_HD -> (view as? NotificationsCheckCell)?.isChecked = InuConfig.ALWAYS_SEND_VIDEOS_HD.toggle()
             TOGGLE_FASTER_UPLOADS -> (view as? TextCheckCell)?.isChecked = InuConfig.FASTER_UPLOADS.toggle()
 
             BUTTON_CLOCK_FORMAT -> RadioItemOptions.show(
@@ -510,6 +561,8 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
             TOGGLE_DISABLE_QUICK_SHARE -> (view as? NotificationsCheckCell)?.isChecked = InuConfig.DISABLE_QUICK_SHARE.toggle()
             TOGGLE_MEMORY_TRIM -> (view as? NotificationsCheckCell)?.isChecked = InuConfig.MEMORY_TRIM.toggle()
             TOGGLE_SAVE_SELECTED_FILES -> (view as? NotificationsCheckCell)?.isChecked = InuConfig.SAVE_SELECTED_FILES.toggle()
+
+            TOGGLE_HDR_IMAGES -> (view as? NotificationsCheckCell)?.isChecked = InuConfig.HDR_IMAGES.toggle()
 
             TOGGLE_SHOW_SECONDS -> {
                 val new = InuConfig.SHOW_SECONDS.toggle()
@@ -625,6 +678,7 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
         private val TOGGLE_REDUCE_PROFILE_MOTION = InuUtils.generateId()
         private val TOGGLE_DISABLE_PROFILE_SCROLL_SNAP = InuUtils.generateId()
         private val TOGGLE_PROFILE_PREFER_MEDIA_TAB = InuUtils.generateId()
+        private val TOGGLE_SHOW_PROFILE_GIFT_BUTTON = InuUtils.generateId()
         private val BUTTON_PROFILE_ID_MODE = InuUtils.generateId()
         private val TOGGLE_SHOW_PROFILE_REG_DATE = InuUtils.generateId()
         private val TOGGLE_SETTINGS_SHOW_ACCOUNTS = InuUtils.generateId()
@@ -639,6 +693,8 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
         private val TOGGLE_CALL_CONFIRMATION = InuUtils.generateId()
         private val TOGGLE_HD_BLUETOOTH_CALL_AUDIO = InuUtils.generateId()
         private val TOGGLE_CALL_ROTATION = InuUtils.generateId()
+        private val TOGGLE_NOTIFY_BELL_IN_MENU = InuUtils.generateId()
+        private val TOGGLE_DISABLE_CALL_PROXIMITY = InuUtils.generateId()
         private val TOGGLE_CONFIRM_INTERNAL_LINKS = InuUtils.generateId()
         private val TOGGLE_DISABLE_BROWSER_SWIPE_COLLAPSE = InuUtils.generateId()
         private val TOGGLE_GIF_SEEKBAR = InuUtils.generateId()
@@ -650,6 +706,7 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
         private val TOGGLE_KEEP_DOWNLOADS_IN_BACKGROUND = InuUtils.generateId()
         private val TOGGLE_BLOCK_SLEEP_WHILE_DOWNLOADING = InuUtils.generateId()
         private val TOGGLE_FASTER_DOWNLOADS = InuUtils.generateId()
+        private val TOGGLE_ALWAYS_SEND_VIDEOS_HD = InuUtils.generateId()
         private val TOGGLE_FASTER_UPLOADS = InuUtils.generateId()
         private val SECTION_DELETE_FOR_BOTH = InuUtils.generateId()
         private val BUTTON_MAP_PROVIDER = InuUtils.generateId()
@@ -661,6 +718,7 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
         private val TOGGLE_DISABLE_QUICK_SHARE = InuUtils.generateId()
         private val TOGGLE_MEMORY_TRIM = InuUtils.generateId()
         private val TOGGLE_SAVE_SELECTED_FILES = InuUtils.generateId()
+        private val TOGGLE_HDR_IMAGES = InuUtils.generateId()
         private val TOGGLE_DISABLE_ROUNDING = InuUtils.generateId()
         private val BUTTON_CLOCK_FORMAT = InuUtils.generateId()
         private val TOGGLE_ACCOUNT_SWITCH_SHORTCUT = InuUtils.generateId()
@@ -698,6 +756,7 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
                 SearchRegistry.Entry("reduce-profile-motion", R.string.InuReduceProfileMotion, TOGGLE_REDUCE_PROFILE_MOTION),
                 SearchRegistry.Entry("disable-profile-scroll-snap", R.string.InuDisableProfileScrollSnap, TOGGLE_DISABLE_PROFILE_SCROLL_SNAP),
                 SearchRegistry.Entry("profile-prefer-media-tab", R.string.InuProfilePreferMediaTab, TOGGLE_PROFILE_PREFER_MEDIA_TAB),
+                SearchRegistry.Entry("show-profile-gift-button", R.string.InuShowProfileGiftButton, TOGGLE_SHOW_PROFILE_GIFT_BUTTON),
                 SearchRegistry.Entry("profile-id-mode", R.string.InuProfileIdMode, BUTTON_PROFILE_ID_MODE),
                 SearchRegistry.Entry("show-profile-reg-date", R.string.InuShowProfileRegDate, TOGGLE_SHOW_PROFILE_REG_DATE),
                 SearchRegistry.Entry("settings-show-accounts", R.string.InuSettingsShowAccounts, TOGGLE_SETTINGS_SHOW_ACCOUNTS),
@@ -708,12 +767,14 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
                 SearchRegistry.Entry("call-confirmation", R.string.InuCallConfirmation, TOGGLE_CALL_CONFIRMATION),
                 SearchRegistry.Entry("hd-bluetooth-call-audio", R.string.InuHdBluetoothCallAudio, TOGGLE_HD_BLUETOOTH_CALL_AUDIO),
                 SearchRegistry.Entry("call-rotation", R.string.InuCallRotation, TOGGLE_CALL_ROTATION),
+                SearchRegistry.Entry("call-proximity", R.string.InuDisableCallProximity, TOGGLE_DISABLE_CALL_PROXIMITY),
                 SearchRegistry.Entry("confirm-internal-links", R.string.InuConfirmInternalLinks, TOGGLE_CONFIRM_INTERNAL_LINKS),
                 SearchRegistry.Entry("disable-browser-swipe-collapse", R.string.InuDisableBrowserSwipeCollapse, TOGGLE_DISABLE_BROWSER_SWIPE_COLLAPSE),
                 SearchRegistry.Entry("gif-seekbar", R.string.InuGifSeekbar, TOGGLE_GIF_SEEKBAR),
                 SearchRegistry.Entry("keep-chats-in-stack", R.string.InuKeepChatsInStack, TOGGLE_KEEP_CHATS_IN_STACK),
                 SearchRegistry.Entry("send-mp4-document-as-video", R.string.InuSendMp4DocumentAsVideo, TOGGLE_SEND_MP4_DOCUMENT_AS_VIDEO),
                 SearchRegistry.Entry("chat-export", R.string.InuChatExport, TOGGLE_CHAT_EXPORT),
+                SearchRegistry.Entry("notify-bell-in-menu", R.string.InuNotifyBellInMenu, TOGGLE_NOTIFY_BELL_IN_MENU),
                 SearchRegistry.Entry("download-directory", R.string.InuDownloadDirectory, BUTTON_DOWNLOAD_DIRECTORY),
                 SearchRegistry.Entry("save-filename-date", R.string.InuSaveFilenameDate, TOGGLE_SAVE_FILENAME_DATE),
                 SearchRegistry.Entry("web-preview-replacements", R.string.InuWebPreviewReplacements, BUTTON_WEB_PREVIEW_REPLACEMENTS),
@@ -721,6 +782,7 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
                 SearchRegistry.Entry("keep-downloads-in-background", R.string.InuKeepDownloadsInBackground, TOGGLE_KEEP_DOWNLOADS_IN_BACKGROUND),
                 SearchRegistry.Entry("block-sleep-while-downloading", R.string.InuBlockSleepWhileDownloading, TOGGLE_BLOCK_SLEEP_WHILE_DOWNLOADING),
                 SearchRegistry.Entry("faster-downloads", R.string.InuFasterDownloads, TOGGLE_FASTER_DOWNLOADS),
+                SearchRegistry.Entry("always-send-videos-hd", R.string.InuAlwaysSendVideosHd, TOGGLE_ALWAYS_SEND_VIDEOS_HD),
                 SearchRegistry.Entry("faster-uploads", R.string.InuFasterUploads, TOGGLE_FASTER_UPLOADS),
                 SearchRegistry.Entry("delete-for-both", R.string.InuDeleteForBoth, SECTION_DELETE_FOR_BOTH),
                 SearchRegistry.Entry("map-provider", R.string.InuMapProvider, BUTTON_MAP_PROVIDER),
@@ -733,6 +795,7 @@ class BehaviorSettingsActivity : SettingsPageActivity() {
                 SearchRegistry.Entry("disable-quick-share", R.string.InuDisableQuickShare, TOGGLE_DISABLE_QUICK_SHARE),
                 SearchRegistry.Entry("memory-trim", R.string.InuMemoryTrim, TOGGLE_MEMORY_TRIM),
                 SearchRegistry.Entry("save-selected-files", R.string.InuSaveSelectedFiles, TOGGLE_SAVE_SELECTED_FILES),
+                SearchRegistry.Entry("hdr-images", R.string.InuHdrImages, TOGGLE_HDR_IMAGES),
                 SearchRegistry.Entry("clock-format", R.string.InuClockFormat, BUTTON_CLOCK_FORMAT),
                 SearchRegistry.Entry("account-switch-shortcut", R.string.InuAccountSwitchShortcut, TOGGLE_ACCOUNT_SWITCH_SHORTCUT),
             ),

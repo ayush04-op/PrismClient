@@ -31,6 +31,17 @@ class RegexFilterSettingsActivity : SettingsPageActivity(), NotificationCenter.N
     }
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
+        items.add(UItem.asHeader("Banners"))
+        items.add(
+            mkTwoLineCheckItem(
+                TOGGLE_HIDE_BUSINESS_BOT_BANNER,
+                R.string.InuHideBusinessBotBanner,
+                R.string.InuHideBusinessBotBannerInfo,
+                InuConfig.HIDE_BUSINESS_BOT_BANNER.value,
+            )
+        )
+        items.add(UItem.asShadow(null))
+
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuRegexFilter)))
         items.add(
             mkTwoLineCheckItem(
@@ -90,6 +101,11 @@ class RegexFilterSettingsActivity : SettingsPageActivity(), NotificationCenter.N
 
             item.id == TOGGLE_HIDE_PROXY_SPONSOR_CHAT -> {
                 val new = InuConfig.HIDE_PROXY_SPONSOR_CHAT.toggle()
+                (view as? NotificationsCheckCell)?.isChecked = new
+            }
+
+            item.id == TOGGLE_HIDE_BUSINESS_BOT_BANNER -> {
+                val new = InuConfig.HIDE_BUSINESS_BOT_BANNER.toggle()
                 (view as? NotificationsCheckCell)?.isChecked = new
             }
 
@@ -184,6 +200,7 @@ class RegexFilterSettingsActivity : SettingsPageActivity(), NotificationCenter.N
     companion object {
         private val TOGGLE_HIDE_SPONSORED_MESSAGES = InuUtils.generateId()
         private val TOGGLE_HIDE_PROXY_SPONSOR_CHAT = InuUtils.generateId()
+        private val TOGGLE_HIDE_BUSINESS_BOT_BANNER = InuUtils.generateId()
         private val TOGGLE_REGEX_FILTER_ENABLED = InuUtils.generateId()
         private val BUTTON_REGEX_FILTER_MODE = InuUtils.generateId()
         private val TOGGLE_REGEX_FILTER_HIDE_REPLIES = InuUtils.generateId()
@@ -201,6 +218,7 @@ class RegexFilterSettingsActivity : SettingsPageActivity(), NotificationCenter.N
             entries = listOf(
                 SearchRegistry.Entry("hide-sponsored-messages", R.string.InuHideSponsoredMessages, TOGGLE_HIDE_SPONSORED_MESSAGES),
                 SearchRegistry.Entry("hide-proxy-sponsor-chat", R.string.InuHideProxySponsorChat, TOGGLE_HIDE_PROXY_SPONSOR_CHAT),
+                SearchRegistry.Entry("hide-business-bot-banner", R.string.InuHideBusinessBotBanner, TOGGLE_HIDE_BUSINESS_BOT_BANNER),
                 SearchRegistry.Entry("regex-filter-enabled", R.string.InuRegexFilterEnabled, TOGGLE_REGEX_FILTER_ENABLED),
                 SearchRegistry.Entry("regex-filter-mode", R.string.InuRegexFilterMode, BUTTON_REGEX_FILTER_MODE),
                 SearchRegistry.Entry("regex-filter-hide-replies", R.string.InuRegexFilterHideReplies, TOGGLE_REGEX_FILTER_HIDE_REPLIES),

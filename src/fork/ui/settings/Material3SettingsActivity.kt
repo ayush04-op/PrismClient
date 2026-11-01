@@ -8,6 +8,7 @@ import desu.inugram.SearchRegistry
 import desu.inugram.helpers.InuUtils
 import desu.inugram.helpers.dialogs.DialogsM3SectionsHelper
 import desu.inugram.helpers.theme.MonetHelper
+import desu.inugram.helpers.theme.MonetStyle
 import org.telegram.messenger.LocaleController
 import org.telegram.messenger.R
 import org.telegram.ui.Cells.NotificationsCheckCell
@@ -25,6 +26,7 @@ class Material3SettingsActivity : SettingsPageActivity() {
             listOf(
                 ExpandableBoolGroup.Option(R.string.InuMaterial3Switches, InuConfig.MATERIAL3_SWITCHES, TOGGLE_MATERIAL3_SWITCHES, locked = true),
                 ExpandableBoolGroup.Option(R.string.InuMaterial3Sliders, InuConfig.MATERIAL3_SLIDERS, TOGGLE_MATERIAL3_SLIDERS, locked = true),
+                ExpandableBoolGroup.Option(R.string.InuMaterial3Dialogs, InuConfig.MATERIAL3_DIALOGS, TOGGLE_MATERIAL3_DIALOGS),
                 ExpandableBoolGroup.Option(R.string.InuMaterial3Fabs, InuConfig.MATERIAL3_FABS, TOGGLE_MATERIAL3_FABS, locked = true),
                 ExpandableBoolGroup.Option(R.string.InuMaterial3Sections, InuConfig.M3_SECTIONS_STYLE, TOGGLE_M3_SECTIONS_STYLE),
                 ExpandableBoolGroup.Option(R.string.InuMaterial3AccentIcons, InuConfig.M3_ACCENT_ICONS, TOGGLE_M3_ACCENT_ICONS, locked = true),
@@ -39,6 +41,24 @@ class Material3SettingsActivity : SettingsPageActivity() {
     }
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            items.add(
+                UItem.asButton(
+                    BUTTON_MONET_THEME,
+                    LocaleController.getString(R.string.InuMonetTheme),
+                    monetThemeModeLabel(MonetHelper.getThemeMode()),
+                )
+            )
+            items.add(
+                UItem.asButton(
+                    BUTTON_MONET_STYLE,
+                    LocaleController.getString(R.string.InuMonetStyle),
+                    monetStyleLabel(InuConfig.MONET_STYLE.value),
+                )
+            )
+            items.add(UItem.asShadow(null))
+        }
+
         m3Group.addTo(items) { changed ->
             if (changed.any { it.id == TOGGLE_M3_BOTTOM_TABS } && InuConfig.M3_BOTTOM_TABS.value && InuConfig.IOS_BOTTOM_NAVIGATION_BAR.value) {
                 InuConfig.IOS_BOTTOM_NAVIGATION_BAR.value = false
@@ -132,6 +152,21 @@ class Material3SettingsActivity : SettingsPageActivity() {
                 )
             }
 
+            BUTTON_MONET_STYLE -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                RadioItemOptions.show(
+                    this, view,
+                    listOf(
+                        LocaleController.getString(R.string.InuMonetStyleClassic),
+                        LocaleController.getString(R.string.InuMonetStyleMaterial3),
+                    ),
+                    InuConfig.MONET_STYLE.value,
+                ) { which ->
+                    InuConfig.MONET_STYLE.value = which
+                    MonetHelper.onStyleChanged()
+                    listView.adapter.update(true)
+                }
+            }
+
             TOGGLE_DIALOGS_SECTIONS -> {
                 val new = InuConfig.DIALOGS_M3_SECTIONS.toggle()
                 (view as? TextCheckCell)?.isChecked = new
@@ -165,6 +200,7 @@ class Material3SettingsActivity : SettingsPageActivity() {
 
     companion object {
         private val BUTTON_MONET_THEME = InuUtils.generateId()
+        private val BUTTON_MONET_STYLE = InuUtils.generateId()
         private val SECTION_MATERIAL3 = InuUtils.generateId()
         private val TOGGLE_MATERIAL3_SWITCHES = InuUtils.generateId()
         private val TOGGLE_MATERIAL3_SLIDERS = InuUtils.generateId()
@@ -176,6 +212,7 @@ class Material3SettingsActivity : SettingsPageActivity() {
         private val TOGGLE_MATERIAL_PROFILE_ACTIONS = InuUtils.generateId()
         private val TOGGLE_M3_NAVIGATION_ANIMATION = InuUtils.generateId()
         private val TOGGLE_MD3_PLAYER = InuUtils.generateId()
+        private val TOGGLE_MATERIAL3_DIALOGS = InuUtils.generateId()
         private val TOGGLE_DIALOGS_SECTIONS = InuUtils.generateId()
         private val BUTTON_DIALOGS_MARGIN = InuUtils.generateId()
         private val TOGGLE_DIALOGS_SEPARATE_PINNED = InuUtils.generateId()
@@ -191,6 +228,10 @@ class Material3SettingsActivity : SettingsPageActivity() {
             else -> LocaleController.getString(R.string.InuMonetThemeDisabled)
         }
 
+        private fun monetStyleLabel(style: Int): String = LocaleController.getString(
+            if (style == MonetStyle.MATERIAL3) R.string.InuMonetStyleMaterial3 else R.string.InuMonetStyleClassic
+        )
+
         @JvmField
         val PAGE = SearchRegistry.Page(
             slug = "material3",
@@ -200,6 +241,7 @@ class Material3SettingsActivity : SettingsPageActivity() {
             entries = listOf(
                 // entiny: slugs kept verbatim from AppearanceSettingsActivity so old deeplinks keep resolving
                 SearchRegistry.Entry("monet-theme", R.string.InuMonetTheme, BUTTON_MONET_THEME),
+                SearchRegistry.Entry("monet-style", R.string.InuMonetStyle, BUTTON_MONET_STYLE),
                 SearchRegistry.Entry("material3-switches", R.string.InuMaterial3Switches, TOGGLE_MATERIAL3_SWITCHES),
                 SearchRegistry.Entry("material3-sliders", R.string.InuMaterial3Sliders, TOGGLE_MATERIAL3_SLIDERS),
                 SearchRegistry.Entry("material3-fabs", R.string.InuMaterial3Fabs, TOGGLE_MATERIAL3_FABS),

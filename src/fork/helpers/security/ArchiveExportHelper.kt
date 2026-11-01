@@ -1,9 +1,9 @@
 package desu.inugram.helpers.security
 
+import desu.inugram.helpers.archive.ArchiveStore
 import android.content.ClipData
 import android.content.Intent
 import androidx.core.content.FileProvider
-import desu.inugram.helpers.InuDatabaseHelper
 import org.telegram.SQLite.SQLiteDatabase
 import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.ApplicationLoader
@@ -38,7 +38,7 @@ object ArchiveExportHelper {
         if (!dir.exists()) dir.mkdirs()
         val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
         val target = File(dir, "prism-archive-$stamp.json")
-        val count = target.bufferedWriter().use { InuDatabaseHelper.writeArchiveJson(db, it) }
+        val count = target.bufferedWriter().use { ArchiveStore.writeArchiveJson(db, it) }
         return target to count
     }
 

@@ -3,7 +3,7 @@ package desu.inugram.helpers
 import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
-import desu.inugram.helpers.vibration.HapticFeedbackConstants
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -73,7 +73,7 @@ object LongPressDragMenuHelper {
         hoverItem = item
         hoverSaved = item.background
         item.background = makeHighlightBg(item)
-        item.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        item.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
 
     private fun makeHighlightBg(item: View): GradientDrawable {

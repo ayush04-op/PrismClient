@@ -221,6 +221,11 @@ object FolderHelper {
         return FilterTabsView.TAB_PADDING_WIDTH
     }
 
+    // entiny: tab width is measured before the tab joins the strip, so the default tab cannot be resolved via the view yet
+    @JvmStatic
+    fun isDefaultFilterTab(filters: List<MessagesController.DialogFilter>, tabId: Int): Boolean =
+        tabId >= 0 && tabId < filters.size && filters[tabId].isDefault
+
     @JvmStatic
     fun shouldSkipDefaultTab(totalFilters: Int): Boolean {
         return InuConfig.HIDE_ALL_CHATS_TAB.value && totalFilters > 1
@@ -314,6 +319,11 @@ object FolderHelper {
 
     @JvmStatic
     fun bottomReservedHeightDp(): Int = getTabBarHeightDp() + TAB_BAR_BOTTOM_MARGIN_DP
+
+    // entiny: with the share bar open the bottom tabs sit above it instead of covering its send button
+    @JvmStatic
+    fun shareBarLift(barHeightPx: Int, navigationBarHeight: Int, factor: Float): Float =
+        if (!atBottom()) 0f else maxOf(0f, barHeightPx - navigationBarHeight - AndroidUtilities.dp(2f).toFloat()) * factor
 
     @JvmStatic
     @JvmOverloads

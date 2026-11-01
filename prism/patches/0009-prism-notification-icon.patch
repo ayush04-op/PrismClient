@@ -1,0 +1,13 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+index a8e350c5..b8cf626c 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+@@ -400,7 +400,7 @@ public class NotificationsController extends BaseController implements Notificat
+                 PendingIntent contentIntent = PendingIntent.getActivity(ApplicationLoader.applicationContext,
+                         currentAccount, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                 NotificationCompat.Builder builder = new NotificationCompat.Builder(ApplicationLoader.applicationContext, channelId)
+-                        .setSmallIcon(R.drawable.notification)
++                        .setSmallIcon(NotificationsHelper.smallIconRes())
+                         .setContentTitle(LocaleController.getString(R.string.AppName))
+                         .setContentText(message)
+                         .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
