@@ -50,7 +50,7 @@ class IosStyleSettingsActivity : SettingsPageActivity() {
                     LocaleController.getString(R.string.InuChatHeaderSettings),
                 )
             )
-        )
+        }
         items.add(UItem.asShadow(null))
 
         items.add(UItem.asHeader(LocaleController.getString(R.string.InuMessageInput)))
@@ -224,8 +224,14 @@ class IosStyleSettingsActivity : SettingsPageActivity() {
                 SearchRegistry.Entry("disable-glass-glare", R.string.InuDisableGlassGlare, TOGGLE_DISABLE_GLASS_GLARE),
                 // entiny: slugs kept verbatim from AppearanceSettingsActivity so old deeplinks keep resolving
                 SearchRegistry.Entry("ios-bottom-bar", R.string.InuIosBottomBar, TOGGLE_IOS_BOTTOM_BAR),
+                SearchRegistry.Entry("ios-chat-list", R.string.InuIosChatList, TOGGLE_IOS_CHAT_LIST),
+                SearchRegistry.Entry("ios-message-menu", R.string.InuIosMessageMenu, TOGGLE_IOS_MESSAGE_MENU),
+                SearchRegistry.Entry("ios-chats-tab-first-folder", R.string.InuIosChatsTabFirstFolder, TOGGLE_IOS_CHATS_TAB_FIRST_FOLDER),
                 SearchRegistry.Entry("ios-button-placement", R.string.InuIosButtonPlacement, TOGGLE_IOS_BUTTON_PLACEMENT),
                 SearchRegistry.Entry("ios-input-appearance", R.string.InuIosInputAppearance, TOGGLE_IOS_INPUT_APPEARANCE),
+                SearchRegistry.Entry("compact-input-size", R.string.InuCompactInputSize, TOGGLE_COMPACT_INPUT_SIZE),
+                SearchRegistry.Entry("commands-near-stickers", R.string.InuCommandsNearStickers, TOGGLE_COMMANDS_NEAR_STICKERS),
+                SearchRegistry.Entry("action-button-style", R.string.InuActionButtonStyle, BUTTON_ACTION_BUTTON_STYLE),
                 SearchRegistry.Entry("chat-header-settings", R.string.InuChatHeaderSettings, BUTTON_CHAT_HEADER),
             ),
         )
