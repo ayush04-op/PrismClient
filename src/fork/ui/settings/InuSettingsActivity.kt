@@ -13,6 +13,7 @@ import org.telegram.messenger.LocaleController
 import org.telegram.messenger.browser.Browser
 import org.telegram.messenger.R
 import org.telegram.ui.ActionBar.ActionBarMenuItem
+import org.telegram.ui.Components.BulletinFactory
 import org.telegram.ui.Components.UItem
 import org.telegram.ui.Components.UniversalAdapter
 import org.telegram.ui.ProfileActivity
@@ -212,7 +213,6 @@ class InuSettingsActivity : SettingsPageActivity() {
             BUTTON_PLUGINS -> presentFragment(PluginsActivity())
             // #endif
             CAT_SYSTEM -> presentFragment(AdditionalSettingsActivity())
-            CAT_NICHE -> presentFragment(NicheSettingsActivity())
             BUTTON_CHANNEL_LINK -> Browser.openUrl(ctx, "https://github.com/ayush04-op")
             BUTTON_CREDITS -> presentFragment(PrismCreditsActivity())
             BUTTON_GITHUB -> Browser.openUrl(ctx, "https://github.com/ayush04-op/PrismClient")
