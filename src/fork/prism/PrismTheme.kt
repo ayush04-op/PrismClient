@@ -73,7 +73,11 @@ object PrismTheme {
         } else {
             // a manual pick: apply the matching twin for the mode the user is in right now
             val target = if (wantDark) dark else light
-            if (target != null) Theme.applyTheme(target, wantDark)
+            if (target != null) {
+                // same path as Telegram's own switcher: applies the theme and re-colours every open screen
+                org.telegram.messenger.NotificationCenter.getGlobalInstance()
+                    .postNotificationName(org.telegram.messenger.NotificationCenter.needSetDayNightTheme, target, wantDark, null, -1)
+            }
         }
     }
 
