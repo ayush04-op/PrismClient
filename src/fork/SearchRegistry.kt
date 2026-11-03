@@ -20,7 +20,6 @@ import desu.inugram.ui.settings.ChatHeaderSettingsActivity
 import desu.inugram.ui.settings.DatacenterStatusActivity
 import desu.inugram.helpers.feed.FeedHelper
 import desu.inugram.ui.settings.FeedExcludedChannelsSettingsActivity
-import desu.inugram.ui.settings.GhostModeSettingsActivity
 import desu.inugram.ui.settings.InuSettingsActivity
 import desu.inugram.ui.settings.IosStyleSettingsActivity
 import desu.inugram.ui.settings.Material3SettingsActivity
@@ -69,6 +68,7 @@ object SearchRegistry {
             desu.inugram.ui.spoof.DeviceSpoofSettingsActivity.PAGE,
             CacheManagementSettingsActivity.PAGE,
             InuSettingsActivity.PAGE,
+            PrismToolsActivity.PAGE,
             AppearanceSettingsActivity.PAGE,
             ChatHeaderSettingsActivity.PAGE,
             IosStyleSettingsActivity.PAGE,
@@ -90,7 +90,6 @@ object SearchRegistry {
             MainScreenSettingsActivity.PAGE,
             BehaviorSettingsActivity.PAGE,
             TosSettingsActivity.PAGE,
-            GhostModeSettingsActivity.PAGE,
             PillStackSettingsActivity.PAGE,
             RecentChatsSettingsActivity.PAGE,
             WeatherLocationActivity.PAGE,

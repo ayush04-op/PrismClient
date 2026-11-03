@@ -5,8 +5,12 @@ import android.text.InputType
 import android.view.View
 import android.widget.EditText
 import desu.inugram.InuConfig
+import desu.inugram.SearchRegistry
 import desu.inugram.helpers.PrismChatTools
+import org.telegram.messenger.LocaleController
+import org.telegram.messenger.R
 import org.telegram.ui.ActionBar.AlertDialog
+import org.telegram.ui.ActionBar.Theme
 import org.telegram.ui.Cells.TextCheckCell
 import org.telegram.ui.Components.UItem
 import org.telegram.ui.Components.UniversalAdapter
@@ -16,8 +20,17 @@ class PrismToolsActivity : SettingsPageActivity() {
     override fun getTitle(): CharSequence = "Prism tools"
 
     override fun fillItems(items: ArrayList<UItem>, adapter: UniversalAdapter) {
+        items.add(UItem.asHeader("Light and dark"))
+        items.add(UItem.asButton(BTN_THEME_MODE, "Switch automatically", themeModeLabel()))
+        if (Theme.selectedAutoNightType == Theme.AUTO_NIGHT_TYPE_SCHEDULED) {
+            items.add(UItem.asButton(BTN_NIGHT_FROM, "Dark from", PrismChatTools.fmt(Theme.autoNightDayStartTime)))
+            items.add(UItem.asButton(BTN_NIGHT_TO, "Light from", PrismChatTools.fmt(Theme.autoNightDayEndTime)))
+        }
+        items.add(UItem.asShadow("Paper switches between its light and dark looks for you."))
+
         items.add(UItem.asHeader("Downloads"))
         items.add(UItem.asButton(BTN_DOWNLOADS, "Downloads", "Browse by category"))
+        items.add(UItem.asButton(BTN_FINDER, "Find links & files", "Across all chats"))
         items.add(UItem.asCheck(TOG_SORT, "Sort saved files into folders").setChecked(InuConfig.SORT_DOWNLOADS.value))
         items.add(UItem.asShadow("APKs, PDFs, documents and archives are saved into their own folders."))
 
@@ -51,6 +64,17 @@ class PrismToolsActivity : SettingsPageActivity() {
             TOG_CAPTION -> (view as? TextCheckCell)?.isChecked = InuConfig.CAPTION_ABOVE_DEFAULT.toggle()
             TOG_QUIET -> (view as? TextCheckCell)?.isChecked = InuConfig.QUIET_ENABLED.toggle()
             BTN_DOWNLOADS -> presentFragment(PrismDownloadsActivity())
+            BTN_FINDER -> presentFragment(PrismFinderActivity())
+            BTN_THEME_MODE -> RadioItemOptions.show(
+                this, view, listOf("Follow the phone", "On a schedule", "Off"),
+                when (Theme.selectedAutoNightType) { Theme.AUTO_NIGHT_TYPE_SYSTEM -> 0; Theme.AUTO_NIGHT_TYPE_SCHEDULED -> 1; else -> 2 }
+            ) { which ->
+                Theme.selectedAutoNightType = when (which) { 0 -> Theme.AUTO_NIGHT_TYPE_SYSTEM; 1 -> Theme.AUTO_NIGHT_TYPE_SCHEDULED; else -> Theme.AUTO_NIGHT_TYPE_NONE }
+                Theme.autoNightScheduleByLocation = false
+                applyThemeSchedule()
+            }
+            BTN_NIGHT_FROM -> pickTime(Theme.autoNightDayStartTime) { Theme.autoNightDayStartTime = it; applyThemeSchedule() }
+            BTN_NIGHT_TO -> pickTime(Theme.autoNightDayEndTime) { Theme.autoNightDayEndTime = it; applyThemeSchedule() }
             BTN_QUIET_START -> pickTime(InuConfig.QUIET_START.value) { InuConfig.QUIET_START.value = it; softRebuild() }
             BTN_QUIET_END -> pickTime(InuConfig.QUIET_END.value) { InuConfig.QUIET_END.value = it; softRebuild() }
             BTN_ADD_REPLY -> {
@@ -79,6 +103,19 @@ class PrismToolsActivity : SettingsPageActivity() {
         }
     }
 
+    private fun themeModeLabel() = when (Theme.selectedAutoNightType) {
+        Theme.AUTO_NIGHT_TYPE_SYSTEM -> "Follow the phone"
+        Theme.AUTO_NIGHT_TYPE_SCHEDULED -> "On a schedule"
+        else -> "Off"
+    }
+
+    private fun applyThemeSchedule() {
+        Theme.saveAutoNightThemeConfig()
+        Theme.cancelAutoNightThemeCallbacks()
+        Theme.checkAutoNightThemeConditions(true)
+        softRebuild()
+    }
+
     private fun pickTime(current: Int, done: (Int) -> Unit) {
         val ctx = parentActivity ?: return
         TimePickerDialog(ctx, { _, h, m -> done(h * 60 + m) }, current / 60, current % 60, true).show()
@@ -93,6 +130,28 @@ class PrismToolsActivity : SettingsPageActivity() {
         private const val BTN_QUIET_END = 7206
         private const val BTN_ADD_REPLY = 7207
         private const val BTN_LOCKS = 7208
+        private const val BTN_FINDER = 7209
+        private const val BTN_THEME_MODE = 7210
+        private const val BTN_NIGHT_FROM = 7211
+        private const val BTN_NIGHT_TO = 7212
         private const val REPLY_BASE = 7300
+
+        @JvmField
+        val PAGE = SearchRegistry.Page(
+            slug = "prism-tools",
+            titleRes = R.string.PrismTools,
+            iconRes = R.drawable.msg_download,
+            factory = ::PrismToolsActivity,
+            entries = listOf(
+                SearchRegistry.Entry("prism-theme-schedule", R.string.PrismThemeSchedule, BTN_THEME_MODE),
+                SearchRegistry.Entry("prism-finder", R.string.PrismFinder, BTN_FINDER),
+                SearchRegistry.Entry("prism-downloads", R.string.PrismDownloads, BTN_DOWNLOADS),
+                SearchRegistry.Entry("prism-sort-downloads", R.string.PrismSortDownloads, TOG_SORT),
+                SearchRegistry.Entry("prism-caption-above", R.string.PrismCaptionAbove, TOG_CAPTION),
+                SearchRegistry.Entry("prism-quiet-hours", R.string.PrismQuietHours, TOG_QUIET),
+                SearchRegistry.Entry("prism-saved-replies", R.string.PrismSavedReplies, BTN_ADD_REPLY),
+                SearchRegistry.Entry("prism-locked-chats", R.string.PrismLockedChats, BTN_LOCKS),
+            ),
+        )
     }
 }

@@ -1,0 +1,29 @@
+diff --git a/TMessagesProj/src/main/AndroidManifest.xml b/TMessagesProj/src/main/AndroidManifest.xml
+--- a/TMessagesProj/src/main/AndroidManifest.xml
++++ b/TMessagesProj/src/main/AndroidManifest.xml
+@@ -1027,6 +1027,14 @@
+             android:name=".voip.CallNotificationSoundProvider"
+             android:exported="true"/>
+ 
++        <receiver android:name="desu.inugram.helpers.PrismUnreadWidget" android:exported="false" android:label="@string/PrismWidgetLabel">
++            <meta-data android:name="android.appwidget.provider"
++                android:resource="@xml/prism_widget_info" />
++            <intent-filter>
++                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
++            </intent-filter>
++        </receiver>
++
+         <receiver android:name=".ChatsWidgetProvider" android:exported="false">
+             <meta-data android:name="android.appwidget.provider"
+                 android:resource="@xml/chats_widget_info" />
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/NotificationsController.java
+@@ -1934,6 +1934,7 @@
+         FileLog.d("setBadge " + count);
+         lastBadgeCount = count;
+         NotificationBadge.applyCount(count);
++        desu.inugram.helpers.PrismUnreadWidget.refresh(ApplicationLoader.applicationContext);
+     }
+ 
+     public String getShortStringForMessage(MessageObject messageObject, String[] userName, boolean[] preview) {

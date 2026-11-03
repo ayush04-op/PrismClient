@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="prism_widget_bg">#F6F0E6</color>
+    <color name="prism_widget_text">#3B2F2A</color>
+    <color name="prism_widget_sub">#8A7B70</color>
+    <color name="prism_widget_accent">#C4623D</color>
+    <string name="PrismWidgetLabel">Prism unread</string>
+    <string name="PrismWidgetDesc">Your unread chats at a glance, in Paper style.</string>
+</resources>

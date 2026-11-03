@@ -216,8 +216,6 @@ class RegexFilterSettingsActivity : SettingsPageActivity(), NotificationCenter.N
             iconRes = R.drawable.inu_tabler_filter,
             factory = ::RegexFilterSettingsActivity,
             entries = listOf(
-                SearchRegistry.Entry("hide-sponsored-messages", R.string.InuHideSponsoredMessages, TOGGLE_HIDE_SPONSORED_MESSAGES),
-                SearchRegistry.Entry("hide-proxy-sponsor-chat", R.string.InuHideProxySponsorChat, TOGGLE_HIDE_PROXY_SPONSOR_CHAT),
                 SearchRegistry.Entry("hide-business-bot-banner", R.string.InuHideBusinessBotBanner, TOGGLE_HIDE_BUSINESS_BOT_BANNER),
                 SearchRegistry.Entry("regex-filter-enabled", R.string.InuRegexFilterEnabled, TOGGLE_REGEX_FILTER_ENABLED),
                 SearchRegistry.Entry("regex-filter-mode", R.string.InuRegexFilterMode, BUTTON_REGEX_FILTER_MODE),

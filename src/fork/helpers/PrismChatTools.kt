@@ -10,6 +10,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import desu.inugram.InuConfig
 import org.json.JSONArray
+import org.json.JSONObject
 import org.telegram.messenger.ApplicationLoader
 import org.telegram.messenger.MessageObject
 import org.telegram.ui.ActionBar.AlertDialog
@@ -23,6 +24,7 @@ object PrismChatTools {
     const val MENU_LOCK = 9101
     const val MENU_REPLIES = 9102
     const val MENU_PDF = 9103
+    const val MENU_COLOR = 9104
 
     private fun prefs() = ApplicationLoader.applicationContext.getSharedPreferences("prism_tools", Context.MODE_PRIVATE)
 
@@ -173,5 +175,106 @@ object PrismChatTools {
         file.outputStream().use { doc.writeTo(it) }
         doc.close()
         return file
+    }
+
+    // ── backup of Prism's own data ───────────────────────────────────────────
+    fun exportData(): JSONObject {
+        val o = JSONObject()
+        o.put("replies", JSONArray(replies()))
+        o.put("locked", JSONArray(lockedIds().toList()))
+        o.put("accents", PrismChatAccent.exportData())
+        desu.inugram.prism.PrismTheme.currentPalette()?.let { o.put("palette", it.id) }
+        return o
+    }
+
+    fun importData(o: JSONObject) {
+        o.optJSONArray("replies")?.let { a -> saveReplies((0 until a.length()).map { a.getString(it) }) }
+        o.optJSONArray("locked")?.let { a ->
+            prefs().edit().putStringSet("locked", (0 until a.length()).map { a.getString(it) }.toSet()).apply()
+        }
+        o.optJSONObject("accents")?.let { PrismChatAccent.importData(it) }
+        val pid = o.optString("palette", "")
+        desu.inugram.prism.PrismTheme.palettes.firstOrNull { it.id == pid }?.let {
+            desu.inugram.prism.PrismTheme.installPalette(it, org.telegram.ui.ActionBar.Theme.isCurrentThemeDark(), false)
+        }
+    }
+
+    // ── per-chat accent picker ───────────────────────────────────────────────
+    @JvmStatic
+    fun showColorPicker(f: BaseFragment, dialogId: Long) {
+        val ctx = f.parentActivity ?: return
+        val dark = org.telegram.ui.ActionBar.Theme.isCurrentThemeDark()
+        val row = android.widget.LinearLayout(ctx).apply {
+            orientation = android.widget.LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER
+            setPadding(org.telegram.messenger.AndroidUtilities.dp(12f), org.telegram.messenger.AndroidUtilities.dp(16f), org.telegram.messenger.AndroidUtilities.dp(12f), org.telegram.messenger.AndroidUtilities.dp(8f))
+        }
+        var dialog: AlertDialog? = null
+        val current = PrismChatAccent.get(dialogId)
+        fun swatch(color: Int, selected: Boolean, label: String, pick: String?) {
+            val size = org.telegram.messenger.AndroidUtilities.dp(40f)
+            val v = android.widget.TextView(ctx).apply {
+                text = if (selected) "✓" else ""
+                setTextColor(0xFFFFFFFF.toInt()); textSize = 18f; gravity = android.view.Gravity.CENTER
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    shape = android.graphics.drawable.GradientDrawable.OVAL; setColor(color)
+                }
+                contentDescription = label
+                setOnClickListener {
+                    PrismChatAccent.set(dialogId, pick)
+                    dialog?.dismiss()
+                    org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(org.telegram.messenger.NotificationCenter.didSetNewTheme, false, true, true)
+                }
+            }
+            row.addView(v, android.widget.LinearLayout.LayoutParams(size, size).apply { setMargins(org.telegram.messenger.AndroidUtilities.dp(5f), 0, org.telegram.messenger.AndroidUtilities.dp(5f), 0) })
+        }
+        swatch(0xFF9A9A9A.toInt(), current == null, "Default", null)
+        for (p in desu.inugram.prism.PrismTheme.palettes) swatch(if (dark) p.accentDark else p.accentLight, current == p.id, p.label, p.id)
+        dialog = AlertDialog.Builder(ctx).setTitle("Chat colour").setView(row).setNegativeButton("Cancel", null).create()
+        dialog.show()
+    }
+
+    // ── PDF of the whole chat history ────────────────────────────────────────
+    private const val FULL_PDF_LIMIT = 5000
+
+    @JvmStatic
+    fun exportFullPdf(f: BaseFragment, title: String, dialogId: Long) {
+        val ctx = f.parentActivity ?: return
+        val account = f.currentAccount
+        val progress = AlertDialog(ctx, AlertDialog.ALERT_TYPE_SPINNER).apply { setCanCancel(true) }
+        val collected = ArrayList<MessageObject>()
+        val users = androidx.collection.LongSparseArray<org.telegram.tgnet.TLRPC.User>()
+        val chats = androidx.collection.LongSparseArray<org.telegram.tgnet.TLRPC.Chat>()
+        var cancelled = false
+        progress.setOnCancelListener { cancelled = true }
+        progress.show()
+        fun finish() {
+            progress.dismiss()
+            if (cancelled) return
+            val file = exportPdf(f, title, collected.asReversed().let { ArrayList(it) })
+            if (file == null) {
+                org.telegram.ui.Components.BulletinFactory.of(f).createSimpleBulletin(org.telegram.messenger.R.raw.chats_infotip, "Nothing to export").show()
+            } else {
+                org.telegram.messenger.AndroidUtilities.openForView(file, file.name, "application/pdf", ctx, null, false)
+            }
+        }
+        fun page(offsetId: Int) {
+            val req = org.telegram.tgnet.TLRPC.TL_messages_getHistory()
+            req.peer = org.telegram.messenger.MessagesController.getInstance(account).getInputPeer(dialogId)
+            req.offset_id = offsetId
+            req.limit = 100
+            org.telegram.tgnet.ConnectionsManager.getInstance(account).sendRequest(req) { response, error ->
+                org.telegram.messenger.AndroidUtilities.runOnUIThread {
+                    if (cancelled) return@runOnUIThread
+                    if (error != null || response !is org.telegram.tgnet.TLRPC.messages_Messages) { finish(); return@runOnUIThread }
+                    for (u in response.users) users.put(u.id, u)
+                    for (c in response.chats) chats.put(c.id, c)
+                    for (m in response.messages) collected.add(MessageObject(account, m, users, chats, false, true))
+                    val last = response.messages.lastOrNull()
+                    if (response.messages.size < 100 || last == null || collected.size >= FULL_PDF_LIMIT) finish() else page(last.id)
+                }
+            }
+        }
+        page(0)
     }
 }

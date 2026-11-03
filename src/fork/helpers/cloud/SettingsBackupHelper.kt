@@ -67,6 +67,7 @@ object SettingsBackupHelper {
             val item = byKey[key] ?: continue
             if (differsFromInu(item, values.get(key))) changed++
         }
+        if (root.optJSONObject("prism") != null) changed++
         val sub = root.optJSONObject("stock")?.optJSONObject(STOCK_PREF_NAME)
         if (sub != null) {
             val prefs = stockPrefs()
@@ -132,6 +133,7 @@ object SettingsBackupHelper {
         root.put("app_version", BuildVars.BUILD_VERSION_STRING)
         root.put("values", values)
         if (sub.length() > 0) root.put("stock", JSONObject().put(STOCK_PREF_NAME, sub))
+        root.put("prism", desu.inugram.helpers.PrismChatTools.exportData())
         return root.toString(2)
     }
 
@@ -161,6 +163,7 @@ object SettingsBackupHelper {
                 }
             }
             for (item in InuConfig.items) item.load(InuConfig.prefs)
+            root.optJSONObject("prism")?.let { desu.inugram.helpers.PrismChatTools.importData(it) }
 
             val sub = root.optJSONObject("stock")?.optJSONObject(STOCK_PREF_NAME) ?: return applied
             stockPrefs().edit {
