@@ -70,10 +70,10 @@ object PrismTheme {
             Theme.selectedAutoNightType = Theme.AUTO_NIGHT_TYPE_SYSTEM
             Theme.saveAutoNightThemeConfig()
             Theme.checkAutoNightThemeConditions(true)
-        } else if (wantDark && dark != null) {
-            // a manual pick: show the mode the user is in and leave the auto-night setting alone
-            org.telegram.messenger.NotificationCenter.getGlobalInstance()
-                .postNotificationName(org.telegram.messenger.NotificationCenter.needSetDayNightTheme, dark, false, null, -1)
+        } else {
+            // a manual pick: apply the matching twin for the mode the user is in right now
+            val target = if (wantDark) dark else light
+            if (target != null) Theme.applyTheme(target, wantDark)
         }
     }
 
