@@ -3,6 +3,7 @@ package desu.inugram
 import android.content.Intent
 import desu.inugram.helpers.security.ParanoiaHelper
 import desu.inugram.ui.settings.AdditionalSettingsActivity
+import desu.inugram.ui.settings.PrismToolsActivity
 import desu.inugram.ui.settings.AiEditorSettingsActivity
 import desu.inugram.ui.settings.AiSettingsActivity
 import desu.inugram.ui.settings.AiSummarySettingsActivity
