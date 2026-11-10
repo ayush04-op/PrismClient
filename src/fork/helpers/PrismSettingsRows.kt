@@ -33,6 +33,7 @@ object PrismSettingsRows {
     const val SAFE_MODE = 218
     const val AI = 219
     const val TOOLS = 220
+    const val WELCOME = 221
 
     /** settings section of every Prism row (see ProfileSettingsHelper) */
     @JvmStatic
@@ -42,7 +43,7 @@ object PrismSettingsRows {
         DESIGN, MAIN_SCREEN, INTERFACE -> 14
         PREMIUM -> 2
         PLUGINS, BACKUP, UPDATE, SAFE_MODE -> 15
-        DEVELOPER, GITHUB, CREDITS, FONT_CHECK -> 16
+        DEVELOPER, GITHUB, CREDITS, WELCOME, FONT_CHECK -> 16
         else -> -1
     }
 
@@ -74,6 +75,7 @@ object PrismSettingsRows {
             row(DEVELOPER, R.drawable.inu_tabler_brand_github, LocaleController.getString(R.string.PrismDeveloper), null, "Ayush"),
             row(GITHUB, R.drawable.inu_tabler_brand_github, "GitHub", null, "PrismClient"),
             row(CREDITS, R.drawable.inu_tabler_heart, LocaleController.getString(R.string.PrismCredits), "Open-source thanks"),
+            row(WELCOME, R.drawable.msg_help, "Replay welcome", "See the first-run tour again"),
             row(FONT_CHECK, R.drawable.msg_info, LocaleController.getString(R.string.PrismFontCheck), "Check the app font"),
         )
         if (PrismSafe.isSafe()) list.add(row(SAFE_MODE, R.drawable.msg_info, LocaleController.getString(R.string.PrismSafeMode), LocaleController.getString(R.string.PrismSafeModeValue)))
@@ -104,6 +106,7 @@ object PrismSettingsRows {
             DEVELOPER -> org.telegram.messenger.browser.Browser.openUrl(ctx, "https://github.com/ayush04-op")
             GITHUB -> org.telegram.messenger.browser.Browser.openUrl(ctx, "https://github.com/ayush04-op/PrismClient")
             CREDITS -> f.presentFragment(PrismCreditsActivity())
+            WELCOME -> f.presentFragment(desu.inugram.prism.PrismIntroActivity(true))
             FONT_CHECK -> org.telegram.ui.ActionBar.AlertDialog.Builder(ctx)
                 .setTitle(LocaleController.getString(R.string.PrismFontCheck))
                 .setMessage(desu.inugram.helpers.font.FontHelper.diagnose())

@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prism Client</title>
+<meta name="description" content="Prism is a calm, paper-themed Telegram client for Android. Unofficial client. Uses the Telegram API.">
+<meta name="theme-color" content="#FBF6EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E1915" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108'%3E%3Crect width='108' height='108' rx='26' fill='%23B5532F'/%3E%3Cg fill='%23fff'%3E%3Cpath d='M62.1,38.4 L56.8,44.7 L48.7,43.3 L45.9,35.6 L51.2,29.3 L59.3,30.7Z'/%3E%3Cpath d='M79.5,51.6 L72.8,56.3 L65.4,52.8 L64.6,44.7 L71.4,40 L78.8,43.4Z'/%3E%3Cpath d='M72.7,69.3 L68,76 L59.9,75.3 L56.4,67.8 L61.1,61.1 L69.3,61.8Z'/%3E%3Cpath d='M49.7,73.8 L42,76.6 L35.7,71.4 L37.1,63.3 L44.8,60.5 L51.1,65.8Z'/%3E%3Cpath d='M43.9,50.3 L38.1,56 L30.1,53.9 L28,46 L33.8,40.2 L41.7,42.3Z'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FBF6EA;
+  --surface: #F3EBDA;
+  --card: #FFFCF5;
+  --ink: #2B2420;
+  --muted: #6B5F55;
+  --line: #E6DAC4;
+  --accent: #B5532F;
+  --on-accent: #FFFFFF;
+  --shadow: 0 10px 30px rgba(90, 55, 30, .10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1E1915;
+    --surface: #15110E;
+    --card: #2A231E;
+    --ink: #F2E8D5;
+    --muted: #A89C89;
+    --line: #3A3026;
+    --accent: #D4693F;
+    --on-accent: #1E1915;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1E1915;
+  --surface: #15110E;
+  --card: #2A231E;
+  --ink: #F2E8D5;
+  --muted: #A89C89;
+  --line: #3A3026;
+  --accent: #D4693F;
+  --on-accent: #1E1915;
+  --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+}
+
+* { box-sizing: border-box; margin: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 18px;
+  line-height: 1.55;
+  transition: background-color .25s ease, color .25s ease;
+  overflow-x: hidden;
+}
+em, i { font-style: normal; }
+a { color: var(--accent); }
+img { max-width: 100%; height: auto; display: block; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+/* nav */
+nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
+.brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 22px; color: var(--ink); text-decoration: none; }
+.brand svg { width: 38px; height: 38px; }
+.nav-links { display: flex; gap: 22px; font-size: 16px; }
+.nav-links a { color: var(--muted); text-decoration: none; }
+.nav-links a:hover { color: var(--accent); }
+
+/* hero */
+.hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; padding: 48px 0 72px; }
+.kicker { color: var(--accent); font-weight: 600; font-size: 17px; letter-spacing: .02em; }
+h1 { font-size: clamp(44px, 7vw, 76px); line-height: 1.02; letter-spacing: -.02em; font-weight: 700; margin-top: 10px; }
+h1 span { color: var(--accent); }
+.lede { font-size: 21px; color: var(--muted); margin-top: 18px; max-width: 30em; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 52px; padding: 0 24px; border-radius: 26px;
+  font: 600 17px "Source Serif 4", Georgia, serif; text-decoration: none;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.btn:active { transform: scale(.98); }
+.btn-main { background: var(--accent); color: var(--on-accent); box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent); }
+.btn-ghost { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+.fine { font-size: 15px; color: var(--muted); margin-top: 18px; }
+
+.hero-art { position: relative; min-height: 470px; }
+.hero-art img { position: absolute; width: 74%; filter: drop-shadow(0 18px 30px rgba(60, 35, 15, .18)); }
+.hero-art img:first-child { top: 0; left: 0; transform: rotate(-3deg); }
+.hero-art img:last-child { bottom: 0; right: 0; transform: rotate(3deg); }
+
+/* sections */
+section { padding: 72px 0; }
+.alt { background: var(--surface); transition: background-color .25s ease; }
+h2 { font-size: clamp(32px, 4.5vw, 44px); line-height: 1.1; letter-spacing: -.01em; font-weight: 700; }
+.section-lede { color: var(--muted); font-size: 19px; margin-top: 10px; max-width: 36em; }
+
+/* palette picker */
+.picker { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 30px; }
+.swatch {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 18px 10px 10px; border-radius: 30px;
+  background: var(--card); border: 1px solid var(--line); color: var(--ink);
+  font: 600 16px "Source Serif 4", Georgia, serif; cursor: pointer;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.swatch:hover { transform: translateY(-1px); }
+.swatch i { width: 30px; height: 30px; border-radius: 50%; display: block; }
+.swatch[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+.modes { display: inline-flex; margin-top: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 4px; }
+.modes button {
+  border: 0; background: none; color: var(--muted); cursor: pointer;
+  font: 600 15px "Source Serif 4", Georgia, serif; padding: 8px 18px; border-radius: 20px;
+}
+.modes button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+
+/* features */
+.features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; margin-top: 34px; }
+.feature { background: var(--card); border: 1px solid var(--line); border-radius: 26px; padding: 22px; box-shadow: var(--shadow); }
+.feature img { width: 100%; max-width: 380px; margin: 0 auto 8px; }
+.feature h3 { font-size: 23px; font-weight: 700; }
+.feature p { color: var(--muted); margin-top: 4px; }
+
+/* steps */
+.steps { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 34px; counter-reset: s; }
+.steps li { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 22px; counter-increment: s; }
+.steps li::before {
+  content: counter(s); display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: var(--on-accent);
+  font-weight: 700; margin-bottom: 12px;
+}
+.steps h3 { font-size: 20px; }
+.steps p { color: var(--muted); font-size: 16px; margin-top: 4px; }
+
+/* privacy */
+.privacy { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.privacy ul { padding-left: 1.1em; color: var(--muted); }
+.privacy li { margin: 8px 0; }
+.privacy li::marker { color: var(--accent); }
+
+footer { border-top: 1px solid var(--line); padding: 34px 0 48px; color: var(--muted); font-size: 15px; }
+footer .row { display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; }
+
+/* reveal: quick and light */
+.reveal { opacity: 0; transform: translateY(12px); transition: opacity .35s ease, transform .35s ease; }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  * { transition: none !important; }
+}
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; padding-top: 24px; gap: 28px; }
+  .hero-art { min-height: 0; display: grid; gap: 14px; }
+  .hero-art img { position: static; width: 100%; max-width: 420px; transform: none !important; margin: 0 auto; }
+  .hero-art img:last-child { display: none; }
+  .features, .steps, .privacy { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  section { padding: 56px 0; }
+}
+@media (max-width: 480px) {
+  .wrap { padding: 0 16px; }
+  body { font-size: 17px; }
+  .btn { width: 100%; justify-content: center; }
+  .swatch { flex: 1 1 40%; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 108 108">
+    <rect width="108" height="108" rx="26" fill="var(--accent)"/>
+    <g fill="#fff" stroke="#fff" stroke-width="2.6" stroke-linejoin="round">
+      <path d="M62.1,38.4 L56.8,44.7 L48.7,43.3 L45.9,35.6 L51.2,29.3 L59.3,30.7Z"/>
+      <path d="M79.5,51.6 L72.8,56.3 L65.4,52.8 L64.6,44.7 L71.4,40 L78.8,43.4Z"/>
+      <path d="M72.7,69.3 L68,76 L59.9,75.3 L56.4,67.8 L61.1,61.1 L69.3,61.8Z"/>
+      <path d="M49.7,73.8 L42,76.6 L35.7,71.4 L37.1,63.3 L44.8,60.5 L51.1,65.8Z"/>
+      <path d="M43.9,50.3 L38.1,56 L30.1,53.9 L28,46 L33.8,40.2 L41.7,42.3Z"/>
+    </g>
+  </symbol>
+</svg>
+
+<header class="wrap">
+  <nav>
+    <a class="brand" href="#"><svg><use href="#logo"/></svg>Prism</a>
+    <div class="nav-links">
+      <a href="#look">Looks</a>
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/ayush04-op/PrismClient">GitHub</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <div class="kicker">Telegram client for Android</div>
+      <h1>A calmer way to use <span>Telegram.</span></h1>
+      <p class="lede">Prism wraps your chats in warm paper colours and a clean serif type, with useful tools that stay out of your way.</p>
+      <div class="actions">
+        <a class="btn btn-main" href="https://github.com/ayush04-op/PrismClient/releases/latest">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
+          Download the APK
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/ayush04-op/PrismClient">View on GitHub</a>
+      </div>
+      <p class="fine">Free and open source. Unofficial client. Uses the Telegram API. Not affiliated with Telegram.</p>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <img src="img/colour.webp" alt="" width="720" height="600">
+      <img src="img/lock.webp" alt="" width="720" height="600">
+    </div>
+  </div>
+
+  <section id="look" class="alt">
+    <div class="wrap reveal">
+      <h2>Pick your look</h2>
+      <p class="section-lede">Six paper palettes, each with a light and a dark side. Try them here. The app works the same way.</p>
+      <div class="picker" role="group" aria-label="Palettes"></div>
+      <div class="modes" role="group" aria-label="Light or dark">
+        <button type="button" data-mode="light">Light</button>
+        <button type="button" data-mode="dark">Dark</button>
+        <button type="button" data-mode="auto">Auto</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <h2 class="reveal">Small tools, done well</h2>
+      <p class="section-lede reveal">Everything is built into Prism and styled to match your palette.</p>
+      <div class="features">
+        <article class="feature reveal">
+          <img src="img/colour.webp" alt="A chat with sage-coloured message bubbles and a row of colour swatches" width="720" height="600" loading="lazy">
+          <h3>Chat colours</h3>
+          <p>Give any chat its own accent, so your important chats are easy to tell apart.</p>
+        </article>
+        <article class="feature reveal">
+          <img src="img/lock.webp" alt="A chat list where the Family chat shows Locked chat and an Unlock with fingerprint button" width="720" height="600" loading="lazy">
+          <h3>Locked chats</h3>
+          <p>Lock a chat with your fingerprint. Its previews are hidden in the chat list and in notifications.</p>
+        </article>
+        <article class="feature reveal">
+          <img src="img/finder.webp" alt="A search for notes showing files from several chats" width="720" height="600" loading="lazy">
+          <h3>Link and file finder</h3>
+          <p>Search links, files and photos across all your chats at once, then jump straight to the message.</p>
+        </article>
+        <article class="feature reveal">
+          <img src="img/widget.webp" alt="A home screen widget showing 12 unread chats" width="720" height="600" loading="lazy">
+          <h3>Home-screen widget</h3>
+          <p>See your unread count at a glance, in light or dark to match your phone.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="install" class="alt">
+    <div class="wrap">
+      <h2 class="reveal">Install in three steps</h2>
+      <ol class="steps">
+        <li class="reveal">
+          <h3>Download</h3>
+          <p>Get the latest APK from the <a href="https://github.com/ayush04-op/PrismClient/releases/latest">releases page</a>.</p>
+        </li>
+        <li class="reveal">
+          <h3>Allow the install</h3>
+          <p>Android will ask once to allow installs from your browser or file manager. Say yes.</p>
+        </li>
+        <li class="reveal">
+          <h3>Open and log in</h3>
+          <p>Open Prism, pick a look and log in with your Telegram account. Later updates arrive inside the app.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap privacy">
+      <div class="reveal">
+        <h2>Your privacy</h2>
+        <p class="section-lede">Prism has no servers of its own.</p>
+      </div>
+      <ul class="reveal">
+        <li>Your chats go directly between your phone and Telegram.</li>
+        <li>Your settings stay on your phone unless you choose to back them up.</li>
+        <li>Prism contacts GitHub only to check for updates.</li>
+        <li>The AI assistant is off until you add your own key, and then it talks only to the provider you chose.</li>
+        <li>All of the code is public on <a href="https://github.com/ayush04-op/PrismClient">GitHub</a>.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap row">
+    <div>Prism by <a href="https://github.com/ayush04-op">Ayush</a>. Unofficial client. Uses the Telegram API.</div>
+    <div>Built on Telegram for Android, entinyGram and Inugram. Thank you to their authors.</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var palettes = [
+    { id: "paper", label: "Paper", light: ["#B5532F", "#FBF6EA"], dark: ["#D4693F", "#1E1915"] },
+    { id: "sage",  label: "Sage",  light: ["#5C7A4B", "#F5FBEA"], dark: ["#8DB07A", "#191C16"] },
+    { id: "ocean", label: "Ocean", light: ["#3F6E8C", "#F1F6F8"], dark: ["#6FA3C4", "#1A1C1E"] },
+    { id: "plum",  label: "Plum",  light: ["#8E4F7A", "#F9F1F5"], dark: ["#C27BAE", "#1D171B"] },
+    { id: "amber", label: "Amber", light: ["#B87A1E", "#FBF4E4"], dark: ["#E0A054", "#1D1810"] },
+    { id: "slate", label: "Slate", light: ["#4A5568", "#F3F4F6"], dark: ["#9AA7BD", "#15171B"] }
+  ];
+  var root = document.documentElement;
+  var media = window.matchMedia("(prefers-color-scheme: dark)");
+  var state = { palette: "paper", mode: "auto" };
+  try {
+    var saved = JSON.parse(localStorage.getItem("prism-look") || "null");
+    if (saved && saved.palette) state = saved;
+  } catch (e) {}
+
+  function mix(a, b, t) {
+    var pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+    var r = Math.round(((pa >> 16) & 255) * (1 - t) + ((pb >> 16) & 255) * t);
+    var g = Math.round(((pa >> 8) & 255) * (1 - t) + ((pb >> 8) & 255) * t);
+    var bl = Math.round((pa & 255) * (1 - t) + (pb & 255) * t);
+    return "#" + ((1 << 24) | (r << 16) | (g << 8) | bl).toString(16).slice(1);
+  }
+
+  function apply() {
+    var p = palettes.filter(function (x) { return x.id === state.palette; })[0] || palettes[0];
+    var dark = state.mode === "dark" || (state.mode === "auto" && media.matches);
+    root.setAttribute("data-theme", dark ? "dark" : "light");
+    var c = dark ? p.dark : p.light;
+    var accent = c[0], bg = c[1];
+    root.style.setProperty("--accent", accent);
+    root.style.setProperty("--bg", bg);
+    if (dark) {
+      root.style.setProperty("--surface", mix(bg, "#000000", .3));
+      root.style.setProperty("--card", mix(bg, "#ffffff", .06));
+      root.style.setProperty("--line", mix(bg, "#ffffff", .14));
+      root.style.setProperty("--ink", mix("#F2E8D5", accent, .06));
+      root.style.setProperty("--muted", mix("#A89C89", accent, .12));
+      root.style.setProperty("--on-accent", bg);
+    } else {
+      root.style.setProperty("--surface", mix(bg, accent, .06));
+      root.style.setProperty("--card", mix(bg, "#ffffff", .55));
+      root.style.setProperty("--line", mix(bg, accent, .16));
+      root.style.setProperty("--ink", mix("#2B2420", accent, .08));
+      root.style.setProperty("--muted", mix("#6B5F55", accent, .15));
+      root.style.setProperty("--on-accent", "#FFFFFF");
+    }
+    document.querySelectorAll(".swatch").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.id === p.id));
+      b.querySelector("i").style.background = dark ? b.dataset.dark : b.dataset.light;
+    });
+    document.querySelectorAll(".modes button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode));
+    });
+    try { localStorage.setItem("prism-look", JSON.stringify(state)); } catch (e) {}
+  }
+
+  var picker = document.querySelector(".picker");
+  palettes.forEach(function (p) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "swatch";
+    b.dataset.id = p.id;
+    b.dataset.light = p.light[0];
+    b.dataset.dark = p.dark[0];
+    b.innerHTML = "<i></i>" + p.label;
+    b.addEventListener("click", function () { state.palette = p.id; apply(); });
+    picker.appendChild(b);
+  });
+  document.querySelectorAll(".modes button").forEach(function (b) {
+    b.addEventListener("click", function () { state.mode = b.dataset.mode; apply(); });
+  });
+  if (media.addEventListener) media.addEventListener("change", apply);
+  apply();
+
+  var items = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, { rootMargin: "0px 0px -40px 0px" });
+    items.forEach(function (el) { io.observe(el); });
+  } else {
+    items.forEach(function (el) { el.classList.add("in"); });
+  }
+})();
+</script>
+</body>
+</html>

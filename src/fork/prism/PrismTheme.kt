@@ -54,31 +54,66 @@ object PrismTheme {
         return palettes.firstOrNull { n == it.lightName || n == it.darkName }
     }
 
+    /** True when the phone itself is in dark mode. */
+    @JvmStatic
+    fun systemIsDark(): Boolean {
+        val ui = ApplicationLoader.applicationContext.resources.configuration.uiMode
+        return (ui and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+    }
+
+    /**
+     * Copies a palette theme into the app once per build. Telegram's applyThemeFile also applies the theme
+     * as a side effect, so re-installing on every tap made the screen flash dark, light, dark and lag.
+     */
+    private fun ensureInstalled(name: String, assetName: String): Theme.ThemeInfo? {
+        val prefs = ApplicationLoader.applicationContext.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
+        val stamp = PrismUpdater.currentBuild(ApplicationLoader.applicationContext).toString() + "-" + org.telegram.messenger.BuildVars.BUILD_VERSION_STRING
+        val existing = Theme.getTheme("$name.attheme")
+        if (existing != null && existing.pathToFile != null && File(existing.pathToFile).exists() &&
+            prefs.getString("installed_$name", null) == stamp
+        ) return existing
+        val t = Theme.applyThemeFile(asset("prism_theme/$assetName", "$name.attheme"), name, null, false)
+        if (t != null) prefs.edit().putString("installed_$name", stamp).apply()
+        return t
+    }
+
     /** Installs a palette's day + night themes, makes them the pair the day/night switch uses, and shows the right one. */
     @JvmStatic
     fun installPalette(p: Palette, wantDark: Boolean, followSystem: Boolean = false) {
         val ctx = ApplicationLoader.applicationContext
-        val dark = Theme.applyThemeFile(asset("prism_theme/${p.darkAsset}", "${p.darkName}.attheme"), p.darkName, null, false)
-        val light = Theme.applyThemeFile(asset("prism_theme/${p.lightAsset}", "${p.lightName}.attheme"), p.lightName, null, false)
-        if (dark != null) Theme.setCurrentNightTheme(dark)
-        // The day/night toggle reads these two keys; unset they point at stock Blue / Dark Blue.
-        ctx.getSharedPreferences("themeconfig", android.content.Context.MODE_PRIVATE).edit().apply {
-            if (light != null) putString("lastDayTheme", light.key)
-            if (dark != null) putString("lastDarkTheme", dark.key)
-        }.commit()
         if (followSystem) {
             Theme.selectedAutoNightType = Theme.AUTO_NIGHT_TYPE_SYSTEM
             Theme.saveAutoNightThemeConfig()
-            Theme.checkAutoNightThemeConditions(true)
-        } else {
-            // a manual pick: apply the matching twin for the mode the user is in right now
-            val target = if (wantDark) dark else light
-            if (target != null) {
-                // same path as Telegram's own switcher: applies the theme and re-colours every open screen
-                org.telegram.messenger.NotificationCenter.getGlobalInstance()
-                    .postNotificationName(org.telegram.messenger.NotificationCenter.needSetDayNightTheme, target, wantDark, null, -1)
-            }
         }
+        // With automatic switching on, dark is the night slot and light stays the day theme.
+        // With it off, the theme the user picked (even a dark one) becomes the day theme, so it survives a restart.
+        val autoNight = Theme.selectedAutoNightType != Theme.AUTO_NIGHT_TYPE_NONE
+        val dayIsDark = wantDark && !autoNight
+        // install the other one first: the last install is what Telegram saves as the day theme
+        val light: Theme.ThemeInfo?
+        val dark: Theme.ThemeInfo?
+        if (dayIsDark) {
+            light = ensureInstalled(p.lightName, p.lightAsset)
+            dark = ensureInstalled(p.darkName, p.darkAsset)
+        } else {
+            dark = ensureInstalled(p.darkName, p.darkAsset)
+            light = ensureInstalled(p.lightName, p.lightAsset)
+        }
+        if (dark != null) Theme.setCurrentNightTheme(dark)
+        // The day/night toggle reads these two keys; unset they point at stock Blue / Dark Blue.
+        ctx.getSharedPreferences("themeconfig", android.content.Context.MODE_PRIVATE).edit().apply {
+            val day = if (dayIsDark) dark else light
+            if (day != null) putString("lastDayTheme", day.key)
+            if (dark != null) putString("lastDarkTheme", dark.key)
+        }.commit()
+        val target = if (wantDark) dark else light
+        if (target != null) {
+            // same path as Telegram's own switcher: applies the theme and re-colours every open screen
+            org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(
+                org.telegram.messenger.NotificationCenter.needSetDayNightTheme, target, wantDark && autoNight, null, -1
+            )
+        }
+        if (followSystem) Theme.checkAutoNightThemeConditions(true)
     }
 
     /** Installs Paper (day) + Paper Dark (night) and makes the system dark setting choose between them. */
@@ -86,7 +121,7 @@ object PrismTheme {
         val ctx = ApplicationLoader.applicationContext
         val prefs = ctx.getSharedPreferences("prism", android.content.Context.MODE_PRIVATE)
         prefs.edit().putBoolean("paper_v6", true).commit() // first: a failure must not loop
-        installPalette(palettes[0], false, followSystem = true)
+        installPalette(palettes[0], systemIsDark(), followSystem = true)
     }
 
     private fun needsInstall(): Boolean {
